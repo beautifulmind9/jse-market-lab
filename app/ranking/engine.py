@@ -50,13 +50,11 @@ def rank_instruments(
                     reasons.append("Guardrail: shifted to 10D due to high turnover.")
 
         tier = assign_tier(float(best["score_window"]))
-        volume_available = bool(
-            meta.get("volume_confirmation_enabled", meta.get("volume_available", False))
-            meta.get(
-                "volume_confirmation_enabled",
-                meta.get("volume_available", False),
-            )
-        )
+        if "volume_confirmation_enabled" in meta:
+            volume_available = bool(meta.get("volume_confirmation_enabled"))
+        else:
+            volume_available = bool(meta.get("volume_available", False))
+
         tier, warning = apply_liquidity_cap(
             tier,
             volume_available,
