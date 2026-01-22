@@ -6,6 +6,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
+from app.data.metadata import build_metadata
 from app.ranking.engine import rank_instruments
 from app.ranking.objectives import get_objective_weights
 
@@ -129,3 +130,16 @@ def test_guardrail_shifts_to_10d_on_high_turnover():
 
     ranked = rank_instruments(df_summary, meta, "income_stability")
     assert ranked.iloc[0]["best_window"] == 10
+
+
+def test_rank_with_metadata_missing_dates():
+    df_summary = _base_summary()
+    meta = build_metadata(
+        pd.DataFrame({"volume": [1000, 1500]}),
+        source="demo",
+        dataset_id="test",
+    )
+
+    ranked = rank_instruments(df_summary, meta, "active_growth")
+    assert not ranked.empty
+    assert ranked["warnings"].apply(len).sum() == 0
