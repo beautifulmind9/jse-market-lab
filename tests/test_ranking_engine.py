@@ -83,6 +83,17 @@ def test_objective_changes_weights_not_summary():
     assert not ranked_income["score_total"].equals(ranked_growth["score_total"])
 
 
+def test_metadata_without_dates_uses_volume_confirmation():
+    df_summary = _base_summary()
+    meta = {
+        "volume_confirmation_enabled": True,
+        "liquidity_ceiling": "A",
+    }
+
+    ranked = rank_instruments(df_summary, meta, "active_growth")
+    assert ranked["warnings"].apply(len).sum() == 0
+
+
 def test_guardrail_shifts_to_10d_on_high_turnover():
     df_summary = pd.DataFrame(
         [
