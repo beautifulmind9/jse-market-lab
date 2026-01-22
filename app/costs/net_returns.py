@@ -18,20 +18,6 @@ def compute_trade_results(
     """Compute trade-level returns for each entry across holding windows."""
     prices = df_prices.copy()
     prices["date"] = pd.to_datetime(prices["date"], errors="coerce")
-    duplicate_mask = prices.duplicated(subset=["instrument", "date"])
-    if duplicate_mask.any():
-        examples = (
-            prices.loc[duplicate_mask, ["instrument", "date"]]
-            .drop_duplicates()
-            .head(3)
-        )
-        example_str = ", ".join(
-            f"{row.instrument}@{row.date.date()}" for row in examples.itertuples()
-        )
-        raise ValueError(
-            "Duplicate (instrument, date) rows found in prices: "
-            f"{example_str}. Please de-duplicate before running."
-        )
     price_index = prices.set_index(["instrument", "date"])["close"]
 
     entries = df_entries.copy()

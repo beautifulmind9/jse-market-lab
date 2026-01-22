@@ -94,27 +94,3 @@ def test_insufficient_future_data_excluded_from_summary():
     assert trades.empty
     assert summary_instrument.empty
     assert summary_overall.empty
-
-
-def test_duplicate_price_rows_raise_error():
-    df_prices = pd.DataFrame(
-        {
-            "date": pd.to_datetime(["2024-01-01", "2024-01-01"]),
-            "instrument": ["AAA", "AAA"],
-            "close": [100, 101],
-        }
-    )
-    df_entries = pd.DataFrame(
-        {"instrument": ["AAA"], "entry_date": [pd.Timestamp("2024-01-01")]}
-    )
-
-    try:
-        run_cost_engine(
-            df_prices,
-            df_entries,
-            holding_windows=[5],
-            broker_profile="Default",
-        )
-        assert False, "Expected ValueError for duplicate prices."
-    except ValueError as exc:
-        assert "Duplicate (instrument, date) rows found in prices" in str(exc)

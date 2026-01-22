@@ -60,14 +60,10 @@ def _normalize_wide(df: pd.DataFrame, source: str, dataset_id: str) -> pd.DataFr
     """Normalize wide-format input into canonical schema."""
     df = df.copy()
     df.columns = [col.strip() for col in df.columns]
-    date_candidates = [col for col in df.columns if col.lower() == "date"]
-    if not date_candidates:
-        raise ValueError("Wide format requires a 'date' column.")
-    date_col = date_candidates[0]
+    date_col = df.columns[0]
     prices = df.melt(id_vars=[date_col], var_name="instrument", value_name="close")
-    prices = prices.rename(columns={date_col: "date"}).dropna(subset=["close"])
     data = pd.DataFrame()
-    data["date"] = pd.to_datetime(prices["date"], errors="coerce")
+    data["date"] = pd.to_datetime(prices[date_col], errors="coerce")
     data["instrument"] = prices["instrument"].astype(str).str.strip().str.upper()
     data["close"] = pd.to_numeric(prices["close"], errors="coerce")
     data["volume"] = np.nan
