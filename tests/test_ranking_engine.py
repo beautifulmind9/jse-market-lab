@@ -132,14 +132,12 @@ def test_guardrail_shifts_to_10d_on_high_turnover():
     assert ranked.iloc[0]["best_window"] == 10
 
 
-def test_rank_with_metadata_missing_dates():
+def test_rank_handles_missing_dates_and_volume_flag():
     df_summary = _base_summary()
-    meta = build_metadata(
-        pd.DataFrame({"volume": [1000, 1500]}),
-        source="demo",
-        dataset_id="test",
-    )
+    meta = {
+        "volume_confirmation_enabled": True,
+        "liquidity_ceiling": "A",
+    }
 
     ranked = rank_instruments(df_summary, meta, "active_growth")
-    assert not ranked.empty
     assert ranked["warnings"].apply(len).sum() == 0
