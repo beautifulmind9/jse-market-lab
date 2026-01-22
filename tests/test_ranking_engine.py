@@ -129,3 +129,14 @@ def test_guardrail_shifts_to_10d_on_high_turnover():
 
     ranked = rank_instruments(df_summary, meta, "income_stability")
     assert ranked.iloc[0]["best_window"] == 10
+
+
+def test_rank_handles_missing_dates_and_volume_flag():
+    df_summary = _base_summary()
+    meta = {
+        "volume_confirmation_enabled": True,
+        "liquidity_ceiling": "A",
+    }
+
+    ranked = rank_instruments(df_summary, meta, "active_growth")
+    assert ranked["warnings"].apply(len).sum() == 0
