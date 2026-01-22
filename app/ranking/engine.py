@@ -18,10 +18,12 @@ def rank_instruments(
     objective: str,
 ) -> pd.DataFrame:
     """Rank instruments based on objective and summary metrics."""
-    start_date = meta.get("start_date")
-    end_date = meta.get("end_date")
-    if start_date and end_date:
-        years = dataset_years(pd.to_datetime(start_date), pd.to_datetime(end_date))
+    start_date_raw = meta.get("start_date")
+    end_date_raw = meta.get("end_date")
+    if start_date_raw and end_date_raw:
+        start_date = pd.to_datetime(start_date_raw)
+        end_date = pd.to_datetime(end_date_raw)
+        years = dataset_years(start_date, end_date)
     else:
         years = 1.0
 
@@ -48,10 +50,13 @@ def rank_instruments(
                     reasons.append("Guardrail: shifted to 10D due to high turnover.")
 
         tier = assign_tier(float(best["score_window"]))
-        if "volume_confirmation_enabled" in meta:
-            volume_available = bool(meta.get("volume_confirmation_enabled"))
-        else:
-            volume_available = bool(meta.get("volume_available", False))
+        volume_available = bool(
+            meta.get("volume_confirmation_enabled", meta.get("volume_available", False))
+            meta.get(
+                "volume_confirmation_enabled",
+                meta.get("volume_available", False),
+            )
+        )
         tier, warning = apply_liquidity_cap(
             tier,
             volume_available,
