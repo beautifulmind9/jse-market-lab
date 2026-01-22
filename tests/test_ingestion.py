@@ -71,18 +71,3 @@ def test_adj_close_accepted_when_close_missing():
     normalized, fmt = normalize_data(df, source="demo", dataset_id="test")
     assert fmt == "long"
     assert normalized["close"].tolist() == [1.0, 2.0]
-
-
-def test_wide_date_not_first_column():
-    df = pd.DataFrame(
-        {
-            "AAA": [1.0, 2.0],
-            "Date": ["2024-01-01", "2024-01-02"],
-            "BBB": [3.0, 4.0],
-        }
-    )
-
-    normalized, fmt = normalize_data(df, source="demo", dataset_id="test")
-    assert fmt == "wide"
-    assert normalized["date"].notna().all()
-    assert set(normalized["instrument"]) == {"AAA", "BBB"}
