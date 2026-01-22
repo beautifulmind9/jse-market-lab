@@ -6,6 +6,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
+from app.data.metadata import build_metadata
 from app.ranking.engine import rank_instruments
 from app.ranking.objectives import get_objective_weights
 

@@ -51,6 +51,7 @@ def rank_instruments(
 
         tier = assign_tier(float(best["score_window"]))
         volume_available = bool(
+            meta.get("volume_confirmation_enabled", meta.get("volume_available", False))
             meta.get(
                 "volume_confirmation_enabled",
                 meta.get("volume_available", False),
