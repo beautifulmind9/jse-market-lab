@@ -18,9 +18,9 @@ PHASE_ALIASES = {
 }
 
 
-def normalize_phase_label(label: object | None) -> str:
+def normalize_phase_label(label: str | None) -> str:
     """Normalize phase labels to match earnings tagging constants."""
-    if label is None or pd.isna(label):
+    if label is None or (isinstance(label, float) and pd.isna(label)):
         return PHASE_NON
     normalized = PHASE_ALIASES.get(str(label).strip().lower())
     if normalized is None:
