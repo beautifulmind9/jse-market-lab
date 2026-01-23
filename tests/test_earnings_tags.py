@@ -1,0 +1,83 @@
+import sys
+from pathlib import Path
+
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.append(str(ROOT))
+
+from app.events.earnings import (
+    PHASE_NON,
+    PHASE_POST,
+    PHASE_PRE,
+    PHASE_REACTION,
+    tag_earnings_phase,
+)
+
+
+def test_earnings_phase_tags_use_trading_days():
+    dates = pd.bdate_range("2024-01-02", periods=40)
+    df = pd.DataFrame({"instrument": "AAA", "date": dates, "return": 0.0})
+    event_date = dates[10]
+    events_df = pd.DataFrame(
+        {
+            "instrument": ["AAA"],
+            "earnings_date": [event_date],
+            "confidence": ["confirmed"],
+        }
+    )
+
+    tagged = tag_earnings_phase(df, events_df, "date", "instrument")
+
+    friday_before = dates[9]
+    friday_row = tagged[tagged["date"] == friday_before].iloc[0]
+    assert friday_row["earnings_day_offset"] == -1
+
+    event_row = tagged[tagged["date"] == event_date].iloc[0]
+    assert event_row["earnings_phase"] == PHASE_REACTION
+
+
+def test_earnings_phase_bounds():
+    dates = pd.bdate_range("2024-03-01", periods=70)
+    df = pd.DataFrame({"instrument": "BBB", "date": dates, "return": 0.0})
+    event_date = dates[30]
+    events_df = pd.DataFrame(
+        {
+            "instrument": ["BBB"],
+            "earnings_date": [event_date],
+            "confidence": ["estimated"],
+        }
+    )
+
+    tagged = tag_earnings_phase(df, events_df, "date", "instrument")
+
+    pre_day = dates[0]
+    pre_row = tagged[tagged["date"] == pre_day].iloc[0]
+    assert pre_row["earnings_phase"] == PHASE_PRE
+
+    post_day = dates[34]
+    post_row = tagged[tagged["date"] == post_day].iloc[0]
+    assert post_row["earnings_phase"] == PHASE_POST
+
+    outside_day = dates[65]
+    outside_row = tagged[tagged["date"] == outside_day].iloc[0]
+    assert outside_row["earnings_phase"] == PHASE_NON
+
+
+def test_earnings_phase_tie_breaks_on_confidence():
+    dates = pd.bdate_range("2024-04-01", periods=25)
+    df = pd.DataFrame({"instrument": "CCC", "date": dates, "return": 0.0})
+    event_estimated = dates[5]
+    event_confirmed = dates[9]
+    anchor_date = dates[7]
+    events_df = pd.DataFrame(
+        {
+            "instrument": ["CCC", "CCC"],
+            "earnings_date": [event_estimated, event_confirmed],
+            "confidence": ["estimated", "confirmed"],
+        }
+    )
+
+    tagged = tag_earnings_phase(df, events_df, "date", "instrument")
+    anchor_row = tagged[tagged["date"] == anchor_date].iloc[0]
+    assert anchor_row["earnings_day_offset"] == -2
