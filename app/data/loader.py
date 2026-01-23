@@ -7,7 +7,7 @@ from typing import IO, Optional
 
 import pandas as pd
 
-DEMO_PATH = Path(__file__).resolve().parents[2] / "data" / "demo" / "demo_prices.csv"
+DEMO_PATH = Path(__file__).resolve().parents[2] / "data" / "demo" / "prices_demo.csv"
 
 
 def load_demo() -> pd.DataFrame:
