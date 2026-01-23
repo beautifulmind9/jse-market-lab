@@ -9,12 +9,13 @@ import pandas as pd
 
 from app.costs.engine import run_cost_engine
 from app.data.ingest import ingest_dataset
+from app.demo.language import get_explanatory_copy
 from app.events.earnings import tag_earnings_phase
 from app.events.phase_metrics import compute_phase_metrics
 from app.ranking.engine import rank_instruments
 
 
-def run_demo() -> dict:
+def run_demo(language_mode: str = "plain") -> dict:
     """Run ingestion, cost, ranking, and phase metrics for demo data."""
     canonical, meta, issues = ingest_dataset("demo")
 
@@ -53,6 +54,8 @@ def run_demo() -> dict:
         "phase_metrics": phase_metrics,
         "meta": meta,
         "issues": issues,
+        "language_mode": language_mode,
+        "explanatory_copy": get_explanatory_copy(language_mode),
     }
 
 
