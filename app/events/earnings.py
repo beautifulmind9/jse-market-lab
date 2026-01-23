@@ -84,7 +84,7 @@ def _event_indices(
         pd.to_datetime(list(event_dates)),
         list(confidences),
     ):
-        position = dates.get_indexer([event_date])[0]
+        position = dates.get_indexer([event_date], method="backfill")[0]
         if position >= 0:
             indices.append((int(position), _confidence_score(str(confidence))))
     return indices
