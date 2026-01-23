@@ -1,0 +1,4 @@
+instrument,earnings_date,confidence,source
+AAA,2024-02-15,confirmed,manual_v1
+BBB,2024-02-20,estimated,manual_v1
+CCC,2024-02-28,confirmed,manual_v1
