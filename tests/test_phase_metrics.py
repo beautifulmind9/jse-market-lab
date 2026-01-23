@@ -13,7 +13,7 @@ def test_phase_metrics_threshold_and_stats():
     df = pd.DataFrame(
         {
             "instrument": ["AAA"] * 12 + ["BBB"] * 5,
-            "earnings_phase": ["earnings"] * 12 + ["post_earnings"] * 5,
+            "earnings_phase": ["reaction"] * 12 + ["post"] * 5,
             "net_return": [0.02] * 6 + [-0.01] * 6 + [0.03] * 5,
         }
     )

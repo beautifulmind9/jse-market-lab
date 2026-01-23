@@ -8,6 +8,7 @@ sys.path.append(str(ROOT))
 
 from app.events.earnings import (
     PHASE_EVENT,
+    PHASE_NON,
     PHASE_POST,
     PHASE_PRE,
     tag_earnings_phase,
@@ -60,7 +61,7 @@ def test_earnings_phase_bounds():
 
     outside_day = dates[65]
     outside_row = tagged[tagged["date"] == outside_day].iloc[0]
-    assert pd.isna(outside_row["earnings_phase"])
+    assert outside_row["earnings_phase"] == PHASE_NON
 
 
 def test_earnings_phase_snaps_weekend_to_next_trading_day():
