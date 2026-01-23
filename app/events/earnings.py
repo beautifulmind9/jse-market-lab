@@ -8,9 +8,10 @@ import numpy as np
 import pandas as pd
 
 
-PHASE_PRE = "pre_earnings"
-PHASE_EVENT = "earnings"
-PHASE_POST = "post_earnings"
+PHASE_PRE = "pre"
+PHASE_EVENT = "reaction"
+PHASE_POST = "post"
+PHASE_NON = "non"
 
 PRE_WINDOW = (-30, -1)
 EVENT_WINDOW = (0, 3)
@@ -59,14 +60,15 @@ def tag_earnings_phase(
         for idx, date in enumerate(dates):
             offset = offsets[idx]
             phase = phase_map[idx]
-            if phase is None or offset is None:
+            if np.isnan(offset):
+                phase_values[(instrument, date)] = PHASE_NON
                 continue
             phase_values[(instrument, date)] = phase
             offset_values[(instrument, date)] = int(offset)
 
     tagged["earnings_phase"] = tagged.apply(
         lambda row: phase_values.get((row[inst_col], row[date_col])), axis=1
-    )
+    ).fillna(PHASE_NON)
     tagged["earnings_day_offset"] = tagged.apply(
         lambda row: offset_values.get((row[inst_col], row[date_col])), axis=1
     )
@@ -116,11 +118,11 @@ def _closest_offsets(length: int, event_indices: Iterable[tuple[int, int]]) -> n
     return best_offsets
 
 
-def _phase_from_offsets(offsets: np.ndarray) -> list[str | None]:
-    phases: list[str | None] = []
+def _phase_from_offsets(offsets: np.ndarray) -> list[str]:
+    phases: list[str] = []
     for offset in offsets:
         if np.isnan(offset):
-            phases.append(None)
+            phases.append(PHASE_NON)
             continue
         offset_int = int(offset)
         if PRE_WINDOW[0] <= offset_int <= PRE_WINDOW[1]:
@@ -130,7 +132,7 @@ def _phase_from_offsets(offsets: np.ndarray) -> list[str | None]:
         elif POST_WINDOW[0] <= offset_int <= POST_WINDOW[1]:
             phases.append(PHASE_POST)
         else:
-            phases.append(None)
+            phases.append(PHASE_NON)
     return phases
 
 
