@@ -7,10 +7,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
 from app.events.earnings import (
-    PHASE_NON,
+    PHASE_EVENT,
     PHASE_POST,
     PHASE_PRE,
-    PHASE_REACTION,
     tag_earnings_phase,
 )
 
@@ -34,7 +33,7 @@ def test_earnings_phase_tags_use_trading_days():
     assert friday_row["earnings_day_offset"] == -1
 
     event_row = tagged[tagged["date"] == event_date].iloc[0]
-    assert event_row["earnings_phase"] == PHASE_REACTION
+    assert event_row["earnings_phase"] == PHASE_EVENT
 
 
 def test_earnings_phase_bounds():
@@ -61,7 +60,7 @@ def test_earnings_phase_bounds():
 
     outside_day = dates[65]
     outside_row = tagged[tagged["date"] == outside_day].iloc[0]
-    assert outside_row["earnings_phase"] == PHASE_NON
+    assert pd.isna(outside_row["earnings_phase"])
 
 
 def test_earnings_phase_tie_breaks_on_confidence():

@@ -8,10 +8,9 @@ import numpy as np
 import pandas as pd
 
 
-PHASE_PRE = "pre"
-PHASE_REACTION = "reaction"
-PHASE_POST = "post"
-PHASE_NON = "non"
+PHASE_PRE = "pre_earnings"
+PHASE_EVENT = "earnings"
+PHASE_POST = "post_earnings"
 
 PRE_WINDOW = (-30, -1)
 EVENT_WINDOW = (0, 3)
@@ -67,7 +66,7 @@ def tag_earnings_phase(
 
     tagged["earnings_phase"] = tagged.apply(
         lambda row: phase_values.get((row[inst_col], row[date_col])), axis=1
-    ).fillna(PHASE_NON)
+    )
     tagged["earnings_day_offset"] = tagged.apply(
         lambda row: offset_values.get((row[inst_col], row[date_col])), axis=1
     )
@@ -127,11 +126,11 @@ def _phase_from_offsets(offsets: np.ndarray) -> list[str | None]:
         if PRE_WINDOW[0] <= offset_int <= PRE_WINDOW[1]:
             phases.append(PHASE_PRE)
         elif EVENT_WINDOW[0] <= offset_int <= EVENT_WINDOW[1]:
-            phases.append(PHASE_REACTION)
+            phases.append(PHASE_EVENT)
         elif POST_WINDOW[0] <= offset_int <= POST_WINDOW[1]:
             phases.append(PHASE_POST)
         else:
-            phases.append(PHASE_NON)
+            phases.append(None)
     return phases
 
 
