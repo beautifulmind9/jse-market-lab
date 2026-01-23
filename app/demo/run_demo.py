@@ -10,7 +10,7 @@ import pandas as pd
 from app.costs.engine import run_cost_engine
 from app.data.ingest import ingest_dataset
 from app.events.earnings import tag_earnings_phase
-from app.metrics.phase_metrics import compute_phase_metrics
+from app.events.phase_metrics import compute_phase_metrics
 from app.ranking.engine import rank_instruments
 
 

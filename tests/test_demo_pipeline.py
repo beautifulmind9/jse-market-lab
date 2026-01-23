@@ -12,7 +12,7 @@ from app.data.normalize import normalize_data
 from app.data.validate import validate_canonical
 from app.demo.generate_prices import generate_demo_prices
 from app.events.earnings import tag_earnings_phase
-from app.metrics.phase_metrics import compute_phase_metrics
+from app.events.phase_metrics import compute_phase_metrics
 from app.ranking.engine import rank_instruments
 
 

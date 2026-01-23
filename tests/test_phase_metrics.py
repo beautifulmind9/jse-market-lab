@@ -6,7 +6,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
-from app.metrics.phase_metrics import compute_phase_metrics
+from app.events.phase_metrics import compute_phase_metrics
 
 
 def test_phase_metrics_threshold_and_stats():
