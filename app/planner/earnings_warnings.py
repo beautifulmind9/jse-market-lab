@@ -106,6 +106,23 @@ def add_planner_earnings_warnings(
     if objective not in OBJECTIVE_COPY:
         raise ValueError(f"Unknown objective: {objective}")
 
+    calendar_df = _build_calendar_df(prices_df, inst_col)
+    cal_tagged = tag_earnings_phase(
+        calendar_df,
+        events_df,
+        date_col="date",
+        inst_col=inst_col,
+    )
+    phase_map = {
+        (row[inst_col], row["date"]): row["earnings_phase"]
+        for _, row in cal_tagged.iterrows()
+    }
+    offset_map = {
+        (row[inst_col], row["date"]): row["earnings_day_offset"]
+        for _, row in cal_tagged.iterrows()
+        if pd.notna(row["earnings_day_offset"])
+    }
+
     planned_exit = _compute_planned_exit_dates(
         planner_df,
         prices_df,
@@ -114,28 +131,23 @@ def add_planner_earnings_warnings(
         window_col=window_col,
     )
 
-    tagged = tag_earnings_phase(
-        planned_exit,
-        events_df,
-        date_col=entry_col,
-        inst_col=inst_col,
-    )
-
-    combined = tagged.copy()
+    combined = planned_exit.copy()
+    combined[entry_col] = pd.to_datetime(combined[entry_col])
     combined["planned_exit_date"] = planned_exit["planned_exit_date"]
-    exit_phase = pd.Series(PHASE_NON, index=combined.index)
-    valid_exit = combined["planned_exit_date"].notna()
-    if valid_exit.any():
-        exit_tagged = tag_earnings_phase(
-            planned_exit.loc[valid_exit],
-            events_df,
-            date_col="planned_exit_date",
-            inst_col=inst_col,
-        )
-        exit_phase.loc[valid_exit] = exit_tagged["earnings_phase"].fillna(PHASE_NON)
-    combined["exit_earnings_phase"] = exit_phase.replace({None: PHASE_NON})
-    combined["earnings_phase"] = combined["earnings_phase"].fillna(PHASE_NON)
-    combined["earnings_phase"] = combined["earnings_phase"].replace({None: PHASE_NON})
+    combined["earnings_phase"] = combined.apply(
+        lambda row: phase_map.get((row[inst_col], row[entry_col]), PHASE_NON),
+        axis=1,
+    )
+    combined["earnings_day_offset"] = combined.apply(
+        lambda row: offset_map.get((row[inst_col], row[entry_col])),
+        axis=1,
+    )
+    combined["exit_earnings_phase"] = combined.apply(
+        lambda row: phase_map.get(
+            (row[inst_col], row["planned_exit_date"]), PHASE_NON
+        ),
+        axis=1,
+    )
 
     combined["earnings_overlaps_window"] = (
         combined["earnings_phase"] != combined["exit_earnings_phase"]
@@ -202,6 +214,18 @@ def _compute_planned_exit_dates(
 
     result["planned_exit_date"] = planned_dates
     return result
+
+
+def _build_calendar_df(
+    prices_df: pd.DataFrame,
+    inst_col: str,
+) -> pd.DataFrame:
+    if inst_col not in prices_df.columns:
+        raise KeyError(f"prices_df must include {inst_col}")
+    calendar_df = prices_df[[inst_col, "date"]].drop_duplicates().copy()
+    calendar_df["date"] = pd.to_datetime(calendar_df["date"])
+    calendar_df = calendar_df.sort_values([inst_col, "date"], kind="stable")
+    return calendar_df
 
 
 def _warning_for_row(row: pd.Series, copy_map: Dict[str, Dict[str, str]]):

@@ -124,3 +124,38 @@ def test_missing_planned_exit_date_sets_exit_phase_non():
     )
 
     assert tagged.loc[0, "exit_earnings_phase"] == "non"
+
+
+def test_calendar_tags_single_planner_entry():
+    planner_df = pd.DataFrame(
+        {
+            "instrument": ["AAA"],
+            "entry_date": [pd.Timestamp("2024-01-02")],
+            "holding_window": [1],
+        }
+    )
+    prices_df = pd.DataFrame(
+        {
+            "instrument": ["AAA", "AAA", "AAA"],
+            "date": pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"]),
+            "close": [10, 11, 12],
+        }
+    )
+    events_df = pd.DataFrame(
+        {
+            "instrument": ["AAA"],
+            "earnings_date": [pd.Timestamp("2024-01-03")],
+            "confidence": ["confirmed"],
+        }
+    )
+
+    tagged = add_planner_earnings_warnings(
+        planner_df,
+        prices_df,
+        events_df,
+        objective="income_stability",
+    )
+
+    assert tagged.loc[0, "earnings_phase"] == "pre"
+    assert tagged.loc[0, "exit_earnings_phase"] == "reaction"
+    assert bool(tagged.loc[0, "earnings_overlaps_window"]) is True
