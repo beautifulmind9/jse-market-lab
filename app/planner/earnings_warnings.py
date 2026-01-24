@@ -7,7 +7,74 @@ from typing import Dict, Optional
 import pandas as pd
 
 from app.events.earnings import PHASE_NON, tag_earnings_phase
-from app.planner.warnings import build_earnings_warning
+
+
+PHASES = {"pre", "reaction", "post", PHASE_NON}
+
+
+INCOME_STABILITY_COPY = {
+    "pre": {
+        "title": "⚠️ Earnings upcoming",
+        "body": (
+            "Earnings in {days} trading days... Consider smaller size or "
+            "allowing more time for the trade."
+        ),
+        "severity": "caution",
+    },
+    "reaction": {
+        "title": "⚠️ Earnings reaction period",
+        "body": "Earnings reactions can increase volatility.",
+        "severity": "caution",
+    },
+    "post": {
+        "title": "ℹ️ Post-earnings window",
+        "body": "Post-earnings prices may still be stabilizing.",
+        "severity": "info",
+    },
+}
+
+ACTIVE_GROWTH_COPY = {
+    "pre": {
+        "title": "⚠️ Earnings upcoming",
+        "body": "Earnings reactions can drive outsized volatility.",
+        "severity": "caution",
+    },
+    "reaction": {
+        "title": "⚠️ Earnings reaction period",
+        "body": "Expect wider variance around earnings reactions.",
+        "severity": "caution",
+    },
+    "post": {
+        "title": "ℹ️ Post-earnings window",
+        "body": "Watch for post-earnings follow-through.",
+        "severity": "info",
+    },
+}
+
+CAPITAL_PRESERVATION_COPY = {
+    "pre": {
+        "title": "⚠️ Earnings upcoming",
+        "body": "Earnings windows can amplify downside gaps.",
+        "severity": "caution",
+    },
+    "reaction": {
+        "title": "⚠️ Earnings reaction period",
+        "body": "Earnings reactions can elevate downside risk.",
+        "severity": "caution",
+    },
+    "post": {
+        "title": "ℹ️ Post-earnings window",
+        "body": "Post-earnings pricing can still settle.",
+        "severity": "info",
+    },
+}
+
+
+OBJECTIVE_COPY: Dict[str, Dict[str, Dict[str, str]]] = {
+    "income_stability": INCOME_STABILITY_COPY,
+    "active_growth": ACTIVE_GROWTH_COPY,
+    "capital_preservation": CAPITAL_PRESERVATION_COPY,
+}
 
 
 def add_planner_earnings_warnings(
@@ -35,6 +102,9 @@ def add_planner_earnings_warnings(
             if column not in result.columns:
                 result[column] = None
         return result
+
+    if objective not in OBJECTIVE_COPY:
+        raise ValueError(f"Unknown objective: {objective}")
 
     calendar_df = _build_calendar_df(prices_df, inst_col)
     cal_tagged = tag_earnings_phase(
@@ -86,24 +156,17 @@ def add_planner_earnings_warnings(
         | (combined["exit_earnings_phase"] != PHASE_NON)
     )
 
+    copy_map = OBJECTIVE_COPY[objective]
     warning_data = combined.apply(
-        lambda row: build_earnings_warning(
-            entry_phase=row["earnings_phase"],
-            exit_phase=row["exit_earnings_phase"],
-            entry_offset=row.get("earnings_day_offset"),
-            overlaps=bool(row["earnings_overlaps_window"]),
-            objective=objective,
-        ),
+        lambda row: _warning_for_row(row, copy_map),
         axis=1,
         result_type="expand",
     )
-    warning_data = warning_data.rename(
-        columns={
-            "body": "earnings_warning_body",
-            "severity": "earnings_warning_severity",
-            "title": "earnings_warning_title",
-        }
-    )
+    warning_data.columns = [
+        "earnings_warning_title",
+        "earnings_warning_body",
+        "earnings_warning_severity",
+    ]
     combined = pd.concat([combined, warning_data], axis=1)
     return combined
 
@@ -164,3 +227,30 @@ def _build_calendar_df(
     calendar_df = calendar_df.sort_values([inst_col, "date"], kind="stable")
     return calendar_df
 
+
+def _warning_for_row(row: pd.Series, copy_map: Dict[str, Dict[str, str]]):
+    phase = row["earnings_phase"]
+    if phase not in PHASES:
+        phase = PHASE_NON
+    if phase == PHASE_NON:
+        return pd.Series([None, None, None])
+
+    copy = copy_map.get(phase)
+    if not copy:
+        return pd.Series([None, None, None])
+
+    title = copy.get("title")
+    body = copy.get("body")
+    severity = copy.get("severity")
+
+    if phase == "pre" and body:
+        offset = row.get("earnings_day_offset")
+        if pd.notna(offset):
+            body = body.format(days=abs(int(offset)))
+        else:
+            body = body.replace("{days} ", "").replace("{days}", "")
+
+    if row.get("earnings_overlaps_window") and body:
+        body = f"{body}\nThis trade overlaps an earnings window."
+
+    return pd.Series([title, body, severity])
