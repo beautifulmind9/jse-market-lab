@@ -222,7 +222,7 @@ def _warning_for_row(row: pd.Series, copy_map: Dict[str, Dict[str, str]]):
     if phase == "pre" and body:
         offset = row.get("earnings_day_offset")
         if pd.notna(offset):
-            body = body.format(days=int(offset))
+            body = body.format(days=abs(int(offset)))
         else:
             body = body.replace("{days} ", "").replace("{days}", "")
 

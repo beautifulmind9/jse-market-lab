@@ -79,6 +79,40 @@ def test_non_phase_yields_no_warning_fields():
     assert tagged.loc[0, "earnings_warning_severity"] is None
 
 
+def test_pre_phase_warning_uses_positive_countdown():
+    entry_dates = pd.bdate_range("2024-01-02", periods=6)
+    planner_df = pd.DataFrame(
+        {
+            "instrument": ["AAA"] * len(entry_dates),
+            "entry_date": entry_dates,
+            "holding_window": [2] * len(entry_dates),
+        }
+    )
+    prices_df = pd.DataFrame(
+        {
+            "instrument": ["AAA"] * 10,
+            "date": pd.bdate_range("2024-01-02", periods=10),
+            "close": list(range(10, 20)),
+        }
+    )
+    events_df = pd.DataFrame(
+        {
+            "instrument": ["AAA"],
+            "earnings_date": [pd.Timestamp("2024-01-09")],
+            "confidence": ["confirmed"],
+        }
+    )
+
+    tagged = add_planner_earnings_warnings(
+        planner_df,
+        prices_df,
+        events_df,
+        objective="income_stability",
+    )
+
+    assert "Earnings in 5 trading days" in tagged.loc[0, "earnings_warning_body"]
+
+
 def test_missing_planned_exit_date_sets_exit_phase_non():
     planner_df, prices_df, events_df = _base_inputs(window=30)
 
