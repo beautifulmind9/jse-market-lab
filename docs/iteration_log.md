@@ -10,3 +10,4 @@
 | V6     | Planner warning UI (Sprint 1)          | Improve user decision-making   |
 | V6.1   | Null-handling patch (post-review fix)  | Prevent crashes and false alerts |
 | V7     | Decision guidance layer                | Converts warnings into user-facing decision support |
+| V8 | Jamaican clarity layer (Clear vs Pro) | Improves usability and local readability |
