@@ -10,3 +10,4 @@
 | Charts                   | Visual aid only                          | Low      |
 | Advanced Styling         | Cosmetic improvement                     | Low      |
 | Decision Guidance Layer  | Helps users act on insights              | High     |
+| Guidance wording refinement | Improve beginner clarity and action relevance | High |
