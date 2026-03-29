@@ -31,3 +31,6 @@ Clear vs Pro guidance is controlled at the planner level, not inside each trade 
 
 ## Confidence Layer Philosophy
 The confidence layer converts signals and risk factors into a clear prioritization system. It does not predict outcomes but helps users decide which trades deserve attention and capital first.
+
+## Allocation Philosophy
+The allocation layer uses simple, rule-based sizing to prioritize stronger trades while preserving cash and limiting exposure. It is designed to support disciplined portfolio decisions, not optimize returns through complex models.
