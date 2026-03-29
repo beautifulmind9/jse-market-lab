@@ -9,3 +9,4 @@
 | Planner Layout           | Improves usability                       | Medium   |
 | Charts                   | Visual aid only                          | Low      |
 | Advanced Styling         | Cosmetic improvement                     | Low      |
+| Decision Guidance Layer  | Helps users act on insights              | High     |
