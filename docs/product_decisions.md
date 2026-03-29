@@ -28,3 +28,6 @@ Guidance should sound natural to Jamaican users without using patois or overly f
 
 ## Guidance Mode Ownership
 Clear vs Pro guidance is controlled at the planner level, not inside each trade card. This keeps the UI stable, avoids repeated widget creation, and applies one consistent reading mode across a planner view.
+
+## Confidence Layer Philosophy
+The confidence layer converts signals and risk factors into a clear prioritization system. It does not predict outcomes but helps users decide which trades deserve attention and capital first.
