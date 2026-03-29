@@ -19,3 +19,6 @@ Warnings are shown instead of blocking trades to preserve user agency.
 ## UI Philosophy
 - Decision support, not signal pushing
 - Clear, minimal, structured
+
+## Decision Guidance Philosophy
+Guidance is provided as optional decision support, not as automatic execution logic. The system suggests possible responses to risk while preserving user agency.
