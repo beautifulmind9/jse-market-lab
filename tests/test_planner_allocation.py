@@ -187,3 +187,62 @@ def test_confidence_derives_when_missing_label():
 
     assert payload["allocations"][0]["confidence_label"] == "strong"
     assert payload["allocations"][0]["allocation_pct"] == 0.30
+
+
+def test_total_allocated_amount_matches_sum_of_line_items():
+    payload = generate_portfolio_allocation(
+        [
+            {
+                "instrument": "A1",
+                "quality_tier": "A",
+                "liquidity_pass": True,
+                "volatility_bucket": "low",
+                "earnings_warning_severity": "info",
+                "confidence_label": "strong",
+            },
+            {
+                "instrument": "A2",
+                "quality_tier": "B",
+                "liquidity_pass": True,
+                "volatility_bucket": "medium",
+                "earnings_warning_severity": "caution",
+                "confidence_label": "moderate",
+            },
+            {
+                "instrument": "A3",
+                "quality_tier": "A",
+                "liquidity_pass": True,
+                "volatility_bucket": "high",
+                "earnings_warning_severity": "high",
+                "confidence_label": "high risk",
+            },
+        ],
+        12_345.67,
+    )
+
+    line_item_sum = round(sum(row["allocation_amount"] for row in payload["allocations"]), 2)
+    assert line_item_sum == payload["total_allocated_amount"]
+
+
+def test_total_allocated_plus_cash_reserve_reconciles_to_capital():
+    total_capital = 12_345.67
+    payload = generate_portfolio_allocation(
+        [
+            {
+                "instrument": f"R{i}",
+                "quality_tier": "A",
+                "liquidity_pass": True,
+                "volatility_bucket": "low",
+                "earnings_warning_severity": "info",
+                "confidence_label": "strong",
+            }
+            for i in range(5)
+        ],
+        total_capital,
+    )
+
+    reconciled_total = round(
+        payload["total_allocated_amount"] + payload["cash_reserve_amount"],
+        2,
+    )
+    assert reconciled_total == round(total_capital, 2)
