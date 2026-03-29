@@ -9,3 +9,4 @@
 | V5     | Earnings warning logic                 | Highlight risk                 |
 | V6     | Planner warning UI (Sprint 1)          | Improve user decision-making   |
 | V6.1   | Null-handling patch (post-review fix)  | Prevent crashes and false alerts |
+| V7     | Decision guidance layer                | Converts insight into action   |
