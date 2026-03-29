@@ -75,6 +75,7 @@ def render_trade_card(
     *,
     st_module=None,
     use_expander: bool = True,
+    guidance_mode: Optional[str] = None,
 ) -> None:
     """Render one planner trade card in scan-first order.
 
@@ -90,6 +91,11 @@ def render_trade_card(
         f"### {instrument} | Entry: {entry_date} | Window: {holding_window}D"
     )
 
+    selected_guidance_mode = _resolve_guidance_mode(
+        st_module=st_module,
+        guidance_mode=guidance_mode,
+    )
+
     render_earnings_warning_block(
         trade_row,
         st_module=st_module,
@@ -99,8 +105,21 @@ def render_trade_card(
         trade_row,
         st_module=st_module,
         use_expander=use_expander,
+        guidance_mode=selected_guidance_mode,
     )
     render_trade_math(trade_row)
+
+
+def _resolve_guidance_mode(*, st_module=None, guidance_mode: Optional[str]) -> str:
+    """Resolve whether guidance should render in clear or pro mode."""
+    if guidance_mode in {"clear", "pro"}:
+        return guidance_mode
+
+    if hasattr(st_module, "toggle"):
+        is_simple = st_module.toggle("Simple explanation", value=True)
+        return "clear" if is_simple else "pro"
+
+    return "clear"
 
 
 def _render_guidance_block(
@@ -108,6 +127,7 @@ def _render_guidance_block(
     *,
     st_module=None,
     use_expander: bool = True,
+    guidance_mode: str = "clear",
 ) -> bool:
     """Render guidance interpretation block below earnings warnings."""
     guidance = generate_trade_guidance(trade_row)
@@ -115,7 +135,11 @@ def _render_guidance_block(
         return False
 
     guidance_title = guidance["guidance_title"]
-    guidance_body = guidance["guidance_body"]
+    guidance_body = (
+        guidance["guidance_body_pro"]
+        if guidance_mode == "pro"
+        else guidance["guidance_body_clear"]
+    )
     guidance_type = guidance["guidance_type"]
     summary = f"**{guidance_title}** · `{guidance_type}`"
 
