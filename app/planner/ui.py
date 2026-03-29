@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Mapping, Optional
+from typing import Any, Callable, Mapping, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -75,6 +75,7 @@ def render_trade_card(
     *,
     st_module=None,
     use_expander: bool = True,
+    guidance_mode: Optional[str] = None,
 ) -> None:
     """Render one planner trade card in scan-first order.
 
@@ -90,6 +91,8 @@ def render_trade_card(
         f"### {instrument} | Entry: {entry_date} | Window: {holding_window}D"
     )
 
+    selected_guidance_mode = _resolve_guidance_mode(guidance_mode)
+
     render_earnings_warning_block(
         trade_row,
         st_module=st_module,
@@ -99,8 +102,67 @@ def render_trade_card(
         trade_row,
         st_module=st_module,
         use_expander=use_expander,
+        guidance_mode=selected_guidance_mode,
     )
     render_trade_math(trade_row)
+
+
+def resolve_guidance_mode_for_planner(
+    *,
+    st_module=None,
+    guidance_mode: Optional[str] = None,
+    toggle_key: str = "guidance_mode_toggle",
+) -> str:
+    """Resolve guidance mode once for a planner/page-level view."""
+    if guidance_mode in {"clear", "pro"}:
+        return guidance_mode
+
+    if st_module is None:
+        import streamlit as st_module
+
+    is_simple = st_module.toggle(
+        "Simple explanation",
+        value=True,
+        key=toggle_key,
+    )
+    return "clear" if is_simple else "pro"
+
+
+def render_trade_cards(
+    trade_rows: Sequence[Mapping[str, Any]],
+    render_trade_math: Callable[[Mapping[str, Any]], None],
+    *,
+    st_module=None,
+    use_expander: bool = True,
+    guidance_mode: Optional[str] = None,
+    toggle_key: str = "guidance_mode_toggle",
+) -> str:
+    """Render planner trade cards using one shared guidance mode."""
+    if st_module is None:
+        import streamlit as st_module
+
+    selected_guidance_mode = resolve_guidance_mode_for_planner(
+        st_module=st_module,
+        guidance_mode=guidance_mode,
+        toggle_key=toggle_key,
+    )
+
+    for trade_row in trade_rows:
+        render_trade_card(
+            trade_row,
+            render_trade_math,
+            st_module=st_module,
+            use_expander=use_expander,
+            guidance_mode=selected_guidance_mode,
+        )
+    return selected_guidance_mode
+
+
+def _resolve_guidance_mode(guidance_mode: Optional[str]) -> str:
+    """Resolve whether guidance should render in clear or pro mode."""
+    if guidance_mode in {"clear", "pro"}:
+        return guidance_mode
+    return "clear"
 
 
 def _render_guidance_block(
@@ -108,6 +170,7 @@ def _render_guidance_block(
     *,
     st_module=None,
     use_expander: bool = True,
+    guidance_mode: str = "clear",
 ) -> bool:
     """Render guidance interpretation block below earnings warnings."""
     guidance = generate_trade_guidance(trade_row)
@@ -115,7 +178,11 @@ def _render_guidance_block(
         return False
 
     guidance_title = guidance["guidance_title"]
-    guidance_body = guidance["guidance_body"]
+    guidance_body = (
+        guidance["guidance_body_pro"]
+        if guidance_mode == "pro"
+        else guidance["guidance_body_clear"]
+    )
     guidance_type = guidance["guidance_type"]
     summary = f"**{guidance_title}** · `{guidance_type}`"
 
