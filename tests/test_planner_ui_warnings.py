@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+import numpy as np
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
@@ -45,6 +47,7 @@ class DummyStreamlit:
 
 def test_normalize_warning_severity_defaults_to_info():
     assert _normalize_warning_severity(None) == "info"
+    assert _normalize_warning_severity(np.nan) == "info"
     assert _normalize_warning_severity("unknown") == "info"
 
 
@@ -77,6 +80,35 @@ def test_warning_block_skips_non_overlapping_rows():
 
     assert rendered is False
     assert st.calls == []
+
+def test_warning_block_skips_null_overlap_values():
+    st = DummyStreamlit()
+    rendered = render_earnings_warning_block(
+        {
+            "earnings_overlaps_window": np.nan,
+            "earnings_warning_severity": "high",
+            "earnings_warning_title": "High risk earnings window",
+        },
+        st_module=st,
+    )
+
+    assert rendered is False
+    assert st.calls == []
+
+
+def test_warning_block_renders_for_numpy_true_overlap():
+    st = DummyStreamlit()
+    rendered = render_earnings_warning_block(
+        {
+            "earnings_overlaps_window": np.bool_(True),
+            "earnings_warning_severity": "high",
+            "earnings_warning_title": "High risk earnings window",
+        },
+        st_module=st,
+    )
+
+    assert rendered is True
+    assert ("error", "**High risk earnings window** · `high`") in st.calls
 
 
 def test_trade_card_order_is_header_then_warning_then_math():

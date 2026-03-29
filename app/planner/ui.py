@@ -4,15 +4,30 @@ from __future__ import annotations
 
 from typing import Any, Callable, Mapping, Optional
 
+import numpy as np
+import pandas as pd
+
 SEVERITY_LEVELS = {"info", "caution", "high"}
 
 
 def _normalize_warning_severity(raw_severity: Optional[str]) -> str:
     """Normalize warning severity for planner UI rendering."""
-    severity = (raw_severity or "").strip().lower()
+    if raw_severity is None or pd.isna(raw_severity):
+        return "info"
+
+    severity = (
+        raw_severity.strip().lower()
+        if isinstance(raw_severity, str)
+        else str(raw_severity).strip().lower()
+    )
     if severity not in SEVERITY_LEVELS:
         return "info"
     return severity
+
+
+def _overlap_is_explicit_true(overlap_value: Any) -> bool:
+    """Return True only for explicit boolean true values."""
+    return isinstance(overlap_value, (bool, np.bool_)) and bool(overlap_value)
 
 
 def render_earnings_warning_block(
@@ -25,7 +40,7 @@ def render_earnings_warning_block(
 
     Returns True when a warning was rendered.
     """
-    if not bool(trade_row.get("earnings_overlaps_window")):
+    if not _overlap_is_explicit_true(trade_row.get("earnings_overlaps_window")):
         return False
 
     if st_module is None:
