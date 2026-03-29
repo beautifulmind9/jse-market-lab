@@ -22,3 +22,6 @@ Warnings are shown instead of blocking trades to preserve user agency.
 
 ## Decision Guidance Philosophy
 Guidance is provided as optional decision support, not as automatic execution logic. The system suggests possible responses to risk while preserving user agency.
+
+## Language Localization Decision
+Guidance should sound natural to Jamaican users without using patois or overly foreign financial language. The product uses a Clear mode for everyday readability and a Pro mode for more concise interpretation. Both modes should remain locally understandable.
