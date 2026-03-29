@@ -25,3 +25,6 @@ Guidance is provided as optional decision support, not as automatic execution lo
 
 ## Language Localization Decision
 Guidance should sound natural to Jamaican users without using patois or overly foreign financial language. The product uses a Clear mode for everyday readability and a Pro mode for more concise interpretation. Both modes should remain locally understandable.
+
+## Guidance Mode Ownership
+Clear vs Pro guidance is controlled at the planner level, not inside each trade card. This keeps the UI stable, avoids repeated widget creation, and applies one consistent reading mode across a planner view.
