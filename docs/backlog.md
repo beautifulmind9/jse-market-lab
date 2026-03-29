@@ -11,3 +11,5 @@
 | Advanced Styling         | Cosmetic improvement                     | Low      |
 | Decision Guidance Layer  | Helps users act on insights              | High     |
 | Guidance wording refinement | Improve beginner clarity and action relevance | High |
+| Jamaican clarity layer (Clear vs Pro) | Makes guidance feel natural and understandable in the local market | High |
+| Guidance wording refinement from UAT | Improve clarity based on real user reactions | High |
