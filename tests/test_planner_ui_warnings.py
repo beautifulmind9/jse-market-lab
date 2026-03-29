@@ -47,8 +47,8 @@ class DummyStreamlit:
         self.calls.append(("expander", label, expanded))
         return _DummyExpander()
 
-    def toggle(self, label, value=False):
-        self.calls.append(("toggle", label, value))
+    def toggle(self, label, value=False, key=None):
+        self.calls.append(("toggle", label, value, key))
         return self.toggle_value
 
 
@@ -258,7 +258,9 @@ def test_planner_level_guidance_mode_applies_to_multiple_cards():
     )
 
     assert selected_mode == "pro"
-    assert st.calls.count(("toggle", "Simple explanation", True)) == 1
+    assert st.calls.count(
+        ("toggle", "Simple explanation", True, "guidance_mode_toggle")
+    ) == 1
     pro_writes = [call[1] for call in st.calls if call[0] == "write"]
     assert any("smaller position" in text for text in pro_writes)
 
@@ -266,3 +268,13 @@ def test_planner_level_guidance_mode_applies_to_multiple_cards():
 def test_resolve_guidance_mode_for_planner_defaults_to_clear():
     st = DummyStreamlit(toggle_value=True)
     assert resolve_guidance_mode_for_planner(st_module=st) == "clear"
+
+
+def test_resolve_guidance_mode_for_planner_accepts_custom_toggle_key():
+    st = DummyStreamlit(toggle_value=True)
+    resolve_guidance_mode_for_planner(
+        st_module=st,
+        toggle_key="my_custom_toggle_key",
+    )
+
+    assert ("toggle", "Simple explanation", True, "my_custom_toggle_key") in st.calls

@@ -111,6 +111,7 @@ def resolve_guidance_mode_for_planner(
     *,
     st_module=None,
     guidance_mode: Optional[str] = None,
+    toggle_key: str = "guidance_mode_toggle",
 ) -> str:
     """Resolve guidance mode once for a planner/page-level view."""
     if guidance_mode in {"clear", "pro"}:
@@ -119,7 +120,11 @@ def resolve_guidance_mode_for_planner(
     if st_module is None:
         import streamlit as st_module
 
-    is_simple = st_module.toggle("Simple explanation", value=True)
+    is_simple = st_module.toggle(
+        "Simple explanation",
+        value=True,
+        key=toggle_key,
+    )
     return "clear" if is_simple else "pro"
 
 
@@ -130,6 +135,7 @@ def render_trade_cards(
     st_module=None,
     use_expander: bool = True,
     guidance_mode: Optional[str] = None,
+    toggle_key: str = "guidance_mode_toggle",
 ) -> str:
     """Render planner trade cards using one shared guidance mode."""
     if st_module is None:
@@ -138,6 +144,7 @@ def render_trade_cards(
     selected_guidance_mode = resolve_guidance_mode_for_planner(
         st_module=st_module,
         guidance_mode=guidance_mode,
+        toggle_key=toggle_key,
     )
 
     for trade_row in trade_rows:
