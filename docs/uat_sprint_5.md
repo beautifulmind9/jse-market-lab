@@ -83,6 +83,14 @@ Expected:
 * Users may want more customization too early
 * Allocation wording may need simpler Jamaican phrasing in Clear mode
 
+## Observations
+- Allocation output makes the planner feel much more actionable
+- Confidence and risk are now translated into capital decisions
+- Reserve protection improves discipline and realism
+- Explanation strings will be important in the UI so users understand why allocations differ
+
 ## Final UAT Status
 
-(To be completed after implementation review)
+## ✅ Approved for Release
+
+The allocation layer successfully converts planner trades into a clear, rule-based capital plan while enforcing exposure limits, funded-trade caps, and reserve protection.
