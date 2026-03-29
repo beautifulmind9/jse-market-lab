@@ -7,6 +7,8 @@ from typing import Any, Callable, Mapping, Optional
 import numpy as np
 import pandas as pd
 
+from app.planner.guidance import generate_trade_guidance
+
 SEVERITY_LEVELS = {"info", "caution", "high"}
 
 
@@ -76,7 +78,7 @@ def render_trade_card(
 ) -> None:
     """Render one planner trade card in scan-first order.
 
-    Order: header -> earnings warning block -> trade math details.
+    Order: header -> earnings warning block -> guidance block -> trade math details.
     """
     if st_module is None:
         import streamlit as st_module
@@ -93,4 +95,40 @@ def render_trade_card(
         st_module=st_module,
         use_expander=use_expander,
     )
+    _render_guidance_block(
+        trade_row,
+        st_module=st_module,
+        use_expander=use_expander,
+    )
     render_trade_math(trade_row)
+
+
+def _render_guidance_block(
+    trade_row: Mapping[str, Any],
+    *,
+    st_module=None,
+    use_expander: bool = True,
+) -> bool:
+    """Render guidance interpretation block below earnings warnings."""
+    guidance = generate_trade_guidance(trade_row)
+    if guidance is None:
+        return False
+
+    guidance_title = guidance["guidance_title"]
+    guidance_body = guidance["guidance_body"]
+    guidance_type = guidance["guidance_type"]
+    summary = f"**{guidance_title}** · `{guidance_type}`"
+
+    if guidance_type == "high":
+        st_module.error(summary)
+    elif guidance_type == "caution":
+        st_module.warning(summary)
+    else:
+        st_module.info(summary)
+
+    if use_expander:
+        with st_module.expander("Guidance", expanded=False):
+            st_module.write(guidance_body)
+    else:
+        st_module.write(guidance_body)
+    return True

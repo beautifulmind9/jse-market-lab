@@ -132,5 +132,32 @@ def test_trade_card_order_is_header_then_warning_then_math():
     )
 
     event_order = [event[0] for event in st.calls]
-    assert event_order.index("markdown") < event_order.index("error")
-    assert event_order.index("error") < event_order.index("math")
+    first_error = event_order.index("error")
+    second_error = event_order.index("error", first_error + 1)
+    assert event_order.index("markdown") < first_error
+    assert first_error < second_error
+    assert second_error < event_order.index("math")
+
+
+def test_trade_card_renders_info_guidance_below_warning():
+    st = DummyStreamlit()
+
+    def render_math(_row):
+        st.calls.append(("math", "rendered"))
+
+    render_trade_card(
+        {
+            "instrument": "AAA",
+            "entry_date": "2024-01-02",
+            "holding_window": 10,
+            "earnings_overlaps_window": True,
+            "earnings_warning_severity": "info",
+            "earnings_warning_title": "ℹ️ Post-earnings window",
+            "earnings_warning_body": "Body",
+        },
+        render_math,
+        st_module=st,
+    )
+
+    assert ("info", "**Earnings overlap awareness** · `info`") in st.calls
+    assert ("expander", "Guidance", False) in st.calls
