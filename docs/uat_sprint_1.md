@@ -29,3 +29,22 @@ Validate that earnings warnings improve decision clarity without adding noise.
 ## Improvements Identified
 - Handle pandas null values safely
 - Ensure no false positives on overlap
+
+## Behavioral Validation (Added Post-Review)
+
+### Key Question
+Do earnings warnings actually influence user decisions?
+
+### Observations to Validate
+- Do users hesitate more on "high" severity trades?
+- Do users prefer "non-overlap" trades when given options?
+- Does warning placement affect decision speed?
+
+### Risk
+Warnings may be:
+- ignored
+- misunderstood
+- over-weighted
+
+### Next Step
+Introduce user-behavior testing in Sprint 2
