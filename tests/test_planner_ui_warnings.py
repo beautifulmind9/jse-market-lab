@@ -118,7 +118,7 @@ def test_warning_block_renders_for_numpy_true_overlap():
     assert ("error", "**High risk earnings window** · `high`") in st.calls
 
 
-def test_trade_card_order_is_header_then_warning_then_math():
+def test_trade_card_order_is_header_then_warning_then_confidence_then_guidance_then_math():
     st = DummyStreamlit()
 
     def render_math(_row):
@@ -133,17 +133,22 @@ def test_trade_card_order_is_header_then_warning_then_math():
             "earnings_warning_severity": "high",
             "earnings_warning_title": "High risk earnings window",
             "earnings_warning_body": "Body",
+            "liquidity_pass": True,
+            "severity": "info",
+            "quality_tier": "B",
+            "volatility_bucket": "high",
         },
         render_math,
         st_module=st,
     )
 
-    event_order = [event[0] for event in st.calls]
-    first_error = event_order.index("error")
-    second_error = event_order.index("error", first_error + 1)
-    assert event_order.index("markdown") < first_error
-    assert first_error < second_error
-    assert second_error < event_order.index("math")
+    warning_index = st.calls.index(("error", "**High risk earnings window** · `high`"))
+    confidence_index = st.calls.index(("info", "**Moderate confidence** · `moderate`"))
+    guidance_index = st.calls.index(("error", "**High earnings overlap guidance** · `high`"))
+    math_index = st.calls.index(("math", "rendered"))
+
+    assert st.calls.index(("markdown", "### AAA | Entry: 2024-01-02 | Window: 10D")) < warning_index
+    assert warning_index < confidence_index < guidance_index < math_index
 
 
 def test_trade_card_renders_info_guidance_below_warning():
@@ -183,6 +188,10 @@ def test_trade_card_switches_guidance_between_clear_and_pro():
         "holding_window": 10,
         "earnings_overlaps_window": True,
         "earnings_warning_severity": "high",
+        "quality_tier": "A",
+        "volatility_bucket": "low",
+        "liquidity_pass": True,
+        "severity": "info",
     }
 
     render_trade_card(
@@ -205,7 +214,39 @@ def test_trade_card_switches_guidance_between_clear_and_pro():
 
     assert any("put in a smaller amount" in text for text in clear_writes)
     assert any("smaller position" in text for text in pro_writes)
+    assert any("stronger setup" in text for text in clear_writes)
+    assert any("relative confidence" in text for text in pro_writes)
 
+
+
+
+def test_trade_card_renders_confidence_block_between_warning_and_guidance():
+    st = DummyStreamlit()
+
+    def render_math(_row):
+        st.calls.append(("math", "rendered"))
+
+    render_trade_card(
+        {
+            "instrument": "AAA",
+            "entry_date": "2024-01-02",
+            "holding_window": 10,
+            "earnings_overlaps_window": True,
+            "earnings_warning_severity": "caution",
+            "quality_tier": "C",
+            "volatility_bucket": "medium",
+            "liquidity_pass": True,
+            "severity": "caution",
+        },
+        render_math,
+        st_module=st,
+    )
+
+    assert ("warning", "**Watch closely** · `watch`") in st.calls
+    warning_index = st.calls.index(("warning", "**Earnings window warning** · `caution`"))
+    confidence_index = st.calls.index(("warning", "**Watch closely** · `watch`"))
+    guidance_index = st.calls.index(("warning", "**Caution earnings overlap guidance** · `caution`"))
+    assert warning_index < confidence_index < guidance_index
 
 def test_trade_card_does_not_create_toggle_widget_per_card():
     st = DummyStreamlit(toggle_value=False)

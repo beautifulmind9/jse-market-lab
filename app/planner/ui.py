@@ -7,6 +7,7 @@ from typing import Any, Callable, Mapping, Optional, Sequence
 import numpy as np
 import pandas as pd
 
+from app.planner.confidence import generate_trade_confidence
 from app.planner.guidance import generate_trade_guidance
 
 SEVERITY_LEVELS = {"info", "caution", "high"}
@@ -79,7 +80,7 @@ def render_trade_card(
 ) -> None:
     """Render one planner trade card in scan-first order.
 
-    Order: header -> earnings warning block -> guidance block -> trade math details.
+    Order: header -> earnings warning block -> confidence block -> guidance block -> trade math details.
     """
     if st_module is None:
         import streamlit as st_module
@@ -97,6 +98,12 @@ def render_trade_card(
         trade_row,
         st_module=st_module,
         use_expander=use_expander,
+    )
+    _render_confidence_block(
+        trade_row,
+        st_module=st_module,
+        use_expander=use_expander,
+        guidance_mode=selected_guidance_mode,
     )
     _render_guidance_block(
         trade_row,
@@ -163,6 +170,39 @@ def _resolve_guidance_mode(guidance_mode: Optional[str]) -> str:
     if guidance_mode in {"clear", "pro"}:
         return guidance_mode
     return "clear"
+
+
+def _render_confidence_block(
+    trade_row: Mapping[str, Any],
+    *,
+    st_module=None,
+    use_expander: bool = True,
+    guidance_mode: str = "clear",
+) -> bool:
+    """Render confidence classification block below warnings."""
+    confidence = generate_trade_confidence(trade_row)
+    confidence_title = confidence["confidence_title"]
+    confidence_body = (
+        confidence["confidence_body_pro"]
+        if guidance_mode == "pro"
+        else confidence["confidence_body_clear"]
+    )
+    confidence_level = confidence["confidence_level"]
+    summary = f"**{confidence_title}** · `{confidence_level}`"
+
+    if confidence_level in {"avoid", "high risk"}:
+        st_module.error(summary)
+    elif confidence_level == "watch":
+        st_module.warning(summary)
+    else:
+        st_module.info(summary)
+
+    if use_expander:
+        with st_module.expander("Confidence", expanded=False):
+            st_module.write(confidence_body)
+    else:
+        st_module.write(confidence_body)
+    return True
 
 
 def _render_guidance_block(
