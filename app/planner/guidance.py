@@ -39,44 +39,71 @@ def generate_trade_guidance(trade_row: Mapping[str, Any]) -> Optional[dict]:
     holding_window = trade_row.get("holding_window")
     volatility_bucket = trade_row.get("volatility_bucket")
 
-    volatility_hint = (
-        f" Current volatility bucket: {volatility_bucket}."
+    volatility_hint_clear = (
+        f" Current price movement level: {volatility_bucket}."
         if volatility_bucket is not None and not pd.isna(volatility_bucket)
         else ""
     )
-    window_hint = (
-        f" Current holding window: {holding_window} trading days."
+    volatility_hint_pro = (
+        f" Current volatility level: {volatility_bucket}."
+        if volatility_bucket is not None and not pd.isna(volatility_bucket)
+        else ""
+    )
+    window_hint_clear = (
+        f" Your current plan is to hold for about {holding_window} trading days."
+        if holding_window is not None and not pd.isna(holding_window)
+        else ""
+    )
+    window_hint_pro = (
+        f" Current holding period: {holding_window} trading days."
         if holding_window is not None and not pd.isna(holding_window)
         else ""
     )
 
     if severity == "high":
         return {
-            "guidance_title": "High-risk earnings overlap guidance",
-            "guidance_body": (
-                "Consider reducing exposure or shortening the holding window before "
-                "the earnings catalyst."
-                f"{window_hint}{volatility_hint}"
+            "guidance_title": "High earnings overlap guidance",
+            "guidance_body_clear": (
+                "When the company releases its results, the price can go up or down "
+                "quickly. It may be safer to put in a smaller amount or wait until "
+                "after that."
+                f"{window_hint_clear}{volatility_hint_clear}"
+            ).strip(),
+            "guidance_body_pro": (
+                "Price can move significantly when results are released. Consider a "
+                "smaller position or waiting until after the announcement."
+                f"{window_hint_pro}{volatility_hint_pro}"
             ).strip(),
             "guidance_type": "high",
         }
     if severity == "caution":
         return {
-            "guidance_title": "Cautionary earnings overlap guidance",
-            "guidance_body": (
-                "Monitor price action closely or reduce position size while the trade "
-                "window intersects earnings-related uncertainty."
-                f"{window_hint}{volatility_hint}"
+            "guidance_title": "Caution earnings overlap guidance",
+            "guidance_body_clear": (
+                "The price might be a bit unpredictable around this time. You can "
+                "still invest, but it may be better to go in with less or keep an "
+                "eye on it."
+                f"{window_hint_clear}{volatility_hint_clear}"
+            ).strip(),
+            "guidance_body_pro": (
+                "Price may be less stable during this period. Consider a smaller "
+                "position or closer attention."
+                f"{window_hint_pro}{volatility_hint_pro}"
             ).strip(),
             "guidance_type": "caution",
         }
 
     return {
         "guidance_title": "Earnings overlap awareness",
-        "guidance_body": (
-            "This trade window intersects an earnings period; no immediate action is "
-            "required, but keep the event in view."
-            f"{window_hint}{volatility_hint}"
+        "guidance_body_clear": (
+            "The company is expected to release results soon. This can affect the "
+            "price, so just keep it in mind."
+            f"{window_hint_clear}{volatility_hint_clear}"
+        ).strip(),
+        "guidance_body_pro": (
+            "Upcoming results may affect price movement. No immediate action is "
+            "needed."
+            f"{window_hint_pro}{volatility_hint_pro}"
         ).strip(),
         "guidance_type": "info",
     }

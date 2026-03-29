@@ -21,8 +21,12 @@ def test_generate_trade_guidance_high_case():
 
     assert guidance is not None
     assert guidance["guidance_type"] == "high"
-    assert "reducing exposure" in guidance["guidance_body"]
-    assert "Current holding window: 7 trading days." in guidance["guidance_body"]
+    assert "put in a smaller amount" in guidance["guidance_body_clear"]
+    assert "smaller position" in guidance["guidance_body_pro"]
+    assert (
+        "Your current plan is to hold for about 7 trading days."
+        in guidance["guidance_body_clear"]
+    )
 
 
 def test_generate_trade_guidance_caution_case():
@@ -36,7 +40,8 @@ def test_generate_trade_guidance_caution_case():
 
     assert guidance is not None
     assert guidance["guidance_type"] == "caution"
-    assert "reduce position size" in guidance["guidance_body"]
+    assert "go in with less" in guidance["guidance_body_clear"]
+    assert "smaller position" in guidance["guidance_body_pro"]
 
 
 def test_generate_trade_guidance_info_case():
@@ -49,7 +54,8 @@ def test_generate_trade_guidance_info_case():
 
     assert guidance is not None
     assert guidance["guidance_type"] == "info"
-    assert "no immediate action is required" in guidance["guidance_body"]
+    assert "just keep it in mind" in guidance["guidance_body_clear"]
+    assert "No immediate action is needed." in guidance["guidance_body_pro"]
 
 
 def test_generate_trade_guidance_returns_none_without_explicit_true_overlap():
@@ -68,3 +74,5 @@ def test_generate_trade_guidance_falls_back_to_info_for_null_severity():
 
     assert guidance is not None
     assert guidance["guidance_type"] == "info"
+    assert "guidance_body_clear" in guidance
+    assert "guidance_body_pro" in guidance
