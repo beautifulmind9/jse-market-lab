@@ -31,7 +31,11 @@ This sprint is focused on wording clarity, not new decision logic.
 - Does the user understand that results are coming soon and may affect price?
 
 ## Observations
-(To be filled after testing)
+## Early Observations
+- Clear mode is easier to understand at a glance
+- Pro mode remains useful for more experienced users
+- Planner-level mode selection creates a more consistent reading experience
+- Further live user testing is still needed to refine wording
 
 ## Risks to Watch
 - Guidance may still sound too formal
