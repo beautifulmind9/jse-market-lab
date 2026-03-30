@@ -70,4 +70,15 @@ Each trade must include:
 
 - All constraints enforced  
 - Output stable and predictable  
-- No invalid allocations  
+- No invalid allocations
+
+### 10. Allocation Reconciliation
+
+- Expected:  
+  sum(allocation_amount) == total_allocated_amount  
+
+- Tolerance:  
+  max difference ≤ $0.01  
+
+- Result:  
+  PASS if consistent
