@@ -7,6 +7,7 @@ from typing import Any, Callable, Mapping, Optional, Sequence
 import numpy as np
 import pandas as pd
 
+from app.insights.analyst import render_analyst_insights
 from app.planner.confidence import generate_trade_confidence
 from app.planner.guidance import generate_trade_guidance
 
@@ -239,3 +240,17 @@ def _render_guidance_block(
     else:
         st_module.write(guidance_body)
     return True
+
+
+def render_analyst_insights_section(
+    trades_df: pd.DataFrame,
+    *,
+    st_module=None,
+    analyst_mode: bool = True,
+) -> None:
+    """Render analyst insights in analyst mode without mutating engine outputs."""
+    render_analyst_insights(
+        trades_df,
+        st_module=st_module,
+        analyst_mode=analyst_mode,
+    )
