@@ -209,3 +209,7 @@ This project shows:
 
 Taneen Lewis
 Building practical, decision-support systems that turn complex data into clear actions.
+
+## 🔄 System Flow
+
+Signal → Quality → Risk → Confidence → Allocation → Decision
