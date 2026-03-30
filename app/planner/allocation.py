@@ -111,13 +111,20 @@ def generate_portfolio_allocation(
         sum(a["allocation_amount"] for a in allocations),
         2,
     )
-    cash_reserve_amount = round(float(total_capital) - total_allocated_amount, 2)
-
     if float(total_capital) > 0:
         total_allocated_pct = round(total_allocated_amount / float(total_capital), 4)
-        cash_reserve_pct = round(cash_reserve_amount / float(total_capital), 4)
     else:
         total_allocated_pct = 0.0
+
+    line_sum = sum(a["allocation_amount"] for a in allocations)
+    recomputed_total = total_allocated_pct * float(total_capital)
+    if abs(line_sum - recomputed_total) > 0.01:
+        print("[WARN] Allocation rounding mismatch detected")
+
+    cash_reserve_amount = round(float(total_capital) - total_allocated_amount, 2)
+    if float(total_capital) > 0:
+        cash_reserve_pct = round(cash_reserve_amount / float(total_capital), 4)
+    else:
         cash_reserve_pct = 0.0
 
     return {
