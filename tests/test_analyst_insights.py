@@ -152,3 +152,23 @@ def test_render_analyst_insights_shows_exit_dataframe_when_required_columns_exis
     ]
 
     assert dataframes_after_exit_header
+
+
+def test_resolve_return_column_accepts_pandas_index_preferred_columns():
+    df = pd.DataFrame({"net_return": [0.2]})
+    preferred = pd.Index(["foo", "net_return", "bar"])
+
+    assert resolve_return_column(df, preferred=preferred) == "net_return"
+
+
+def test_build_feature_insights_accepts_pandas_index_feature_columns():
+    trades = _sample_trades()
+    features = pd.Index(["vol_bucket", "missing_feature"])
+
+    insights = build_feature_insights(
+        trades,
+        return_column="net_return_pct",
+        feature_columns=features,
+    )
+
+    assert list(insights.keys()) == ["vol_bucket"]

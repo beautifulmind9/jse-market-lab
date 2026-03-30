@@ -20,7 +20,8 @@ PREFERRED_RETURN_COLUMNS = ["net_return_pct", "net_return", "return_pct", "retur
 
 def resolve_return_column(df: pd.DataFrame, preferred: Sequence[str] | None = None) -> str | None:
     """Return the first available return column from preferred names."""
-    for column in preferred or PREFERRED_RETURN_COLUMNS:
+    columns_to_check = preferred if preferred is not None else PREFERRED_RETURN_COLUMNS
+    for column in columns_to_check:
         if column in df.columns:
             return column
     return None
@@ -65,7 +66,8 @@ def build_feature_insights(
 ) -> dict[str, pd.DataFrame]:
     """Build grouped summaries for each available feature column."""
     insights: dict[str, pd.DataFrame] = {}
-    for feature in feature_columns or FEATURE_COLUMNS:
+    features_to_use = feature_columns if feature_columns is not None else FEATURE_COLUMNS
+    for feature in features_to_use:
         if feature not in df.columns:
             continue
         insights[feature] = grouped_trade_metrics(
