@@ -34,3 +34,6 @@ The confidence layer converts signals and risk factors into a clear prioritizati
 
 ## Allocation Philosophy
 The allocation layer uses simple, rule-based sizing to prioritize stronger trades while preserving cash and limiting exposure. It is designed to support disciplined portfolio decisions, not optimize returns through complex models.
+
+## Validation Layer Philosophy
+The dashboard should not only produce decisions but also provide analyst-facing views that help validate whether current rules, filters, and setup classifications are supported by historical behavior.
