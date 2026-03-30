@@ -192,9 +192,14 @@ def render_analyst_insights(
 
     with exit_tab:
         st_module.subheader("Exit Analysis")
-        if "exit_reason" not in trades_df.columns:
-            st_module.info("Exit Analysis unavailable: missing 'exit_reason' column.")
-        else:
+        required_cols = {"exit_reason", "quality_tier"}
+        if required_cols.issubset(trades_df.columns):
             st_module.dataframe(
                 build_exit_analysis(trades_df, return_column=return_column)
+            )
+        else:
+            missing = required_cols - set(trades_df.columns)
+            st_module.info(
+                "Exit Analysis unavailable — missing required columns: "
+                + ", ".join(sorted(missing))
             )

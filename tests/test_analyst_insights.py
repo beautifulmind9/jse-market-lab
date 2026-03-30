@@ -94,3 +94,61 @@ def test_resolve_return_column_finds_preferred_choice():
     df = pd.DataFrame({"return": [0.1]})
     assert resolve_return_column(df) == "return"
     assert resolve_return_column(pd.DataFrame({"x": [1]})) is None
+
+
+class _DummyTab:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+
+class DummyStreamlitInsights:
+    def __init__(self):
+        self.calls = []
+
+    def tabs(self, labels):
+        self.calls.append(("tabs", tuple(labels)))
+        return (_DummyTab(), _DummyTab(), _DummyTab())
+
+    def subheader(self, text):
+        self.calls.append(("subheader", text))
+
+    def markdown(self, text):
+        self.calls.append(("markdown", text))
+
+    def dataframe(self, payload):
+        self.calls.append(("dataframe", payload))
+
+    def info(self, text):
+        self.calls.append(("info", text))
+
+
+def test_render_analyst_insights_handles_missing_quality_tier_for_exit_analysis():
+    from app.insights.analyst import render_analyst_insights
+
+    st = DummyStreamlitInsights()
+    trades = _sample_trades().drop(columns=["quality_tier"])
+
+    render_analyst_insights(trades, st_module=st, analyst_mode=True)
+
+    assert (
+        "info",
+        "Exit Analysis unavailable — missing required columns: quality_tier",
+    ) in st.calls
+
+
+def test_render_analyst_insights_shows_exit_dataframe_when_required_columns_exist():
+    from app.insights.analyst import render_analyst_insights
+
+    st = DummyStreamlitInsights()
+
+    render_analyst_insights(_sample_trades(), st_module=st, analyst_mode=True)
+
+    exit_section_index = st.calls.index(("subheader", "Exit Analysis"))
+    dataframes_after_exit_header = [
+        call for call in st.calls[exit_section_index + 1 :] if call[0] == "dataframe"
+    ]
+
+    assert dataframes_after_exit_header
