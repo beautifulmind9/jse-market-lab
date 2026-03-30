@@ -1,96 +1,73 @@
-# UAT — Sprint 5: Allocation Layer
+# 🧪 UAT — Sprint 5 (Allocation Engine)
 
-## Objective
+---
 
-Validate that the allocation layer turns planner trades into a clear, rule-based capital plan without violating risk limits.
+## 🎯 Objective
 
-## Scope
+Validate that the allocation engine behaves correctly under real-world constraints.
 
-This UAT covers:
+---
 
-* allocation percentages
-* capital amounts
-* exposure caps
-* cash reserve enforcement
-* trade prioritization
+## ✅ Test Cases
 
-Out of scope:
+### 1. Tier C Handling
+- Input: Tier C trade  
+- Expected: allocation = 0%  
 
-* signal generation
-* confidence generation
-* earnings detection
+---
 
-## Test Scenarios
+### 2. Liquidity Fail
+- Input: liquidity_pass = False  
+- Expected: allocation = 0%  
 
-### 1. Strong trade gets larger allocation
+---
 
-Expected:
+### 3. Confidence Priority
+- Input: Strong vs Moderate  
+- Expected: Strong > Moderate allocation  
 
-* strong > moderate
-* strong > high risk
+---
 
-### 2. Tier C gets zero
+### 4. Risk Reduction
+- Input: earnings + high volatility  
+- Expected: reduced allocation  
 
-Expected:
+---
 
-* no allocation assigned
+### 5. Exposure Cap
+- Input: multiple strong trades  
+- Expected: total allocation ≤ 70%  
 
-### 3. Liquidity fail gets zero
+---
 
-Expected:
+### 6. Reserve Floor
+- Expected: cash ≥ 30%  
 
-* no allocation assigned
+---
 
-### 4. High earnings severity reduces allocation
+### 7. Max Trades
+- Input: 5 valid trades  
+- Expected: only top 3 funded  
 
-Expected:
+---
 
-* reduced from base amount
+### 8. Deterministic Ordering
+- Same input → same output always  
 
-### 5. High volatility reduces allocation
+---
 
-Expected:
+### 9. Output Structure
 
-* reduced from base amount
+Each trade must include:
+- allocation_pct  
+- allocation_amount  
+- confidence_label  
+- explanation fields  
 
-### 6. Max funded trades enforced
+---
 
-Expected:
+## ✅ Success Criteria
 
-* no more than 3 funded trades
-
-### 7. Max exposure enforced
-
-Expected:
-
-* total allocated <= 70%
-
-### 8. Cash reserve enforced
-
-Expected:
-
-* cash >= 30%
-
-## Validation Questions
-
-* Does the output clearly show where money should go?
-* Does the logic feel disciplined and understandable?
-* Does the plan remain usable for a normal investor?
-
-## Risks to Watch
-
-* Users may treat allocations as guarantees
-* Users may want more customization too early
-* Allocation wording may need simpler Jamaican phrasing in Clear mode
-
-## Observations
-- Allocation output makes the planner feel much more actionable
-- Confidence and risk are now translated into capital decisions
-- Reserve protection improves discipline and realism
-- Explanation strings will be important in the UI so users understand why allocations differ
-
-## Final UAT Status
-
-## ✅ Approved for Release
-
-The allocation layer successfully converts planner trades into a clear, rule-based capital plan while enforcing exposure limits, funded-trade caps, and reserve protection.
+- All constraints enforced  
+- Output stable and predictable  
+- No invalid allocations  
