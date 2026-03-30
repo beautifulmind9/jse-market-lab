@@ -30,7 +30,18 @@ Expected:
 ### 6. Missing exit_reason
 Expected:
 - helpful message, not a crash
+  
+### 7. Exit Analysis Missing Tier
 
+Input:
+- exit_reason present
+- quality_tier missing
+
+Expected:
+- No crash
+- Informational message displayed
+- Exit Analysis not rendered
+  
 ## Validation Questions
 - Does this help explain why the system favors certain setups?
 - Are the tables readable and useful for analyst review?
