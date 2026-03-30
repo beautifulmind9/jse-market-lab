@@ -13,3 +13,4 @@
 | V8 | Jamaican clarity layer (Clear vs Pro) | Improved local readability and moved guidance mode control to the planner level for stable multi-card rendering |
 | V9 | Trade confidence layer | Introduced prioritization logic to classify trades by strength and guide capital allocation decisions |
 | V10 | Allocation layer | Converted trade prioritization into a portfolio-level capital plan |
+| V11 | Analyst Intelligence Layer | Added feature validation, tier-window performance analysis, and exit analysis without changing core decision engines |
