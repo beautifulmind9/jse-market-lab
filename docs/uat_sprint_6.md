@@ -41,6 +41,18 @@ Expected:
 - No crash
 - Informational message displayed
 - Exit Analysis not rendered
+
+### 8. Pandas Index Input Handling
+
+Input:
+- preferred = df.columns (pandas Index)
+
+Expected:
+- No crash
+- Return column resolves correctly
+
+Result:
+- PASS if stable
   
 ## Validation Questions
 - Does this help explain why the system favors certain setups?
