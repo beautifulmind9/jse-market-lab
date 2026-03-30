@@ -36,6 +36,12 @@ Expected:
 - Are the tables readable and useful for analyst review?
 - Do the outputs help identify potential rule improvements?
 
+## Observations
+- The dashboard now has a stronger analyst workflow
+- Historical behavior is easier to inspect without leaving the app
+- Feature-level summaries should help refine scoring rules later
+- Tier × holding-window views improve confidence in planner decisions
+
 ## Final UAT Status
 
 ## ✅ Approved for Release
