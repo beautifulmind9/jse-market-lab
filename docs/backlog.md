@@ -221,3 +221,12 @@ It is becoming:
 - a public insight platform
 
 The backlog should reflect that shift.
+
+## Sprint 7 — review hardening
+Status: In progress
+
+Open follow-ups:
+- fix unfunded reason resolution to prefer allocator explanation fields (`allocation_reason_clear`, `allocation_reason_pro`, etc.) before helper fallback
+- wire Analyst Insights to return-bearing performance/demo output instead of raw canonical dataset
+- extend tests for both fixes
+- keep scope limited to UI/data wiring only
