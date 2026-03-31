@@ -258,7 +258,22 @@ It is becoming:
 - richer explanation copy in the visible app
 - more user-friendly summary surfaces for everyday investors
 
-  ### Sprint 8 — Next scope to be finalized
+### Post-Sprint 7 direction
+**Status:** Scope to finalize  
+**Priority:** High
+
+**Options under consideration**
+- Option A: in-app explanation layer
+- Option B: external content support
+- Option C: phased approach
+
+**Current note**
+The public-facing insight prompt created after Sprint 7 is useful, but it was originally intended for marketing/content support and should not automatically define in-app implementation scope.
+
+**Reference**
+See: `docs/scope_note_post_sprint_7.md`
+
+### Sprint 8 — Next scope to be finalized
 **Status:** Draft / To refine  
 **Priority:** High
 
