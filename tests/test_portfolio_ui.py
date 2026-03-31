@@ -91,7 +91,7 @@ def test_unfunded_reason_prefers_allocator_reason_field():
     trade = {
         "allocation_amount": 0,
         "quality_tier": "A",
-        "allocator_reason": "Constraint limited — max funded trades reached",
+        "allocation_reason_clear": "Constraint limited — max funded trades reached",
     }
     assert (
         resolve_unfunded_reason(trade)
@@ -107,6 +107,19 @@ def test_unfunded_reason_falls_back_when_allocator_reason_missing():
     assert resolve_unfunded_reason(trade) == "Not funded — Tier C"
 
 
+
+
+def test_unfunded_reason_uses_new_priority_order():
+    trade = {
+        "allocation_amount": 0,
+        "allocation_reason_clear": "Clear reason",
+        "allocation_reason_pro": "Pro reason",
+        "allocator_reason": "Allocator reason",
+        "allocation_reason": "Allocation reason",
+        "reason": "Generic reason",
+    }
+    assert resolve_unfunded_reason(trade) == "Clear reason"
+
 def test_render_portfolio_plan_unfunded_table_shows_allocator_reason():
     st = DummyStreamlit()
     render_portfolio_plan(
@@ -116,7 +129,7 @@ def test_render_portfolio_plan_unfunded_table_shows_allocator_reason():
                 "instrument": "BBB",
                 "allocation_amount": 0,
                 "quality_tier": "A",
-                "allocator_reason": "Constraint limited — max funded trades reached",
+                "allocation_reason_clear": "Constraint limited — max funded trades reached",
             },
         ],
         total_capital=10_000,

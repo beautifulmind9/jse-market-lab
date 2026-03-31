@@ -6,7 +6,13 @@ from typing import Any, Mapping, Sequence
 
 import pandas as pd
 
-_ALLOCATOR_REASON_KEYS = ("allocator_reason", "allocation_reason", "reason")
+_ALLOCATOR_REASON_KEYS = (
+    "allocation_reason_clear",
+    "allocation_reason_pro",
+    "allocator_reason",
+    "allocation_reason",
+    "reason",
+)
 
 
 def build_portfolio_summary(
