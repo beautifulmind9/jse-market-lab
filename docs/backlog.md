@@ -235,3 +235,25 @@ It is becoming:
 - Analyst Insights tab renders from a dataset with supported return columns
 - Existing fallback behavior remains graceful
 - Tests pass
+
+### Sprint 7 — Streamlit App Shell and Portfolio Plan UI
+**Status:** Done with minor follow-up  
+**Priority:** High
+
+**Delivered**
+- Added root `app.py` Streamlit entrypoint
+- Added visible dashboard shell
+- Added Analyst Insights tab to the app surface
+- Added Portfolio Plan tab with funded vs unfunded sections
+- Added portfolio summary and constraints display
+- Added portfolio UI helper coverage with tests
+- Completed Sprint 7 review hardening for reason resolution and analyst data wiring
+
+**Validation**
+- Sprint 7 targeted tests passed
+- Full regression suite passed locally after duplicate nested repo cleanup
+
+**Minor follow-up**
+- UI polish and styling refinement
+- richer explanation copy in the visible app
+- more user-friendly summary surfaces for everyday investors
