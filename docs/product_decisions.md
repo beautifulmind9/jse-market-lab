@@ -40,3 +40,23 @@ The dashboard should not only produce decisions but also provide analyst-facing 
 
 ## Product Surface Philosophy
 The engine is not enough on its own. The dashboard must present outputs in a way that lets users understand funded trades, unfunded trades, cash reserve, and allocation reasoning at a glance.
+
+## Decision correction: public-facing insight prompts are not automatically in-app scope
+
+A prompt was defined to generate:
+- 3–5 key insights
+- anything surprising or unexpected
+- common mistakes the data reveals
+- a short explanation of one feature and why it exists
+
+This prompt is useful for public sharing and marketing support, but it should not be assumed to represent the next in-app sprint scope by default.
+
+This output can serve three different purposes:
+1. marketing/content generation
+2. public documentation and sharing
+3. a future in-app explanation layer
+
+The product team should explicitly decide which of these is in scope before assigning it as implementation work.
+
+### Current decision
+At this stage, the prompt is recognized primarily as a **content/communication aid** unless intentionally promoted into the app roadmap.
