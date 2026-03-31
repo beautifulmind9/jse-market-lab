@@ -37,3 +37,6 @@ The allocation layer uses simple, rule-based sizing to prioritize stronger trade
 
 ## Validation Layer Philosophy
 The dashboard should not only produce decisions but also provide analyst-facing views that help validate whether current rules, filters, and setup classifications are supported by historical behavior.
+
+## Product Surface Philosophy
+The engine is not enough on its own. The dashboard must present outputs in a way that lets users understand funded trades, unfunded trades, cash reserve, and allocation reasoning at a glance.
