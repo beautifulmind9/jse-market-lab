@@ -88,3 +88,46 @@ Sprint 7 cannot be marked fully passed until these fixes are implemented and re-
 - [ ] Analyst Insights uses return-bearing analytical dataset
 - [x] Empty/fallback states remain graceful
 - [ ] Final regression test pass recorded after review fixes
+
+# UAT — Sprint 7
+
+## Overall Status
+**Pass**
+
+## Summary
+Sprint 7 successfully delivered the first visible product surface for the JSE Dashboard.
+
+Validated outcomes:
+- root `app.py` launches successfully through Streamlit
+- dashboard shell renders
+- Analyst Insights tab renders
+- Portfolio Plan tab renders
+- demo dataset loads into the visible app surface
+- funded and unfunded trade tables render
+- portfolio summary and constraints render
+- targeted Sprint 7 tests passed
+- full regression suite passed after local duplicate-repo cleanup
+
+## UAT Checklist
+
+| Area | Status | Notes |
+|---|---|---|
+| App shell launches | Pass | `app.py` runs through Streamlit and renders the dashboard |
+| Tabs render | Pass | Analyst Insights and Portfolio Plan tabs are visible and usable |
+| Demo dataset loads | Pass | Data Status and main data table render with dataset content |
+| Analyst Insights render | Pass | Performance matrix, grouped summary, win-rate matrix, median return matrix, best setups, and exit analysis render |
+| Portfolio Plan renders | Pass | Portfolio summary, funded trades, unfunded trades, and constraints render |
+| Unfunded reason display | Pass | Review hardening completed; unfunded reason handling was addressed before closeout |
+| Targeted Sprint 7 tests | Pass | `tests/test_portfolio_ui.py`, `tests/test_planner_allocation.py`, and `tests/test_analyst_insights.py` all passed |
+| Full regression suite | Pass | `pytest -q` passed after removing duplicate nested repo folder and clearing collection conflicts |
+
+## Issues Found During UAT
+- Local full-suite test execution initially failed because a duplicate nested `jse-market-lab` folder existed inside the repo, causing pytest import-file mismatch errors.
+- After removing the duplicate folder and rerunning tests, the full suite passed.
+
+## Follow-up Items
+- Continue keeping the local repo structure clean so pytest does not collect duplicate module paths
+- Future UI polish can be handled outside Sprint 7 and does not block acceptance
+
+## Final Decision
+**Sprint 7 UAT is accepted.**
