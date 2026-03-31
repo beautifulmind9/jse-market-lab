@@ -1,0 +1,30 @@
+# Sprint 7 To-Do
+
+## App Shell
+- [ ] Create `app.py` at repo root
+- [ ] Add Streamlit page config
+- [ ] Load latest dataset into the app
+- [ ] Add main app title / intro
+- [ ] Add simple navigation / sections
+
+## Analyst Layer Integration
+- [ ] Wire Analyst Insights into app shell
+- [ ] Ensure insights render through top-level app
+
+## Portfolio Plan UI
+- [ ] Create `app/planner/portfolio_ui.py`
+- [ ] Build summary helper
+- [ ] Build funded/unfunded split helper
+- [ ] Build reason-label helper
+- [ ] Build portfolio plan renderer
+
+## UX / Safety
+- [ ] Handle missing data gracefully
+- [ ] Ensure totals reconcile visibly
+- [ ] Keep UI table-first and readable
+
+## Validation
+- [ ] Add tests for portfolio UI helpers
+- [ ] Run sprint-level checks
+- [ ] Update `iteration_log.md` after completion
+- [ ] Update `product_decisions.md` after completion
