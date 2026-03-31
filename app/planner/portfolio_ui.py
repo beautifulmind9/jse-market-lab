@@ -6,6 +6,8 @@ from typing import Any, Mapping, Sequence
 
 import pandas as pd
 
+_ALLOCATOR_REASON_KEYS = ("allocator_reason", "allocation_reason", "reason")
+
 
 def build_portfolio_summary(
     allocations: Sequence[Mapping[str, Any]],
@@ -76,6 +78,15 @@ def generate_funding_reason(trade: Mapping[str, Any]) -> str:
     return "Eligible — meets criteria"
 
 
+def resolve_unfunded_reason(trade: Mapping[str, Any]) -> str:
+    """Resolve unfunded reason preferring allocator output before UI fallback labels."""
+    for key in _ALLOCATOR_REASON_KEYS:
+        value = trade.get(key)
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return generate_funding_reason(trade)
+
+
 def render_portfolio_plan(
     allocations: Sequence[Mapping[str, Any]],
     total_capital: float,
@@ -136,7 +147,7 @@ def render_portfolio_plan(
                     "Instrument": trade.get("instrument", "Unknown"),
                     "Quality Tier": trade.get("quality_tier", "N/A"),
                     "Confidence": trade.get("confidence_label", "N/A"),
-                    "Reason": generate_funding_reason(trade),
+                    "Reason": resolve_unfunded_reason(trade),
                 }
                 for trade in unfunded_trades
             ]

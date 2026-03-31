@@ -7,8 +7,28 @@ sys.path.append(str(ROOT))
 from app.planner.portfolio_ui import (
     build_portfolio_summary,
     generate_funding_reason,
+    render_portfolio_plan,
+    resolve_unfunded_reason,
     split_trades_by_funding,
 )
+
+
+class DummyStreamlit:
+    def __init__(self):
+        self.dataframes = []
+        self.info_messages = []
+
+    def subheader(self, _text):
+        return None
+
+    def markdown(self, _text):
+        return None
+
+    def info(self, text):
+        self.info_messages.append(text)
+
+    def dataframe(self, df, use_container_width=False):
+        self.dataframes.append((df.copy(), use_container_width))
 
 
 def test_build_portfolio_summary_calculates_totals():
@@ -65,3 +85,78 @@ def test_helpers_handle_missing_optional_fields_gracefully():
     assert funded == []
     assert len(unfunded) == 1
     assert reason == "Eligible — meets criteria"
+
+
+def test_unfunded_reason_prefers_allocator_reason_field():
+    trade = {
+        "allocation_amount": 0,
+        "quality_tier": "A",
+        "allocator_reason": "Constraint limited — max funded trades reached",
+    }
+    assert (
+        resolve_unfunded_reason(trade)
+        == "Constraint limited — max funded trades reached"
+    )
+
+
+def test_unfunded_reason_falls_back_when_allocator_reason_missing():
+    trade = {
+        "allocation_amount": 0,
+        "quality_tier": "C",
+    }
+    assert resolve_unfunded_reason(trade) == "Not funded — Tier C"
+
+
+def test_render_portfolio_plan_unfunded_table_shows_allocator_reason():
+    st = DummyStreamlit()
+    render_portfolio_plan(
+        allocations=[
+            {"instrument": "AAA", "allocation_amount": 1000, "quality_tier": "A"},
+            {
+                "instrument": "BBB",
+                "allocation_amount": 0,
+                "quality_tier": "A",
+                "allocator_reason": "Constraint limited — max funded trades reached",
+            },
+        ],
+        total_capital=10_000,
+        st_module=st,
+    )
+
+    unfunded_df = st.dataframes[2][0]
+    assert unfunded_df.iloc[0]["Reason"] == "Constraint limited — max funded trades reached"
+
+
+def test_render_portfolio_plan_funded_rows_work_with_or_without_allocator_reason():
+    st = DummyStreamlit()
+    render_portfolio_plan(
+        allocations=[
+            {
+                "instrument": "AAA",
+                "allocation_amount": 1000,
+                "allocation_pct": 0.1,
+                "quality_tier": "A",
+                "allocator_reason": "ignored for funded note",
+            },
+            {
+                "instrument": "CCC",
+                "allocation_amount": 500,
+                "allocation_pct": 0.05,
+                "quality_tier": "B",
+            },
+            {
+                "instrument": "BBB",
+                "allocation_amount": 0,
+                "quality_tier": "C",
+            },
+        ],
+        total_capital=10_000,
+        st_module=st,
+    )
+
+    funded_df = st.dataframes[1][0]
+    assert list(funded_df["Instrument"]) == ["AAA", "CCC"]
+    assert list(funded_df["Funding Note"]) == [
+        "Eligible — meets criteria",
+        "Eligible — meets criteria",
+    ]
