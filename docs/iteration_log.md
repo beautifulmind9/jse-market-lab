@@ -16,3 +16,4 @@
 | V11 | Analyst Intelligence Layer | Added feature validation, tier-window performance analysis, and exit analysis without changing core decision engines |
 | V12 | Streamlit App Shell + Portfolio Plan UI | Made the dashboard runnable and turned allocation outputs into a visible portfolio review surface |
 | V12.1 | Sprint 7 review hardening + validation | Corrected visible app wiring, resolved local duplicate-repo test collection issue, and confirmed full regression pass |
+| V13 | Scope clarification for post-Sprint 7 work | Clarified that public-facing insight prompts were created for marketing/content support and are not automatically the next in-app sprint scope |
