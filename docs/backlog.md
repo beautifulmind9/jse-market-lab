@@ -257,3 +257,29 @@ It is becoming:
 - UI polish and styling refinement
 - richer explanation copy in the visible app
 - more user-friendly summary surfaces for everyday investors
+
+  ### Sprint 8 — Next scope to be finalized
+**Status:** Draft / To refine  
+**Priority:** High
+
+**Context**
+A public-facing insight prompt was created to support marketing and public sharing:
+- 3–5 key insights
+- anything surprising or unexpected
+- common mistakes the data reveals
+- short explanation of one feature
+
+This prompt is valuable, but it was created for another chat’s marketing/documentation workflow and should not automatically define the next in-app sprint.
+
+**Current options under consideration**
+- Option A: build an in-app Explanation + Insight Translation Layer
+- Option B: use dashboard outputs externally for marketing/documentation first
+- Option C: do both, but in separate phases
+
+**Immediate need**
+- decide whether the next sprint is product implementation, content support, or a staged combination of both
+
+**Acceptance criteria for scope decision**
+- next sprint objective is clearly identified
+- in-app work and content/marketing work are separated where necessary
+- backlog reflects actual implementation scope rather than blended ideas
