@@ -220,4 +220,18 @@ It is becoming:
 - an education product
 - a public insight platform
 
-The backlog should reflect that shift.
+### Sprint 7 — Review hardening
+**Status:** In progress  
+**Priority:** High
+
+**Open follow-ups**
+- Fix unfunded trade reason resolution to prefer allocator explanation fields before helper fallback
+- Wire Analyst Insights to a return-bearing performance/demo dataset instead of raw canonical price data
+- Extend tests for portfolio reason resolution and analyst data wiring
+- Keep scope limited to UI/data wiring only; no engine logic changes
+
+**Acceptance criteria**
+- Unfunded trades show allocator-produced reason when available
+- Analyst Insights tab renders from a dataset with supported return columns
+- Existing fallback behavior remains graceful
+- Tests pass
