@@ -15,4 +15,4 @@
 | V10 | Allocation layer | Converted trade prioritization into a portfolio-level capital plan |
 | V11 | Analyst Intelligence Layer | Added feature validation, tier-window performance analysis, and exit analysis without changing core decision engines |
 | V12 | Streamlit App Shell + Portfolio Plan UI | Made the dashboard runnable and turned allocation outputs into a visible portfolio review surface |
-| V12.1 | Sprint 7 review hardening | Corrected portfolio reason resolution and Analyst Insights data wiring so the visible app reflects true allocator output and usable return-based analysis |
+| V12.1 | Sprint 7 review hardening + validation | Corrected visible app wiring, resolved local duplicate-repo test collection issue, and confirmed full regression pass |
