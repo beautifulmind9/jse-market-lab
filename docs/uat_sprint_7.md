@@ -59,4 +59,32 @@ Expected:
 - Are funding and non-funding decisions easy to understand?
 
 ## Final UAT Status
-(To be completed after implementation review)
+
+**Overall status:** In progress — review fixes outstanding
+
+**Current assessment**
+Sprint 7 delivered the first visible app shell and portfolio plan surface, but UAT remains open due to two review issues that affect correctness and user trust:
+
+1. Unfunded trade reasons do not yet fully prioritize allocator-produced explanation fields
+2. Analyst Insights is not yet confirmed to be wired to a return-bearing dataset
+
+**UAT decision**
+Sprint 7 cannot be marked fully passed until these fixes are implemented and re-tested.
+
+**Exit condition for UAT pass**
+- Unfunded trades show allocator-produced reason where available
+- Analyst Insights renders from a dataset with supported return fields
+- Graceful fallback behavior remains intact
+- Relevant tests pass
+
+## UAT Checklist
+
+- [x] App shell launches
+- [x] Root `app.py` provides visible Streamlit entrypoint
+- [x] Portfolio Plan tab renders
+- [x] Funded and unfunded sections display
+- [x] Portfolio summary displays
+- [ ] Unfunded reason reflects allocator explanation fields where available
+- [ ] Analyst Insights uses return-bearing analytical dataset
+- [x] Empty/fallback states remain graceful
+- [ ] Final regression test pass recorded after review fixes
