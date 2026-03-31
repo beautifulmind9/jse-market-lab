@@ -14,3 +14,4 @@
 | V9 | Trade confidence layer | Introduced prioritization logic to classify trades by strength and guide capital allocation decisions |
 | V10 | Allocation layer | Converted trade prioritization into a portfolio-level capital plan |
 | V11 | Analyst Intelligence Layer | Added feature validation, tier-window performance analysis, and exit analysis without changing core decision engines |
+| V12 | Streamlit App Shell + Portfolio Plan UI | Made the dashboard runnable and turned allocation outputs into a visible portfolio review surface |
