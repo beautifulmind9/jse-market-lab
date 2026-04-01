@@ -60,3 +60,20 @@ The product team should explicitly decide which of these is in scope before assi
 
 ### Current decision
 At this stage, the prompt is recognized primarily as a **content/communication aid** unless intentionally promoted into the app roadmap.
+
+## Decision: marketing insight data needs do not automatically define app sprint scope
+
+A requirement emerged to generate simple public-facing insights such as:
+- 3–5 key insights
+- anything surprising or unexpected
+- common mistakes the data reveals
+- short explanation of one feature
+
+This requirement was created for marketing/public-sharing support.
+
+Because of that, the need for real historical data in that workflow does not automatically mean the next app sprint must replace demo data as the default visible source.
+
+### Current interpretation
+- real historical data may be needed for credible external insight generation
+- app-level replacement of demo-default behavior remains a separate product decision
+- marketing input needs and app implementation priorities should be evaluated independently
