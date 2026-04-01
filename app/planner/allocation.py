@@ -67,7 +67,7 @@ def generate_portfolio_allocation(
     funded_count = 0
     allocations_by_idx: dict[int, dict[str, Any]] = {}
 
-    for item in ordered_rows:
+    for order_idx, item in enumerate(ordered_rows, start=1):
         row = item["row"]
         instrument = _display_text(row.get("instrument"), fallback="Unknown")
         preconstraint_pct = item["preconstraint_pct"]
@@ -94,6 +94,10 @@ def generate_portfolio_allocation(
             "confidence_label": item["confidence_label"],
             "allocation_pct": round(allocation_pct, 4),
             "allocation_amount": round(allocation_pct * float(total_capital), 2),
+            "selection_rank": order_idx,
+            "funded_rank": funded_count if allocation_pct > 0 else None,
+            "eligible_for_funding": bool(item["hard_stop_reason"] is None and preconstraint_pct > 0),
+            "max_funded_trades": MAX_FUNDED_TRADES,
             "allocation_reason_clear": _build_reason_clear(
                 item,
                 allocation_pct,
