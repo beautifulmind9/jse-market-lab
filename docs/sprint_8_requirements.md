@@ -21,3 +21,8 @@ Enable users to understand the reasoning behind signals, allocation, and confide
 - user can explain why a trade was funded or not funded
 - user can explain what confidence means
 - user can understand warnings without technical knowledge
+
+## Additional functional requirements
+7. The system must explain why funded trades were selected ahead of other eligible trades where current fields allow it.
+8. The system must explain when a trade was eligible but not funded because it ranked outside funded positions.
+9. Selection-order explanations must remain grounded in actual allocation inputs such as quality tier, confidence, and portfolio limits.
