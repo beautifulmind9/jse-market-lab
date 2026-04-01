@@ -413,3 +413,25 @@ was created for marketing/public-sharing support and does not automatically requ
 - validate confidence explanations in-app
 - validate warning explanations in-app
 - complete Sprint 8 UAT once explanation coverage is confirmed end-to-end
+
+### Sprint 8 — Decision Clarity Layer (Explanation + Embedded Insights)
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added in-app explanation helpers for allocation, quality tier, confidence, and warnings
+- Added ranking and allocation-priority reasoning to the Portfolio Plan
+- Added embedded insight generation with:
+  - what_is_happening
+  - what_to_watch
+- Rendered embedded insights inside the app flow
+- Added tests for embedded insight structure and fallback behavior
+
+**Open follow-up**
+- update decision-status classification to respect `eligible_for_funding` so UI status aligns with allocator metadata
+- tighten embedded insight wording so it reads as clear, natural Jamaican-friendly English rather than awkward template text
+
+**Remaining focus**
+- validate confidence explanations in-app
+- validate warning explanations in-app
+- complete Sprint 8 UAT after decision-status and wording fixes are complete
