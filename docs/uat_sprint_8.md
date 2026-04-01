@@ -45,3 +45,35 @@ Sprint 8 passes when:
 - explanations are accurate and grounded in logic
 - hard-stop rule failures are clearly separated from portfolio-constraint cases
 - tests pass after the review fix
+
+# UAT — Sprint 8
+
+## Overall Status
+In progress — portfolio explanation logic validated
+
+## UAT Checklist
+
+| Area | Status | Notes |
+|-----|--------|------|
+| Trade explanations present | Pass | Explanation helpers added |
+| Allocation explanations present | Pass | Portfolio Plan explanation output added |
+| Hard-stop vs constraint distinction is accurate | Pass | Tier C, liquidity failure, true portfolio constraints, and generic unfunded cases now separate correctly |
+| False constrained labeling avoided | Pass | Generic wording such as “pre-constraints reduced allocation to zero” no longer auto-classifies as constrained |
+| Confidence explanations clear | In progress | Added, but still needs broader app-level validation |
+| Warning explanations understandable | In progress | Added, but still needs broader app-level validation |
+| Explanations match system logic | In progress | Portfolio explanation classification validated; broader end-to-end validation still pending |
+| UI remains readable | In progress | Needs app-level visual confirmation |
+
+## Validation completed
+- Tier C hard-stop case no longer mislabels as portfolio constraint
+- Liquidity hard-stop case no longer mislabels as portfolio constraint
+- Genuine max funded trades case remains classified as constrained
+- Genuine max portfolio exposure case remains classified as constrained
+- Generic wording such as “pre-constraints reduced allocation to zero” falls back to generic unfunded rather than false constrained classification
+- Sparse fallback behavior remains supported
+
+## Pass condition
+Sprint 8 passes when:
+- users can understand why portfolio decisions are made
+- confidence and warning explanations are also validated in-app
+- explanations remain accurate and readable across the full explanation layer
