@@ -23,7 +23,7 @@ def main() -> None:
     )
 
     st.title("JSE Decision Support Dashboard")
-    st.caption("Sprint 7 shell: dataset loading, Analyst Insights, and Portfolio Plan UI.")
+    st.caption("Sprint 8 shell: dataset loading, Analyst Insights, Portfolio Plan, and Explanation Layer.")
 
     canonical_df, meta, issues = ingest_dataset("demo")
     st.markdown("### Data Status")
