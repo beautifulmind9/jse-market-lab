@@ -435,3 +435,27 @@ was created for marketing/public-sharing support and does not automatically requ
 - validate confidence explanations in-app
 - validate warning explanations in-app
 - complete Sprint 8 UAT after decision-status and wording fixes are complete
+
+### Sprint 8 — Decision Clarity Layer (Explanation + Embedded Insights)
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added in-app explanation helpers for allocation, quality tier, confidence, and warnings
+- Added ranking and allocation-priority reasoning to the Portfolio Plan
+- Added embedded insight generation with:
+  - what_is_happening
+  - what_to_watch
+- Improved embedded insight wording to read more naturally in simple Jamaican-friendly English
+
+**Open follow-up**
+- refine decision-status classification so trades reduced to 0 by sizing/risk logic are not incorrectly grouped as “not eligible”
+- preserve clearer separation between:
+  - hard-stop ineligibility
+  - portfolio constraints
+  - zero-allocation risk/sizing outcomes
+
+**Remaining focus**
+- validate confidence explanations in-app
+- validate warning explanations in-app
+- complete Sprint 8 UAT after decision-status refinement and final visual review
