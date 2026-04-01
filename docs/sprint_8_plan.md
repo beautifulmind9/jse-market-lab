@@ -93,3 +93,19 @@ All explanations must:
 - describe system logic
 - remain neutral
 - avoid directional advice
+
+## Additional Sprint 8 focus — ranking and allocation-priority reasoning
+
+The explanation layer should not stop at rule/constraint classification.
+
+It should also help users understand:
+- why funded trades were selected ahead of other eligible trades
+- whether a trade was excluded because it ranked below funded positions
+- what role quality tier and confidence played in the final portfolio selection
+
+### Examples of desired explanation behavior
+- “Funded as a top-ranked eligible trade based on quality tier and confidence.”
+- “Eligible but ranked outside funded positions once max funded trades was reached.”
+- “Selected ahead of lower-confidence eligible trades.”
+
+This remains part of the in-app Explanation Layer because it explains internal decision order rather than generating public-facing insight content.
