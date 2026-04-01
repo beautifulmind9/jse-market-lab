@@ -6,13 +6,16 @@ from typing import Any, Mapping, Sequence
 
 import pandas as pd
 
-_ALLOCATOR_REASON_KEYS = (
-    "allocation_reason_clear",
-    "allocation_reason_pro",
-    "allocator_reason",
-    "allocation_reason",
-    "reason",
+from app.planner.explanations import (
+    REASON_KEYS,
+    classify_decision_status,
+    explain_portfolio_decision,
+    explain_primary_rule_or_constraint,
+    resolve_explicit_reason,
 )
+
+
+_ALLOCATOR_REASON_KEYS = REASON_KEYS
 
 
 def build_portfolio_summary(
@@ -64,33 +67,16 @@ def split_trades_by_funding(
 
 
 def generate_funding_reason(trade: Mapping[str, Any]) -> str:
-    """Generate a compact, user-facing funding reason label."""
-    quality_tier = str(trade.get("quality_tier", "")).strip().upper()
-    if quality_tier == "C":
-        return "Not funded — Tier C"
-
-    liquidity_pass = trade.get("liquidity_pass")
-    if liquidity_pass is False:
-        return "Not funded — Liquidity"
-
-    severity = str(trade.get("earnings_warning_severity", "")).strip().lower()
-    if severity == "high":
-        return "Reduced allocation — Earnings risk"
-
-    volatility_bucket = str(trade.get("volatility_bucket", "")).strip().lower()
-    if volatility_bucket == "high":
-        return "Reduced allocation — High volatility"
-
-    return "Eligible — meets criteria"
+    """Generate a compact funding explanation using explicit reasons first."""
+    return explain_portfolio_decision(trade)
 
 
 def resolve_unfunded_reason(trade: Mapping[str, Any]) -> str:
-    """Resolve unfunded reason preferring allocator output before UI fallback labels."""
-    for key in _ALLOCATOR_REASON_KEYS:
-        value = trade.get(key)
-        if value is not None and str(value).strip():
-            return str(value).strip()
-    return generate_funding_reason(trade)
+    """Resolve unfunded reason preferring allocator output before fallback labels."""
+    explicit_reason = resolve_explicit_reason(trade)
+    if explicit_reason:
+        return explicit_reason
+    return explain_portfolio_decision(trade)
 
 
 def render_portfolio_plan(
@@ -103,6 +89,9 @@ def render_portfolio_plan(
         import streamlit as st_module
 
     st_module.subheader("Portfolio Plan")
+    st_module.caption(
+        "Funded trades received non-zero allocation. Unfunded trades remained at 0% after eligibility rules and portfolio constraints were applied."
+    )
 
     if not allocations:
         st_module.info("Portfolio Plan unavailable: no allocation outputs were provided.")
@@ -136,7 +125,9 @@ def render_portfolio_plan(
                     "Confidence": trade.get("confidence_label", "N/A"),
                     "Allocation %": trade.get("allocation_pct", 0.0),
                     "Allocation Amount": trade.get("allocation_amount", 0.0),
-                    "Funding Note": generate_funding_reason(trade),
+                    "Decision Status": classify_decision_status(trade),
+                    "Explanation": explain_portfolio_decision(trade),
+                    "Primary Rule/Constraint": explain_primary_rule_or_constraint(trade),
                 }
                 for trade in funded_trades
             ]
@@ -153,7 +144,10 @@ def render_portfolio_plan(
                     "Instrument": trade.get("instrument", "Unknown"),
                     "Quality Tier": trade.get("quality_tier", "N/A"),
                     "Confidence": trade.get("confidence_label", "N/A"),
+                    "Decision Status": classify_decision_status(trade),
                     "Reason": resolve_unfunded_reason(trade),
+                    "Explanation": explain_portfolio_decision(trade),
+                    "Primary Rule/Constraint": explain_primary_rule_or_constraint(trade),
                 }
                 for trade in unfunded_trades
             ]
