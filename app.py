@@ -7,6 +7,7 @@ import pandas as pd
 from app.data.ingest import ingest_dataset
 from app.demo.run_demo import run_demo
 from app.insights.analyst import render_analyst_insights
+from app.insights.embedded import generate_embedded_insights, render_embedded_insights
 from app.planner.allocation import generate_portfolio_allocation
 from app.planner.portfolio_ui import render_portfolio_plan
 from app.shell import build_analyst_dataset, coerce_trade_rows_from_ranked
@@ -73,6 +74,9 @@ def main() -> None:
         enriched_allocations = []
         for row, allocation in zip(trade_rows, allocations):
             enriched_allocations.append({**allocation, **row})
+
+        insights_payload = generate_embedded_insights(trade_rows, enriched_allocations)
+        render_embedded_insights(insights_payload, st_module=st)
 
         render_portfolio_plan(
             enriched_allocations,
