@@ -131,3 +131,37 @@ def test_render_portfolio_plan_adds_context_note_for_funded_vs_unfunded():
 
     assert st.captions
     assert "Funded trades received non-zero allocation" in st.captions[0]
+
+
+def test_render_portfolio_plan_shows_selection_rank_column():
+    st = DummyStreamlit()
+    render_portfolio_plan(
+        allocations=[
+            {
+                "instrument": "AAA",
+                "allocation_amount": 1000,
+                "allocation_pct": 0.1,
+                "quality_tier": "A",
+                "selection_rank": 1,
+                "funded_rank": 1,
+                "eligible_for_funding": True,
+            },
+            {
+                "instrument": "BBB",
+                "allocation_amount": 0,
+                "quality_tier": "A",
+                "selection_rank": 4,
+                "eligible_for_funding": True,
+                "allocation_reason_clear": "Final allocation is 0% because max funded trades reached (3).",
+            },
+        ],
+        total_capital=10_000,
+        st_module=st,
+    )
+
+    funded_df = st.dataframes[1][0]
+    unfunded_df = st.dataframes[2][0]
+    assert "Selection Rank" in funded_df.columns
+    assert "Selection Rank" in unfunded_df.columns
+    assert "top-ranked eligible trade" in funded_df.iloc[0]["Explanation"]
+    assert "funded slots were filled" in unfunded_df.iloc[0]["Explanation"]

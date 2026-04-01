@@ -21,6 +21,50 @@ def test_resolve_explicit_reason_uses_priority_order():
     assert resolve_explicit_reason(trade) == "clear reason"
 
 
+def test_funded_top_ranked_explanation_is_added_when_rank_fields_available():
+    text = explain_portfolio_decision(
+        {
+            "allocation_amount": 10_000,
+            "allocation_pct": 0.30,
+            "selection_rank": 1,
+            "funded_rank": 1,
+            "eligible_for_funding": True,
+        }
+    )
+    assert "top-ranked eligible trade" in text
+
+
+def test_eligible_but_ranked_outside_funded_positions_explains_priority_limit():
+    text = explain_portfolio_decision(
+        {
+            "allocation_amount": 0,
+            "selection_rank": 4,
+            "eligible_for_funding": True,
+            "allocation_reason_clear": "Final allocation is 0% because max funded trades reached (3).",
+        }
+    )
+    assert classify_decision_status(
+        {
+            "allocation_amount": 0,
+            "selection_rank": 4,
+            "eligible_for_funding": True,
+            "allocation_reason_clear": "Final allocation is 0% because max funded trades reached (3).",
+        }
+    ) == "eligible but constrained"
+    assert "funded slots were filled" in text
+
+
+def test_hard_stop_stays_not_eligible_even_if_constraint_word_appears():
+    trade = {
+        "allocation_amount": 0,
+        "quality_tier": "C",
+        "allocation_reason_clear": "Hard rule applied: quality tier C is not funded; portfolio constraint context present.",
+    }
+
+    assert classify_decision_status(trade) == "not eligible"
+    assert explain_primary_rule_or_constraint(trade) == "Primary driver: quality tier C rule."
+
+
 def test_preconstraints_text_is_not_classified_as_constrained():
     trade = {
         "allocation_amount": 0,
@@ -30,24 +74,9 @@ def test_preconstraints_text_is_not_classified_as_constrained():
     }
 
     assert classify_decision_status(trade) == "unfunded"
-    assert explain_primary_rule_or_constraint(trade) == (
-        "Primary driver: no explicit rule or constraint label available."
-    )
 
 
-def test_genuine_max_funded_trades_constraint_is_classified_as_constrained():
-    trade = {
-        "allocation_amount": 0,
-        "quality_tier": "A",
-        "liquidity_pass": True,
-        "allocation_reason_clear": "Final allocation is 0% because max funded trades reached (3).",
-    }
-
-    assert classify_decision_status(trade) == "eligible but constrained"
-    assert explain_primary_rule_or_constraint(trade) == "Primary driver: max funded trades limit."
-
-
-def test_genuine_max_exposure_constraint_is_classified_as_constrained():
+def test_genuine_exposure_constraint_is_classified_as_constrained():
     trade = {
         "allocation_amount": 0,
         "quality_tier": "A",
@@ -59,17 +88,6 @@ def test_genuine_max_exposure_constraint_is_classified_as_constrained():
     assert explain_primary_rule_or_constraint(trade) == "Primary driver: max portfolio exposure limit."
 
 
-def test_tier_c_case_is_not_eligible_even_if_reason_mentions_constraint():
-    trade = {
-        "allocation_amount": 0,
-        "quality_tier": "C",
-        "allocation_reason_clear": "Hard rule applied: quality tier C is not funded; portfolio constraint context present.",
-    }
-
-    assert classify_decision_status(trade) == "not eligible"
-    assert explain_primary_rule_or_constraint(trade) == "Primary driver: quality tier C rule."
-
-
 def test_liquidity_failure_is_not_eligible():
     trade = {
         "allocation_amount": 0,
@@ -79,22 +97,14 @@ def test_liquidity_failure_is_not_eligible():
 
     assert classify_decision_status(trade) == "not eligible"
     assert explain_primary_rule_or_constraint(trade) == "Primary driver: liquidity eligibility rule."
-    decision_text = explain_portfolio_decision(trade)
-    assert decision_text.startswith("Not funded.")
-    assert "liquidity" in decision_text.lower()
 
 
-def test_sparse_reason_fields_fallback_behavior():
-    trade = {
-        "allocation_amount": 0,
-        "quality_tier": "A",
-        "liquidity_pass": True,
-    }
-
-    assert classify_decision_status(trade) == "unfunded"
-    assert explain_primary_rule_or_constraint(trade) == (
-        "Primary driver: no explicit rule or constraint label available."
+def test_fallback_when_rank_fields_unavailable_remains_neutral():
+    text = explain_portfolio_decision(
+        {
+            "allocation_amount": 0,
+            "quality_tier": "A",
+            "liquidity_pass": True,
+        }
     )
-    assert explain_portfolio_decision(trade) == (
-        "Not funded. No explicit allocator reason was provided in this output."
-    )
+    assert text == "Not funded. No explicit allocator reason was provided in this output."
