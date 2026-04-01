@@ -49,6 +49,10 @@ def classify_decision_status(trade: Mapping[str, Any]) -> str:
     if _is_hard_stop(trade, explicit_reason):
         return "not eligible"
 
+    eligible_for_funding = trade.get("eligible_for_funding")
+    if eligible_for_funding is False:
+        return "not eligible"
+
     if any(marker in explicit_reason for marker in _CONSTRAINT_MARKERS):
         return "eligible but constrained"
 

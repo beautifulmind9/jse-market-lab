@@ -43,7 +43,7 @@ def generate_embedded_insights(
     if not what_is_happening:
         what_is_happening.append("Right now, data look limited, so system observations are basic.")
     if not what_to_watch:
-        what_to_watch.append("Watchlist is light right now because key comparison fields are missing.")
+        what_to_watch.append("The watch section is limited right now because key comparison fields are missing.")
 
     return {
         "what_is_happening": what_is_happening[:3],
@@ -76,11 +76,11 @@ def _volatility_insight(rows: Sequence[Mapping[str, Any]]) -> str:
     share = counts[top_bucket] / total
 
     if top_bucket == "high" and share >= 0.5:
-        return "High volatility dominate now, so price swings look sharper across most setups."
+        return "High volatility is dominating now, so price swings look sharper across most setups."
     if top_bucket == "medium" and share >= 0.5:
-        return "Medium volatility dominate now, so market movement look more steady than extreme."
+        return "Medium volatility is dominating now, so market movement looks steadier than extreme."
     if top_bucket == "low" and share >= 0.5:
-        return "Low volatility dominate now, so movement look calmer in most setups."
+        return "Low volatility is dominating now, so movement looks calmer in most setups."
 
     return "Volatility mix broad right now, with no single bucket fully dominating."
 
@@ -93,7 +93,7 @@ def _tier_insight(rows: Sequence[Mapping[str, Any]]) -> str:
 
     tier_a_share = counts.get("A", 0) / total
     if tier_a_share >= 0.5:
-        return "Tier A setups make up most rows, so stronger-quality setups are leading the slate."
+        return "Tier A setups make up most rows, so stronger setups are leading the current list."
 
     top_tier = max(counts, key=counts.get)
     return f"Tier {top_tier} appears most often in current rows."
@@ -126,8 +126,8 @@ def _consistency_insight(rows: Sequence[Mapping[str, Any]]) -> str:
 
     gap = avg - median
     if gap > max(0.01, abs(median) * 0.5):
-        return "Average return sits well above median return, so outcomes look uneven across trades."
-    return "Average and median return are close, so outcomes look more consistent right now."
+        return "Average return is well above median return, so results look uneven across trades."
+    return "Average and median return are close, so results look more consistent right now."
 
 
 def _holding_window_insight(rows: Sequence[Mapping[str, Any]]) -> str:
@@ -150,7 +150,7 @@ def _holding_window_insight(rows: Sequence[Mapping[str, Any]]) -> str:
     if short_wr >= long_wr + 0.10:
         return f"Short holding window ({shortest}D) shows steadier hit rate than long window ({longest}D)."
     if long_wr >= short_wr + 0.10:
-        return f"Long holding window ({longest}D) looks steadier than short window ({shortest}D)."
+        return f"Long holding window ({longest}D) looks steadier than short window ({shortest}D) right now."
 
     return f"Short ({shortest}D) and long ({longest}D) windows show similar stability right now."
 
@@ -162,8 +162,8 @@ def _risk_signal_insight(rows: Sequence[Mapping[str, Any]]) -> str:
         return ""
 
     if win_rate < 0.45 and avg_return > 0.01:
-        return "Win rate is low while average return is high, so current return profile looks high-variance."
-    return "Win rate and average return are moving in a balanced range for now."
+        return "Win rate is low while average return is high, so the return profile looks high-variance right now."
+    return "Win rate and average return are in a balanced range right now."
 
 
 def _count_tokens(

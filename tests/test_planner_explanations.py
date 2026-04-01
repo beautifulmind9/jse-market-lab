@@ -65,6 +65,18 @@ def test_hard_stop_stays_not_eligible_even_if_constraint_word_appears():
     assert explain_primary_rule_or_constraint(trade) == "Primary driver: quality tier C rule."
 
 
+
+
+def test_eligible_for_funding_false_is_not_eligible_when_unfunded():
+    trade = {
+        "allocation_amount": 0,
+        "quality_tier": "A",
+        "liquidity_pass": True,
+        "eligible_for_funding": False,
+    }
+
+    assert classify_decision_status(trade) == "not eligible"
+
 def test_preconstraints_text_is_not_classified_as_constrained():
     trade = {
         "allocation_amount": 0,

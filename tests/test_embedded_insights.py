@@ -36,6 +36,9 @@ def test_embedded_insights_returns_both_sections_and_max_three_items():
     assert set(payload.keys()) == {"what_is_happening", "what_to_watch"}
     assert 1 <= len(payload["what_is_happening"]) <= 3
     assert 1 <= len(payload["what_to_watch"]) <= 3
+    joined = " ".join(payload["what_is_happening"] + payload["what_to_watch"])
+    assert "is dominating now" in joined
+    assert "looks steadier" in joined
 
 
 def test_embedded_insights_flags_inconsistency_when_avg_far_above_median():
@@ -62,7 +65,7 @@ def test_embedded_insights_flags_inconsistency_when_avg_far_above_median():
     )
 
     joined = " ".join(payload["what_to_watch"]).lower()
-    assert "average return sits well above median return" in joined
+    assert "average return is well above median return" in joined
     assert "high-variance" in joined
 
 
