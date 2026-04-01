@@ -318,3 +318,23 @@ was created for marketing/public-sharing support and does not automatically requ
 **Decision to make**
 - whether Sprint 8 should focus on app-side data readiness
 - or whether real-data usage should first support external marketing/content workflows
+
+### Sprint 8 — Explanation Layer
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added in-app explanation helpers for allocation, quality tier, confidence, and warnings
+- Added Explanation Layer rendering to the Portfolio Plan UI
+- Added Sprint 8 explanation-layer tests
+
+**Open follow-up**
+- Fix explanation-priority logic so hard-stop rule failures (for example Tier C or liquidity failure) are not mislabeled as generic portfolio constraints
+- Re-test explanation output after review fix
+
+**Acceptance criteria remaining**
+- Explanation layer must distinguish between:
+  - not eligible by rule
+  - eligible but constrained by portfolio limits
+- Explanations must mirror actual system logic
+- Tests must pass after review fix
