@@ -12,6 +12,24 @@ REASON_KEYS = (
     "reason",
 )
 
+_HARD_STOP_MARKERS = (
+    "tier c",
+    "quality tier c",
+    "low tier",
+    "liquidity",
+    "not eligible",
+    "ineligible",
+    "hard rule",
+    "hard-stop",
+)
+
+_CONSTRAINT_MARKERS = (
+    "max funded trades",
+    "max portfolio exposure",
+    "constraint",
+    "capacity",
+)
+
 
 def resolve_explicit_reason(trade: Mapping[str, Any]) -> str:
     """Return allocator-provided reason text using priority order."""
@@ -28,18 +46,11 @@ def classify_decision_status(trade: Mapping[str, Any]) -> str:
     if allocation_amount > 0:
         return "funded"
 
-    quality_tier = _token(trade.get("quality_tier")).upper()
-    if quality_tier == "C":
-        return "not eligible"
-
-    if trade.get("liquidity_pass") is False:
-        return "not eligible"
-
     explicit_reason = _token(resolve_explicit_reason(trade))
-    if any(
-        marker in explicit_reason
-        for marker in ("max funded trades", "max portfolio exposure", "constraint")
-    ):
+    if _is_hard_stop(trade, explicit_reason):
+        return "not eligible"
+
+    if any(marker in explicit_reason for marker in _CONSTRAINT_MARKERS):
         return "eligible but constrained"
 
     return "unfunded"
@@ -81,18 +92,20 @@ def explain_primary_rule_or_constraint(trade: Mapping[str, Any]) -> str:
     """Describe the main rule/constraint affecting the outcome."""
     explicit_reason = _token(resolve_explicit_reason(trade))
 
+    if _is_hard_stop(trade, explicit_reason):
+        quality_tier = _token(trade.get("quality_tier")).upper()
+        if quality_tier == "C" or "tier c" in explicit_reason:
+            return "Primary driver: quality tier C rule."
+        if trade.get("liquidity_pass") is False or "liquidity" in explicit_reason:
+            return "Primary driver: liquidity eligibility rule."
+        return "Primary driver: eligibility hard-stop rule."
+
     if "max funded trades" in explicit_reason:
         return "Primary driver: max funded trades limit."
     if "max portfolio exposure" in explicit_reason:
         return "Primary driver: max portfolio exposure limit."
-    if "constraint" in explicit_reason:
+    if "constraint" in explicit_reason or "capacity" in explicit_reason:
         return "Primary driver: portfolio constraint."
-
-    quality_tier = _token(trade.get("quality_tier")).upper()
-    if quality_tier == "C":
-        return "Primary driver: quality tier C rule."
-    if trade.get("liquidity_pass") is False:
-        return "Primary driver: liquidity eligibility rule."
 
     severity = _token(trade.get("earnings_warning_severity"))
     volatility = _token(trade.get("volatility_bucket"))
@@ -100,6 +113,15 @@ def explain_primary_rule_or_constraint(trade: Mapping[str, Any]) -> str:
         return "Primary driver: risk adjustment factors."
 
     return "Primary driver: no explicit rule or constraint label available."
+
+
+def _is_hard_stop(trade: Mapping[str, Any], explicit_reason: str) -> bool:
+    quality_tier = _token(trade.get("quality_tier")).upper()
+    if quality_tier == "C":
+        return True
+    if trade.get("liquidity_pass") is False:
+        return True
+    return any(marker in explicit_reason for marker in _HARD_STOP_MARKERS)
 
 
 def _token(value: Any) -> str:
