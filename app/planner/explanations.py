@@ -29,6 +29,11 @@ _CONSTRAINT_MARKERS = (
     "capacity",
 )
 
+_REDUCED_TO_ZERO_MARKERS = (
+    "pre-constraints reduced allocation to zero",
+    "reduced allocation to zero",
+)
+
 
 def resolve_explicit_reason(trade: Mapping[str, Any]) -> str:
     """Return allocator-provided reason text using priority order."""
@@ -49,12 +54,14 @@ def classify_decision_status(trade: Mapping[str, Any]) -> str:
     if _is_hard_stop(trade, explicit_reason):
         return "not eligible"
 
-    eligible_for_funding = trade.get("eligible_for_funding")
-    if eligible_for_funding is False:
-        return "not eligible"
-
     if any(marker in explicit_reason for marker in _CONSTRAINT_MARKERS):
         return "eligible but constrained"
+
+    eligible_for_funding = trade.get("eligible_for_funding")
+    if eligible_for_funding is False or any(
+        marker in explicit_reason for marker in _REDUCED_TO_ZERO_MARKERS
+    ):
+        return "reduced to zero"
 
     return "unfunded"
 
@@ -85,6 +92,10 @@ def explain_portfolio_decision(trade: Mapping[str, Any]) -> str:
 
     if status == "eligible but constrained":
         base_text = "Not funded. Trade was eligible, but portfolio constraints prevented funding."
+        return _append_ranking_context(base_text, trade, status)
+
+    if status == "reduced to zero":
+        base_text = "Not funded. Trade passed hard eligibility, but risk sizing reduced allocation to 0%."
         return _append_ranking_context(base_text, trade, status)
 
     severity = _token(trade.get("earnings_warning_severity"))
@@ -151,6 +162,9 @@ def _append_ranking_context(base_text: str, trade: Mapping[str, Any], status: st
                 base_text
                 + f" Trade remained eligible at rank #{rank}, but portfolio exposure was fully used before this position."
             )
+
+    if status == "reduced to zero" and rank is not None:
+        return base_text + f" Trade was evaluated at rank #{rank}, but sizing rules left final allocation at 0%."
 
     if status == "unfunded" and eligible and rank is not None:
         return base_text + f" Trade remained eligible but finished outside funded positions at rank #{rank}."

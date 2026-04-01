@@ -67,7 +67,7 @@ def test_hard_stop_stays_not_eligible_even_if_constraint_word_appears():
 
 
 
-def test_eligible_for_funding_false_is_not_eligible_when_unfunded():
+def test_eligible_for_funding_false_is_reduced_to_zero_when_not_hard_stop():
     trade = {
         "allocation_amount": 0,
         "quality_tier": "A",
@@ -75,9 +75,10 @@ def test_eligible_for_funding_false_is_not_eligible_when_unfunded():
         "eligible_for_funding": False,
     }
 
-    assert classify_decision_status(trade) == "not eligible"
+    assert classify_decision_status(trade) == "reduced to zero"
+    assert "risk sizing reduced allocation to 0%" in explain_portfolio_decision(trade)
 
-def test_preconstraints_text_is_not_classified_as_constrained():
+def test_preconstraints_text_is_classified_as_reduced_to_zero():
     trade = {
         "allocation_amount": 0,
         "quality_tier": "A",
@@ -85,7 +86,7 @@ def test_preconstraints_text_is_not_classified_as_constrained():
         "allocation_reason_clear": "Final allocation is 0% because pre-constraints reduced allocation to zero.",
     }
 
-    assert classify_decision_status(trade) == "unfunded"
+    assert classify_decision_status(trade) == "reduced to zero"
 
 
 def test_genuine_exposure_constraint_is_classified_as_constrained():
@@ -120,3 +121,14 @@ def test_fallback_when_rank_fields_unavailable_remains_neutral():
         }
     )
     assert text == "Not funded. No explicit allocator reason was provided in this output."
+
+
+def test_generic_fallback_stays_unfunded_when_no_markers_present():
+    trade = {
+        "allocation_amount": 0,
+        "quality_tier": "A",
+        "liquidity_pass": True,
+        "eligible_for_funding": None,
+    }
+
+    assert classify_decision_status(trade) == "unfunded"
