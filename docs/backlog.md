@@ -298,3 +298,23 @@ This prompt is valuable, but it was created for another chat’s marketing/docum
 - next sprint objective is clearly identified
 - in-app work and content/marketing work are separated where necessary
 - backlog reflects actual implementation scope rather than blended ideas
+
+### Sprint 8 — Scope to finalize
+**Status:** Planned  
+**Priority:** High
+
+**Current focus**
+Define the next product priority after Sprint 7 without mixing app implementation scope with marketing-content needs.
+
+**Important clarification**
+The recent requirement for:
+- 3–5 key insights
+- surprising findings
+- common mistakes
+- short feature explanations
+
+was created for marketing/public-sharing support and does not automatically require replacing demo data inside the app.
+
+**Decision to make**
+- whether Sprint 8 should focus on app-side data readiness
+- or whether real-data usage should first support external marketing/content workflows
