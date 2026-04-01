@@ -165,6 +165,10 @@ def test_output_structure_is_stable():
         "confidence_label",
         "allocation_pct",
         "allocation_amount",
+        "selection_rank",
+        "funded_rank",
+        "eligible_for_funding",
+        "max_funded_trades",
         "allocation_reason_clear",
         "allocation_reason_pro",
     }
@@ -246,3 +250,33 @@ def test_total_allocated_plus_cash_reserve_reconciles_to_capital():
         2,
     )
     assert reconciled_total == round(total_capital, 2)
+
+
+def test_allocation_outputs_selection_rank_and_funded_rank_fields():
+    payload = generate_portfolio_allocation(
+        [
+            {
+                "instrument": "S1",
+                "quality_tier": "A",
+                "liquidity_pass": True,
+                "volatility_bucket": "low",
+                "earnings_warning_severity": "info",
+                "confidence_label": "strong",
+            },
+            {
+                "instrument": "S2",
+                "quality_tier": "A",
+                "liquidity_pass": True,
+                "volatility_bucket": "low",
+                "earnings_warning_severity": "info",
+                "confidence_label": "moderate",
+            },
+        ],
+        100_000,
+    )
+
+    by_symbol = {row["instrument"]: row for row in payload["allocations"]}
+    assert by_symbol["S1"]["selection_rank"] == 1
+    assert by_symbol["S1"]["funded_rank"] == 1
+    assert by_symbol["S2"]["selection_rank"] == 2
+    assert by_symbol["S2"]["eligible_for_funding"] is True

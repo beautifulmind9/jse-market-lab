@@ -1,0 +1,211 @@
+"""Embedded in-app insight layer for observational portfolio commentary."""
+
+from __future__ import annotations
+
+from typing import Any, Mapping, Sequence
+
+
+def generate_embedded_insights(
+    trade_rows: Sequence[Mapping[str, Any]],
+    allocations: Sequence[Mapping[str, Any]] | None = None,
+) -> dict[str, list[str]]:
+    """Return neutral, plain-language insights for current planner data."""
+    rows = [dict(row) for row in trade_rows]
+    allocs = [dict(row) for row in allocations] if allocations is not None else []
+
+    what_is_happening: list[str] = []
+    what_to_watch: list[str] = []
+
+    volatility_line = _volatility_insight(rows)
+    if volatility_line:
+        what_is_happening.append(volatility_line)
+
+    tier_line = _tier_insight(rows)
+    if tier_line:
+        what_is_happening.append(tier_line)
+
+    selection_line = _selection_insight(allocs)
+    if selection_line:
+        what_is_happening.append(selection_line)
+
+    consistency_line = _consistency_insight(rows)
+    if consistency_line:
+        what_to_watch.append(consistency_line)
+
+    holding_line = _holding_window_insight(rows)
+    if holding_line:
+        what_to_watch.append(holding_line)
+
+    risk_line = _risk_signal_insight(rows)
+    if risk_line:
+        what_to_watch.append(risk_line)
+
+    if not what_is_happening:
+        what_is_happening.append("Right now, data look limited, so system observations are basic.")
+    if not what_to_watch:
+        what_to_watch.append("The watch section is limited right now because key comparison fields are missing.")
+
+    return {
+        "what_is_happening": what_is_happening[:3],
+        "what_to_watch": what_to_watch[:3],
+    }
+
+
+def render_embedded_insights(insights: Mapping[str, Sequence[str]], *, st_module=None) -> None:
+    """Render embedded insights as simple bullet lists."""
+    if st_module is None:
+        import streamlit as st_module
+
+    st_module.markdown("#### Embedded Insight Layer")
+    st_module.markdown("**What is happening**")
+    for line in insights.get("what_is_happening", []):
+        st_module.markdown(f"- {line}")
+
+    st_module.markdown("**What to watch**")
+    for line in insights.get("what_to_watch", []):
+        st_module.markdown(f"- {line}")
+
+
+def _volatility_insight(rows: Sequence[Mapping[str, Any]]) -> str:
+    counts = _count_tokens(rows, "volatility_bucket")
+    total = sum(counts.values())
+    if total == 0:
+        return ""
+
+    top_bucket = max(counts, key=counts.get)
+    share = counts[top_bucket] / total
+
+    if top_bucket == "high" and share >= 0.5:
+        return "High volatility is dominating now, so price swings look sharper across most setups."
+    if top_bucket == "medium" and share >= 0.5:
+        return "Medium volatility is dominating now, so market movement looks steadier than extreme."
+    if top_bucket == "low" and share >= 0.5:
+        return "Low volatility is dominating now, so movement looks calmer in most setups."
+
+    return "Volatility mix broad right now, with no single bucket fully dominating."
+
+
+def _tier_insight(rows: Sequence[Mapping[str, Any]]) -> str:
+    counts = _count_tokens(rows, "quality_tier", uppercase=True)
+    total = sum(counts.values())
+    if total == 0:
+        return ""
+
+    tier_a_share = counts.get("A", 0) / total
+    if tier_a_share >= 0.5:
+        return "Tier A setups make up most rows, so stronger setups are leading the current list."
+
+    top_tier = max(counts, key=counts.get)
+    return f"Tier {top_tier} appears most often in current rows."
+
+
+def _selection_insight(allocs: Sequence[Mapping[str, Any]]) -> str:
+    if not allocs:
+        return ""
+
+    funded = sum(1 for row in allocs if float(row.get("allocation_amount", 0.0) or 0.0) > 0)
+    eligible_unfunded = sum(
+        1
+        for row in allocs
+        if bool(row.get("eligible_for_funding"))
+        and float(row.get("allocation_amount", 0.0) or 0.0) <= 0
+    )
+
+    if eligible_unfunded > 0:
+        return (
+            f"{funded} trade(s) funded, while {eligible_unfunded} eligible trade(s) stayed out due to ranking and limits."
+        )
+    return f"{funded} trade(s) funded, and no eligible trade was left outside funded positions."
+
+
+def _consistency_insight(rows: Sequence[Mapping[str, Any]]) -> str:
+    avg = _mean_numeric(rows, "avg_return")
+    median = _mean_numeric(rows, "median_return")
+    if avg is None or median is None:
+        return ""
+
+    gap = avg - median
+    if gap > max(0.01, abs(median) * 0.5):
+        return "Average return is well above median return, so results look uneven across trades."
+    return "Average and median return are close, so results look more consistent right now."
+
+
+def _holding_window_insight(rows: Sequence[Mapping[str, Any]]) -> str:
+    grouped: dict[int, list[float]] = {}
+    for row in rows:
+        window = _int_or_none(row.get("holding_window"))
+        win_rate = _float_or_none(row.get("win_rate"))
+        if window is None or win_rate is None:
+            continue
+        grouped.setdefault(window, []).append(win_rate)
+
+    if len(grouped) < 2:
+        return ""
+
+    shortest = min(grouped)
+    longest = max(grouped)
+    short_wr = sum(grouped[shortest]) / len(grouped[shortest])
+    long_wr = sum(grouped[longest]) / len(grouped[longest])
+
+    if short_wr >= long_wr + 0.10:
+        return f"Short holding window ({shortest}D) shows steadier hit rate than long window ({longest}D)."
+    if long_wr >= short_wr + 0.10:
+        return f"Long holding window ({longest}D) looks steadier than short window ({shortest}D) right now."
+
+    return f"Short ({shortest}D) and long ({longest}D) windows show similar stability right now."
+
+
+def _risk_signal_insight(rows: Sequence[Mapping[str, Any]]) -> str:
+    win_rate = _mean_numeric(rows, "win_rate")
+    avg_return = _mean_numeric(rows, "avg_return")
+    if win_rate is None or avg_return is None:
+        return ""
+
+    if win_rate < 0.45 and avg_return > 0.01:
+        return "Win rate is low while average return is high, so the return profile looks high-variance right now."
+    return "Win rate and average return are in a balanced range right now."
+
+
+def _count_tokens(
+    rows: Sequence[Mapping[str, Any]],
+    field: str,
+    *,
+    uppercase: bool = False,
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        raw = row.get(field)
+        if raw is None:
+            continue
+        token = str(raw).strip()
+        if not token:
+            continue
+        token = token.upper() if uppercase else token.lower()
+        counts[token] = counts.get(token, 0) + 1
+    return counts
+
+
+def _mean_numeric(rows: Sequence[Mapping[str, Any]], field: str) -> float | None:
+    values = [_float_or_none(row.get(field)) for row in rows]
+    clean = [value for value in values if value is not None]
+    if not clean:
+        return None
+    return sum(clean) / len(clean)
+
+
+def _float_or_none(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _int_or_none(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
