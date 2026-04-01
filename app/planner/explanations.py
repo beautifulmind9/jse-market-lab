@@ -26,7 +26,6 @@ _HARD_STOP_MARKERS = (
 _CONSTRAINT_MARKERS = (
     "max funded trades",
     "max portfolio exposure",
-    "constraint",
     "capacity",
 )
 
@@ -104,7 +103,7 @@ def explain_primary_rule_or_constraint(trade: Mapping[str, Any]) -> str:
         return "Primary driver: max funded trades limit."
     if "max portfolio exposure" in explicit_reason:
         return "Primary driver: max portfolio exposure limit."
-    if "constraint" in explicit_reason or "capacity" in explicit_reason:
+    if "capacity" in explicit_reason:
         return "Primary driver: portfolio constraint."
 
     severity = _token(trade.get("earnings_warning_severity"))
