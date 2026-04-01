@@ -318,3 +318,144 @@ was created for marketing/public-sharing support and does not automatically requ
 **Decision to make**
 - whether Sprint 8 should focus on app-side data readiness
 - or whether real-data usage should first support external marketing/content workflows
+
+### Sprint 8 — Explanation Layer
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added in-app explanation helpers for allocation, quality tier, confidence, and warnings
+- Added Explanation Layer rendering to the Portfolio Plan UI
+- Added Sprint 8 explanation-layer tests
+
+**Open follow-up**
+- Fix explanation-priority logic so hard-stop rule failures (for example Tier C or liquidity failure) are not mislabeled as generic portfolio constraints
+- Re-test explanation output after review fix
+
+**Acceptance criteria remaining**
+- Explanation layer must distinguish between:
+  - not eligible by rule
+  - eligible but constrained by portfolio limits
+- Explanations must mirror actual system logic
+- Tests must pass after review fix
+
+### Sprint 8 — Explanation Layer
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added in-app explanation helpers for allocation, quality tier, confidence, and warnings
+- Added Explanation Layer rendering to the Portfolio Plan UI
+- Added Sprint 8 explanation-layer tests
+- Completed review hardening for explanation-priority logic so hard-stop rule failures are checked before generic portfolio constraints
+- Narrowed constraint detection so only explicit portfolio-limit signals classify as “eligible but constrained”
+
+**Validated slice**
+- portfolio explanations now distinguish between:
+  - not eligible by rule
+  - eligible but constrained by portfolio limits
+  - generic unfunded without overstating a portfolio-limit cause
+
+**Remaining focus**
+- continue validating the rest of the explanation layer across quality, confidence, and warning outputs
+- confirm UI readability in the running app
+- complete Sprint 8 UAT once explanation coverage is confirmed end-to-end
+
+### Sprint 8 — Explanation Layer
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added in-app explanation helpers for allocation, quality tier, confidence, and warnings
+- Added Explanation Layer rendering to the Portfolio Plan UI
+- Added Sprint 8 explanation-layer tests
+- Completed review hardening for explanation-priority logic so hard-stop rule failures are checked before generic portfolio constraints
+- Narrowed constraint detection so only explicit portfolio-limit signals classify as “eligible but constrained”
+
+**Validated slice**
+- portfolio explanations now distinguish between:
+  - not eligible by rule
+  - eligible but constrained by portfolio limits
+  - generic unfunded without overstating a portfolio-limit cause
+
+**Next implementation slice**
+- add ranking and allocation-priority reasoning
+- explain why funded trades were selected ahead of other eligible trades
+- explain when a trade was eligible but ranked outside funded positions
+
+**Remaining focus**
+- continue validating the rest of the explanation layer across quality, confidence, and warning outputs
+- confirm UI readability in the running app
+- complete Sprint 8 UAT once explanation coverage is confirmed end-to-end
+
+### Sprint 8 — Explanation Layer
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added in-app explanation helpers for allocation, quality tier, confidence, and warnings
+- Added Explanation Layer rendering to the Portfolio Plan UI
+- Added Sprint 8 explanation-layer tests
+- Completed review hardening for explanation-priority logic so hard-stop rule failures are checked before generic portfolio constraints
+- Narrowed constraint detection so only explicit portfolio-limit signals classify as “eligible but constrained”
+- Added ranking and allocation-priority reasoning to explain why funded trades were selected ahead of other eligible trades
+- Surfaced selection-order context in the Portfolio Plan UI
+
+**Validated slice**
+- portfolio explanations now distinguish between:
+  - not eligible by rule
+  - eligible but constrained by portfolio limits
+  - generic unfunded without overstating a portfolio-limit cause
+  - eligible but ranked outside funded positions
+
+**Remaining focus**
+- manually validate ranking-aware explanations in the running app
+- validate confidence explanations in-app
+- validate warning explanations in-app
+- complete Sprint 8 UAT once explanation coverage is confirmed end-to-end
+
+### Sprint 8 — Decision Clarity Layer (Explanation + Embedded Insights)
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added in-app explanation helpers for allocation, quality tier, confidence, and warnings
+- Added ranking and allocation-priority reasoning to the Portfolio Plan
+- Added embedded insight generation with:
+  - what_is_happening
+  - what_to_watch
+- Rendered embedded insights inside the app flow
+- Added tests for embedded insight structure and fallback behavior
+
+**Open follow-up**
+- update decision-status classification to respect `eligible_for_funding` so UI status aligns with allocator metadata
+- tighten embedded insight wording so it reads as clear, natural Jamaican-friendly English rather than awkward template text
+
+**Remaining focus**
+- validate confidence explanations in-app
+- validate warning explanations in-app
+- complete Sprint 8 UAT after decision-status and wording fixes are complete
+
+### Sprint 8 — Decision Clarity Layer (Explanation + Embedded Insights)
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added in-app explanation helpers for allocation, quality tier, confidence, and warnings
+- Added ranking and allocation-priority reasoning to the Portfolio Plan
+- Added embedded insight generation with:
+  - what_is_happening
+  - what_to_watch
+- Improved embedded insight wording to read more naturally in simple Jamaican-friendly English
+
+**Open follow-up**
+- refine decision-status classification so trades reduced to 0 by sizing/risk logic are not incorrectly grouped as “not eligible”
+- preserve clearer separation between:
+  - hard-stop ineligibility
+  - portfolio constraints
+  - zero-allocation risk/sizing outcomes
+
+**Remaining focus**
+- validate confidence explanations in-app
+- validate warning explanations in-app
+- complete Sprint 8 UAT after decision-status refinement and final visual review
