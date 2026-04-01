@@ -142,3 +142,33 @@ Sprint 8 passes when:
 - decision status matches actual allocator metadata
 - wording is clear, natural, and easy to understand
 - explanations and insights remain neutral and non-advisory
+
+# UAT — Sprint 8
+
+## Overall Status
+In progress — wording improved, decision-status refinement still needed
+
+## UAT Checklist
+
+| Area | Status | Notes |
+|-----|--------|------|
+| Trade explanations present | Pass | Explanation helpers added |
+| Allocation explanations present | Pass | Portfolio Plan explanation output added |
+| Ranking / allocation-priority explanations present | Pass | Funded vs eligible-but-outside-funded logic added |
+| Embedded insights present | Pass | App now renders “what_is_happening” and “what_to_watch” |
+| Embedded insight wording feels natural | Pass with note | Wording is stronger and more natural, though minor future refinement may still help |
+| Decision status aligns with hard-stop logic | Pass | Tier C, liquidity, and explicit ineligible cases remain separated correctly |
+| Decision status distinguishes zero-allocation risk sizing from not eligible | In progress | `eligible_for_funding=False` may still collapse risk-sized zero trades into `not eligible` |
+| Confidence explanations clear | In progress | Still needs app-level validation |
+| Warning explanations understandable | In progress | Still needs app-level validation |
+| UI remains readable | In progress | Needs final visual review after status refinement |
+
+## Open issue
+Trades that pass hard rules but are reduced to 0 allocation by sizing/risk logic should not be grouped under the same status as true hard-stop ineligibility.
+
+## Pass condition
+Sprint 8 passes when:
+- portfolio and embedded insight outputs are accurate
+- decision status distinguishes hard-stop ineligibility, portfolio constraints, and zero-allocation sizing outcomes clearly
+- wording is clear, natural, and easy to understand
+- explanations and insights remain neutral and non-advisory
