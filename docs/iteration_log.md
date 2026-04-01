@@ -20,3 +20,4 @@
 | V13.1 | Sprint 8 review hardening | Tightened explanation-priority logic so hard-stop rule failures are not mislabeled as generic portfolio constraints |
 | V13.2 | Sprint 8 constraint classification refinement | Narrowed constraint detection to explicit portfolio-limit signals only, preventing false constrained classification from generic allocator wording |
 | V13.3 | Sprint 8 ranking explanation extension | Added ranking and allocation-priority reasoning so the Portfolio Plan can explain why funded trades were selected ahead of other eligible trades |
+| V13.4 | Sprint 8 embedded insight layer | Added in-app embedded insights and identified follow-up fixes for eligibility-aware decision status and more natural plain-language wording |
