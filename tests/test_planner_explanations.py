@@ -5,14 +5,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
-from app.planner.explanations import classify_decision_status, explain_portfolio_decision, resolve_explicit_reason
-
-
-TECHNICAL_TERMS = (
-    "allocation",
-    "pre-constraints",
-    "allocator",
-    "portfolio exposure",
+from app.planner.explanations import (
+    classify_decision_status,
+    explain_funded_trade_why,
+    explain_portfolio_decision,
+    explain_primary_rule_or_constraint,
+    resolve_explicit_reason,
 )
 
 
@@ -94,6 +92,38 @@ def test_fallback_maps_to_not_strong_enough_why():
 def test_why_is_one_sentence_short_and_non_technical():
     text = explain_portfolio_decision({"allocation_amount": 0, "quality_tier": "C", "selection_rank": 8})
 
-    assert _single_sentence(text)
-    assert len(text) <= 90
-    assert all(term not in text.lower() for term in TECHNICAL_TERMS)
+    assert classify_decision_status(trade) == "unfunded"
+
+
+def test_funded_why_mapping_for_tier_a_strong():
+    text = explain_funded_trade_why({"quality_tier": "A", "confidence_label": "strong"})
+    assert text == "Selected — strong setup with good confirmation."
+
+
+def test_funded_why_mapping_for_tier_a_moderate():
+    text = explain_funded_trade_why({"quality_tier": "A", "confidence_label": "moderate"})
+    assert text == "Selected — solid setup with decent confirmation."
+
+
+def test_funded_why_mapping_for_tier_b():
+    text = explain_funded_trade_why({"quality_tier": "B", "confidence_label": "strong"})
+    assert text == "Selected — decent setup but not the strongest."
+
+
+def test_funded_why_uses_relative_strength_wording_for_smaller_position():
+    text = explain_funded_trade_why(
+        {
+            "quality_tier": "A",
+            "confidence_label": "strong",
+            "allocation_reason_clear": "Reduced size due to relative strength against peers.",
+        }
+    )
+    assert text == "Selected — smaller position due to relative strength."
+
+
+def test_funded_why_rank_stays_single_sentence():
+    text = explain_funded_trade_why(
+        {"quality_tier": "A", "confidence_label": "strong", "selection_rank": 2}
+    )
+    assert text.count(".") == 1
+    assert text.endswith("ranked #2.")

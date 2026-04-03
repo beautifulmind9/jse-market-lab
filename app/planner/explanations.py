@@ -81,7 +81,53 @@ def explain_portfolio_decision(trade: Mapping[str, Any]) -> str:
     return _append_rank(base_text, trade)
 
 
-def _append_rank(base_text: str, trade: Mapping[str, Any]) -> str:
+
+def explain_funded_trade_why(
+    trade: Mapping[str, Any],
+    *,
+    include_rank: bool = True,
+) -> str:
+    """Return a short, user-first reason for funded rows."""
+    base = _funded_base_message(trade)
+
+    if not include_rank:
+        return base
+
+    rank = _int_or_none(trade.get("selection_rank"))
+    if rank is None:
+        return base
+    trimmed = base[:-1] if base.endswith(".") else base
+    return f"{trimmed}, ranked #{rank}."
+
+
+def explain_primary_rule_or_constraint(trade: Mapping[str, Any]) -> str:
+    """Describe the main rule/constraint affecting the outcome."""
+    explicit_reason = _token(resolve_explicit_reason(trade))
+
+    if _is_hard_stop(trade, explicit_reason):
+        quality_tier = _token(trade.get("quality_tier")).upper()
+        if quality_tier == "C" or "tier c" in explicit_reason:
+            return "Primary driver: quality tier C rule."
+        if trade.get("liquidity_pass") is False or "liquidity" in explicit_reason:
+            return "Primary driver: liquidity eligibility rule."
+        return "Primary driver: eligibility hard-stop rule."
+
+    if "max funded trades" in explicit_reason:
+        return "Primary driver: max funded trades limit."
+    if "max portfolio exposure" in explicit_reason:
+        return "Primary driver: max portfolio exposure limit."
+    if "capacity" in explicit_reason:
+        return "Primary driver: portfolio constraint."
+
+    severity = _token(trade.get("earnings_warning_severity"))
+    volatility = _token(trade.get("volatility_bucket"))
+    if severity == "high" or volatility == "high":
+        return "Primary driver: risk adjustment factors."
+
+    return "Primary driver: no explicit rule or constraint label available."
+
+
+def _append_ranking_context(base_text: str, trade: Mapping[str, Any], status: str) -> str:
     rank = _int_or_none(trade.get("selection_rank"))
     if rank is None:
         rank = _int_or_none(trade.get("funded_rank"))
@@ -90,6 +136,37 @@ def _append_rank(base_text: str, trade: Mapping[str, Any]) -> str:
 
     sentence = base_text if base_text.endswith(".") else f"{base_text}."
     return f"{sentence} Ranked #{rank}"
+
+
+def _funded_base_message(trade: Mapping[str, Any]) -> str:
+    if _is_lower_allocation_vs_peers(trade):
+        return "Selected — smaller position due to relative strength."
+
+    quality_tier = _token(trade.get("quality_tier")).upper()
+    confidence = _token(trade.get("confidence_label"))
+
+    if quality_tier == "A" and confidence == "strong":
+        return "Selected — strong setup with good confirmation."
+    if quality_tier == "A" and confidence == "moderate":
+        return "Selected — solid setup with decent confirmation."
+    if quality_tier == "B":
+        return "Selected — decent setup but not the strongest."
+    return "Selected — setup met the bar for funding."
+
+
+def _is_lower_allocation_vs_peers(trade: Mapping[str, Any]) -> bool:
+    if bool(trade.get("lower_allocation_vs_peers")):
+        return True
+
+    explicit_reason = _token(resolve_explicit_reason(trade))
+    markers = (
+        "relative strength",
+        "smaller position",
+        "smaller size",
+        "reduced size",
+        "below base",
+    )
+    return any(marker in explicit_reason for marker in markers)
 
 
 def _is_hard_stop(trade: Mapping[str, Any], explicit_reason: str) -> bool:

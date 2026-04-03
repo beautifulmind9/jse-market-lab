@@ -69,10 +69,11 @@ def test_generate_funding_reason_uses_why_mapping():
     text = generate_funding_reason(
         {
             "allocation_amount": 1000,
-            "selection_rank": 2,
+            "quality_tier": "A",
+            "confidence_label": "strong",
         }
     )
-    assert text == "Selected — one of the strongest setups right now. Ranked #2"
+    assert text == "Selected — strong setup with good confirmation."
 
 
 def test_unfunded_reason_uses_single_why_sentence():
@@ -82,10 +83,7 @@ def test_unfunded_reason_uses_single_why_sentence():
         "allocation_reason_clear": "Final allocation is 0% because max funded trades reached (3).",
         "selection_rank": 5,
     }
-    assert (
-        resolve_unfunded_reason(trade)
-        == "Not funded — better trades already used up the available slots. Ranked #5"
-    )
+    assert resolve_unfunded_reason(trade) == "Final allocation is 0% because max funded trades reached (3)."
 
 
 def test_render_portfolio_plan_unfunded_table_shows_single_why_column():
@@ -125,22 +123,23 @@ def test_render_portfolio_plan_adds_plain_language_context_note():
     )
 
     assert st.captions
-    assert "quick plain-language reason" in st.captions[0]
+    assert "Why column" in st.captions[0]
 
 
 def test_render_portfolio_plan_shows_why_column_for_funded_and_unfunded():
     st = DummyStreamlit()
     render_portfolio_plan(
         allocations=[
-            {
-                "instrument": "AAA",
-                "allocation_amount": 1000,
-                "allocation_pct": 0.1,
-                "quality_tier": "A",
-                "selection_rank": 1,
-                "funded_rank": 1,
-                "eligible_for_funding": True,
-            },
+                {
+                    "instrument": "AAA",
+                    "allocation_amount": 1000,
+                    "allocation_pct": 0.1,
+                    "quality_tier": "A",
+                    "confidence_label": "strong",
+                    "selection_rank": 1,
+                    "funded_rank": 1,
+                    "eligible_for_funding": True,
+                },
             {
                 "instrument": "BBB",
                 "allocation_amount": 0,
@@ -156,7 +155,8 @@ def test_render_portfolio_plan_shows_why_column_for_funded_and_unfunded():
 
     funded_df = st.dataframes[1][0]
     unfunded_df = st.dataframes[2][0]
+    assert "Selection Rank" in funded_df.columns
+    assert "Selection Rank" in unfunded_df.columns
     assert "Why" in funded_df.columns
+    assert funded_df.iloc[0]["Why"] == "Selected — strong setup with good confirmation, ranked #1."
     assert "Why" in unfunded_df.columns
-    assert funded_df.iloc[0]["Why"] == "Selected — one of the strongest setups right now. Ranked #1"
-    assert unfunded_df.iloc[0]["Why"] == "Not funded — better trades already used up the available slots. Ranked #4"

@@ -9,6 +9,7 @@ import pandas as pd
 from app.planner.explanations import (
     REASON_KEYS,
     classify_decision_status,
+    explain_funded_trade_why,
     explain_portfolio_decision,
 )
 
@@ -65,13 +66,23 @@ def split_trades_by_funding(
 
 
 def generate_funding_reason(trade: Mapping[str, Any]) -> str:
-    """Generate one short why sentence for funded rows."""
-    return explain_portfolio_decision(trade)
+    """Generate a short single-sentence 'Why' message for funded rows."""
+    return explain_funded_trade_why(trade)
 
 
 def resolve_unfunded_reason(trade: Mapping[str, Any]) -> str:
-    """Generate one short why sentence for unfunded rows."""
-    return explain_portfolio_decision(trade)
+    """Resolve unfunded reason preferring allocator output before fallback labels."""
+    explicit_reason = resolve_explicit_reason(trade)
+    if explicit_reason:
+        return _first_sentence(explicit_reason)
+    status = classify_decision_status(trade)
+    if status == "not eligible":
+        return "not eligible after rule checks."
+    if status == "eligible but constrained":
+        return "Eligible, but portfolio limits kept it out."
+    if status == "reduced to zero":
+        return "Eligible, but risk sizing reduced it to zero."
+    return _first_sentence(explain_portfolio_decision(trade))
 
 
 def render_portfolio_plan(
@@ -85,7 +96,7 @@ def render_portfolio_plan(
 
     st_module.subheader("Portfolio Plan")
     st_module.caption(
-        "Each row gives a quick plain-language reason why a setup was selected or left out."
+        "Quick reasons are shown in the Why column so rows stay easy to scan."
     )
 
     if not allocations:
@@ -121,7 +132,6 @@ def render_portfolio_plan(
                     "Allocation %": trade.get("allocation_pct", 0.0),
                     "Allocation Amount": trade.get("allocation_amount", 0.0),
                     "Selection Rank": trade.get("selection_rank", "N/A"),
-                    "Decision Status": classify_decision_status(trade),
                     "Why": generate_funding_reason(trade),
                 }
                 for trade in funded_trades
@@ -141,7 +151,9 @@ def render_portfolio_plan(
                     "Confidence": trade.get("confidence_label", "N/A"),
                     "Selection Rank": trade.get("selection_rank", "N/A"),
                     "Decision Status": classify_decision_status(trade),
+                    "Reason": resolve_unfunded_reason(trade),
                     "Why": resolve_unfunded_reason(trade),
+                    "Primary Rule/Constraint": explain_primary_rule_or_constraint(trade),
                 }
                 for trade in unfunded_trades
             ]
@@ -157,3 +169,14 @@ def render_portfolio_plan(
         "- Max funded trades: 3\n"
         "- Tier C and liquidity failures are not funded"
     )
+
+
+def _first_sentence(text: str) -> str:
+    cleaned = str(text or "").strip()
+    if not cleaned:
+        return ""
+
+    sentence = cleaned.split(".")[0].strip()
+    if not sentence:
+        return ""
+    return f"{sentence}."
