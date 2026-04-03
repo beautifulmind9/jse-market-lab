@@ -41,70 +41,28 @@ def _normalize_token(value: Any) -> str:
 
 
 def _confidence_copy(confidence_level: str) -> dict:
-    if confidence_level == "avoid":
+    if confidence_level in {"avoid", "high risk", "watch"}:
         return {
-            "confidence_label": "avoid",
-            "confidence_title": "Avoid this setup",
-            "confidence_body_clear": (
-                "Liquidity did not pass, so entering this trade can be hard and riskier. "
-                "Prioritize better-liquid setups first."
-            ),
-            "confidence_body_pro": (
-                "Liquidity screen failed. Execution quality and slippage risk are elevated; "
-                "deprioritize this setup."
-            ),
-            "confidence_level": "avoid",
-        }
-
-    if confidence_level == "high risk":
-        return {
-            "confidence_label": "high risk",
-            "confidence_title": "High-risk setup",
-            "confidence_body_clear": (
-                "Warning severity is high, so this trade has elevated uncertainty. "
-                "Use extra caution or reduce size."
-            ),
-            "confidence_body_pro": (
-                "High severity context implies elevated event risk. Consider reduced exposure "
-                "or waiting for cleaner conditions."
-            ),
-            "confidence_level": "high risk",
+            "confidence_label": "weak",
+            "confidence_title": "Weak",
+            "confidence_body_clear": "Weak — signals are not lining up well.",
+            "confidence_body_pro": "Weak — signals are not lining up well.",
+            "confidence_level": "weak",
         }
 
     if confidence_level == "strong":
         return {
             "confidence_label": "strong",
-            "confidence_title": "Strong confidence",
-            "confidence_body_clear": (
-                "Top quality tier with non-high volatility supports a stronger setup."
-            ),
-            "confidence_body_pro": (
-                "Tier A quality with contained volatility supports higher relative confidence."
-            ),
+            "confidence_title": "Strong",
+            "confidence_body_clear": "Strong — signals are lining up clearly.",
+            "confidence_body_pro": "Strong — signals are lining up clearly.",
             "confidence_level": "strong",
-        }
-
-    if confidence_level == "watch":
-        return {
-            "confidence_label": "watch",
-            "confidence_title": "Watch closely",
-            "confidence_body_clear": (
-                "Tier C quality suggests this trade needs monitoring before committing more capital."
-            ),
-            "confidence_body_pro": (
-                "Tier C profile indicates lower conviction; keep on watchlist unless other factors improve."
-            ),
-            "confidence_level": "watch",
         }
 
     return {
         "confidence_label": "moderate",
-        "confidence_title": "Moderate confidence",
-        "confidence_body_clear": (
-            "This setup is usable but not top-priority. Consider balanced sizing."
-        ),
-        "confidence_body_pro": (
-            "Signal quality is acceptable but not elite; maintain standard risk controls."
-        ),
+        "confidence_title": "Moderate",
+        "confidence_body_clear": "Moderate — some signals are there, but not all.",
+        "confidence_body_pro": "Moderate — some signals are there, but not all.",
         "confidence_level": "moderate",
     }

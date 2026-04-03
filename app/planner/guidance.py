@@ -64,46 +64,32 @@ def generate_trade_guidance(trade_row: Mapping[str, Any]) -> Optional[dict]:
         return {
             "guidance_title": "High earnings overlap guidance",
             "guidance_body_clear": (
-                "When the company releases its results, the price can go up or down "
-                "quickly. It may be safer to put in a smaller amount or wait until "
-                "after that."
-                f"{window_hint_clear}{volatility_hint_clear}"
-            ).strip(),
+                "This trade runs into earnings, so price movement may be unpredictable."
+            ),
             "guidance_body_pro": (
-                "Price can move significantly when results are released. Consider a "
-                "smaller position or waiting until after the announcement."
-                f"{window_hint_pro}{volatility_hint_pro}"
-            ).strip(),
+                "This trade runs into earnings, so price movement may be unpredictable."
+            ),
             "guidance_type": "high",
         }
     if severity == "caution":
         return {
             "guidance_title": "Caution earnings overlap guidance",
             "guidance_body_clear": (
-                "The price might be a bit unpredictable around this time. You can "
-                "still invest, but it may be better to go in with less or keep an "
-                "eye on it."
-                f"{window_hint_clear}{volatility_hint_clear}"
-            ).strip(),
+                "This trade runs into earnings, so price movement may be unpredictable."
+            ),
             "guidance_body_pro": (
-                "Price may be less stable during this period. Consider a smaller "
-                "position or closer attention."
-                f"{window_hint_pro}{volatility_hint_pro}"
-            ).strip(),
+                "This trade runs into earnings, so price movement may be unpredictable."
+            ),
             "guidance_type": "caution",
         }
 
     return {
         "guidance_title": "Earnings overlap awareness",
         "guidance_body_clear": (
-            "The company is expected to release results soon. This can affect the "
-            "price, so just keep it in mind."
-            f"{window_hint_clear}{volatility_hint_clear}"
-        ).strip(),
+            "This trade runs into earnings, so price movement may be unpredictable."
+        ),
         "guidance_body_pro": (
-            "Upcoming results may affect price movement. No immediate action is "
-            "needed."
-            f"{window_hint_pro}{volatility_hint_pro}"
-        ).strip(),
+            "This trade runs into earnings, so price movement may be unpredictable."
+        ),
         "guidance_type": "info",
     }

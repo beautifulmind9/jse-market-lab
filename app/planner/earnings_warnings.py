@@ -14,57 +14,54 @@ PHASES = {"pre", "reaction", "post", PHASE_NON}
 
 INCOME_STABILITY_COPY = {
     "pre": {
-        "title": "⚠️ Earnings upcoming",
-        "body": (
-            "Earnings in {days} trading days... Consider smaller size or "
-            "allowing more time for the trade."
-        ),
+        "title": "⚠️ Earnings",
+        "body": "This trade runs into earnings, so price movement may be unpredictable.",
         "severity": "caution",
     },
     "reaction": {
-        "title": "⚠️ Earnings reaction period",
-        "body": "Earnings reactions can increase volatility.",
+        "title": "⚠️ Earnings",
+        "body": "This trade runs into earnings, so price movement may be unpredictable.",
         "severity": "caution",
     },
     "post": {
-        "title": "ℹ️ Post-earnings window",
-        "body": "Post-earnings prices may still be stabilizing.",
+        "title": "⚠️ Earnings",
+        "body": "This trade runs into earnings, so price movement may be unpredictable.",
         "severity": "info",
     },
 }
 
 ACTIVE_GROWTH_COPY = {
     "pre": {
-        "title": "⚠️ Earnings upcoming",
-        "body": "Earnings reactions can drive outsized volatility.",
+        "title": "⚠️ Earnings",
+        "body": "This trade runs into earnings, so price movement may be unpredictable.",
         "severity": "caution",
     },
     "reaction": {
-        "title": "⚠️ Earnings reaction period",
-        "body": "Expect wider variance around earnings reactions.",
+        "title": "⚠️ Earnings",
+        "body": "This trade runs into earnings, so price movement may be unpredictable.",
         "severity": "caution",
     },
     "post": {
-        "title": "ℹ️ Post-earnings window",
-        "body": "Watch for post-earnings follow-through.",
+        "title": "⚠️ Earnings",
+        "body": "This trade runs into earnings, so price movement may be unpredictable.",
         "severity": "info",
     },
 }
 
 CAPITAL_PRESERVATION_COPY = {
     "pre": {
-        "title": "⚠️ Earnings upcoming",
-        "body": "Earnings windows can amplify downside gaps.",
+        "title": "⚠️ Earnings",
+        "body": "This trade runs into earnings, so price movement may be unpredictable.",
         "severity": "caution",
     },
     "reaction": {
-        "title": "⚠️ Earnings reaction period",
-        "body": "Earnings reactions can elevate downside risk.",
+        "title": "⚠️ Earnings",
+        "body": "This trade runs into earnings, so price movement may be unpredictable.",
         "severity": "caution",
     },
     "post": {
-        "title": "ℹ️ Post-earnings window",
-        "body": "Post-earnings pricing can still settle.",
+        "title": "⚠️ Earnings",
+        "body": "This trade runs into earnings, so price movement may be unpredictable.",
         "severity": "info",
     },
 }
@@ -242,15 +239,5 @@ def _warning_for_row(row: pd.Series, copy_map: Dict[str, Dict[str, str]]):
     title = copy.get("title")
     body = copy.get("body")
     severity = copy.get("severity")
-
-    if phase == "pre" and body:
-        offset = row.get("earnings_day_offset")
-        if pd.notna(offset):
-            body = body.format(days=abs(int(offset)))
-        else:
-            body = body.replace("{days} ", "").replace("{days}", "")
-
-    if row.get("earnings_overlaps_window") and body:
-        body = f"{body}\nThis trade overlaps an earnings window."
 
     return pd.Series([title, body, severity])

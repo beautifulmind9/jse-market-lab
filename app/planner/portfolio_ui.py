@@ -11,6 +11,7 @@ from app.planner.explanations import (
     classify_decision_status,
     explain_funded_trade_why,
     explain_portfolio_decision,
+    resolve_explicit_reason,
 )
 
 
@@ -71,18 +72,8 @@ def generate_funding_reason(trade: Mapping[str, Any]) -> str:
 
 
 def resolve_unfunded_reason(trade: Mapping[str, Any]) -> str:
-    """Resolve unfunded reason preferring allocator output before fallback labels."""
-    explicit_reason = resolve_explicit_reason(trade)
-    if explicit_reason:
-        return _first_sentence(explicit_reason)
-    status = classify_decision_status(trade)
-    if status == "not eligible":
-        return "not eligible after rule checks."
-    if status == "eligible but constrained":
-        return "Eligible, but portfolio limits kept it out."
-    if status == "reduced to zero":
-        return "Eligible, but risk sizing reduced it to zero."
-    return _first_sentence(explain_portfolio_decision(trade))
+    """Resolve unfunded reason in the shared one-sentence voice."""
+    return explain_portfolio_decision(trade)
 
 
 def render_portfolio_plan(
@@ -96,7 +87,7 @@ def render_portfolio_plan(
 
     st_module.subheader("Portfolio Plan")
     st_module.caption(
-        "Quick reasons are shown in the Why column so rows stay easy to scan."
+        "Selected trades received funding, and the rest stayed out for clear rule or limit reasons."
     )
 
     if not allocations:
@@ -132,7 +123,8 @@ def render_portfolio_plan(
                     "Allocation %": trade.get("allocation_pct", 0.0),
                     "Allocation Amount": trade.get("allocation_amount", 0.0),
                     "Selection Rank": trade.get("selection_rank", "N/A"),
-                    "Why": generate_funding_reason(trade),
+                    "Decision Status": classify_decision_status(trade),
+                    "Why": explain_portfolio_decision(trade),
                 }
                 for trade in funded_trades
             ]
@@ -151,9 +143,7 @@ def render_portfolio_plan(
                     "Confidence": trade.get("confidence_label", "N/A"),
                     "Selection Rank": trade.get("selection_rank", "N/A"),
                     "Decision Status": classify_decision_status(trade),
-                    "Reason": resolve_unfunded_reason(trade),
                     "Why": resolve_unfunded_reason(trade),
-                    "Primary Rule/Constraint": explain_primary_rule_or_constraint(trade),
                 }
                 for trade in unfunded_trades
             ]
