@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from app.analysis.ticker_intelligence import compute_ticker_metrics
 from app.data.ingest import ingest_dataset
 from app.demo.run_demo import run_demo
 from app.insights.analyst import render_analyst_insights
@@ -48,10 +49,41 @@ def main() -> None:
     ranked_df = demo_payload.get("ranked", pd.DataFrame())
     analyst_df = build_analyst_dataset(canonical_df, ranked_df)
 
-    insights_tab, plan_tab = st.tabs(["Analyst Insights", "Portfolio Plan"])
+    insights_tab, ticker_tab, plan_tab = st.tabs(["Analyst Insights", "Ticker Analysis", "Portfolio Plan"])
 
     with insights_tab:
         render_analyst_insights(analyst_df, st_module=st, analyst_mode=True)
+
+    with ticker_tab:
+        st.markdown("### Ticker Analysis")
+        if analyst_df.empty or "instrument" not in analyst_df.columns:
+            st.info("Ticker Analysis is unavailable because no ticker rows are loaded.")
+        else:
+            ticker_options = sorted(analyst_df["instrument"].dropna().astype(str).unique())
+            if not ticker_options:
+                st.info("Ticker Analysis is unavailable because no tickers are available.")
+            else:
+                selected_ticker = st.selectbox("Select ticker", ticker_options)
+                ticker_payload = compute_ticker_metrics(analyst_df, selected_ticker)
+
+                st.markdown("#### Summary")
+                st.write(ticker_payload["summary"])
+
+                st.markdown("#### Stats")
+                stats_table = pd.DataFrame([ticker_payload["stats"]]).rename(
+                    columns={
+                        "win_rate": "Win Rate",
+                        "median_return": "Median Return",
+                        "avg_return": "Average Return",
+                        "best_window": "Best Window",
+                        "signal_count": "Signal Count",
+                    }
+                )
+                st.dataframe(stats_table, use_container_width=True)
+
+                st.markdown("#### Behavior")
+                for key in ["holding_window", "consistency", "reliability", "tier_profile"]:
+                    st.markdown(f"- {ticker_payload['behavior'][key]}")
 
     with plan_tab:
         st.markdown("### Portfolio Plan")
