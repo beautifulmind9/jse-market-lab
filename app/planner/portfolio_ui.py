@@ -10,8 +10,7 @@ from app.planner.explanations import (
     REASON_KEYS,
     classify_decision_status,
     explain_funded_trade_why,
-    explain_portfolio_decision,
-    resolve_explicit_reason,
+    explain_unfunded_trade_why,
 )
 
 
@@ -67,13 +66,13 @@ def split_trades_by_funding(
 
 
 def generate_funding_reason(trade: Mapping[str, Any]) -> str:
-    """Generate a short single-sentence 'Why' message for funded rows."""
+    """Generate a compact funding explanation using explicit reasons first."""
     return explain_funded_trade_why(trade)
 
 
 def resolve_unfunded_reason(trade: Mapping[str, Any]) -> str:
     """Resolve unfunded reason in the shared one-sentence voice."""
-    return explain_portfolio_decision(trade)
+    return explain_unfunded_trade_why(trade)
 
 
 def render_portfolio_plan(
@@ -124,7 +123,7 @@ def render_portfolio_plan(
                     "Allocation Amount": trade.get("allocation_amount", 0.0),
                     "Selection Rank": trade.get("selection_rank", "N/A"),
                     "Decision Status": classify_decision_status(trade),
-                    "Why": explain_portfolio_decision(trade),
+                    "Why": explain_funded_trade_why(trade),
                 }
                 for trade in funded_trades
             ]

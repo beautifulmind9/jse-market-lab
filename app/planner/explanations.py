@@ -100,6 +100,16 @@ def explain_portfolio_decision(trade: Mapping[str, Any]) -> str:
     return _append_ranking_context(base_text, trade)
 
 
+def explain_funded_trade_why(trade: Mapping[str, Any]) -> str:
+    """Backward-compatible funded Why helper."""
+    return explain_portfolio_decision(trade)
+
+
+def explain_unfunded_trade_why(trade: Mapping[str, Any]) -> str:
+    """Backward-compatible unfunded Why helper."""
+    return explain_portfolio_decision(trade)
+
+
 def explain_primary_rule_or_constraint(trade: Mapping[str, Any]) -> str:
     """Describe the main rule/constraint affecting the outcome."""
     explicit_reason = _token(resolve_explicit_reason(trade))
