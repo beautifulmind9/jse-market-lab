@@ -10,7 +10,6 @@ from app.planner.explanations import (
     REASON_KEYS,
     classify_decision_status,
     explain_portfolio_decision,
-    explain_primary_rule_or_constraint,
     resolve_explicit_reason,
 )
 
@@ -72,10 +71,7 @@ def generate_funding_reason(trade: Mapping[str, Any]) -> str:
 
 
 def resolve_unfunded_reason(trade: Mapping[str, Any]) -> str:
-    """Resolve unfunded reason preferring allocator output before fallback labels."""
-    explicit_reason = resolve_explicit_reason(trade)
-    if explicit_reason:
-        return explicit_reason
+    """Resolve unfunded reason in the shared one-sentence voice."""
     return explain_portfolio_decision(trade)
 
 
@@ -90,7 +86,7 @@ def render_portfolio_plan(
 
     st_module.subheader("Portfolio Plan")
     st_module.caption(
-        "Funded trades received non-zero allocation. Unfunded trades remained at 0% after eligibility rules and portfolio constraints were applied."
+        "Selected trades received funding, and the rest stayed out for clear rule or limit reasons."
     )
 
     if not allocations:
@@ -127,8 +123,7 @@ def render_portfolio_plan(
                     "Allocation Amount": trade.get("allocation_amount", 0.0),
                     "Selection Rank": trade.get("selection_rank", "N/A"),
                     "Decision Status": classify_decision_status(trade),
-                    "Explanation": explain_portfolio_decision(trade),
-                    "Primary Rule/Constraint": explain_primary_rule_or_constraint(trade),
+                    "Why": explain_portfolio_decision(trade),
                 }
                 for trade in funded_trades
             ]
@@ -147,9 +142,7 @@ def render_portfolio_plan(
                     "Confidence": trade.get("confidence_label", "N/A"),
                     "Selection Rank": trade.get("selection_rank", "N/A"),
                     "Decision Status": classify_decision_status(trade),
-                    "Reason": resolve_unfunded_reason(trade),
-                    "Explanation": explain_portfolio_decision(trade),
-                    "Primary Rule/Constraint": explain_primary_rule_or_constraint(trade),
+                    "Why": resolve_unfunded_reason(trade),
                 }
                 for trade in unfunded_trades
             ]
