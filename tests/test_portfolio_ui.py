@@ -65,7 +65,7 @@ def test_split_trades_by_funding_separates_rows():
     assert [row["instrument"] for row in unfunded] == ["BBB"]
 
 
-def test_generate_funding_reason_prefers_allocator_reason_when_available():
+def test_generate_funding_reason_uses_why_mapping():
     text = generate_funding_reason(
         {
             "allocation_amount": 1000,
@@ -76,24 +76,17 @@ def test_generate_funding_reason_prefers_allocator_reason_when_available():
     assert text == "Selected — strong setup with good confirmation."
 
 
-def test_unfunded_reason_prefers_allocator_reason_field():
+def test_unfunded_reason_uses_single_why_sentence():
     trade = {
         "allocation_amount": 0,
         "quality_tier": "A",
         "allocation_reason_clear": "Final allocation is 0% because max funded trades reached (3).",
+        "selection_rank": 5,
     }
     assert resolve_unfunded_reason(trade) == "Final allocation is 0% because max funded trades reached (3)."
 
 
-def test_unfunded_reason_falls_back_to_rule_explanation_when_reason_missing():
-    trade = {
-        "allocation_amount": 0,
-        "quality_tier": "C",
-    }
-    assert "not eligible" in resolve_unfunded_reason(trade)
-
-
-def test_render_portfolio_plan_unfunded_table_shows_status_and_explanations():
+def test_render_portfolio_plan_unfunded_table_shows_single_why_column():
     st = DummyStreamlit()
     render_portfolio_plan(
         allocations=[
@@ -102,6 +95,7 @@ def test_render_portfolio_plan_unfunded_table_shows_status_and_explanations():
                 "allocation_amount": 0,
                 "quality_tier": "A",
                 "liquidity_pass": True,
+                "selection_rank": 5,
                 "allocation_reason_clear": "Final allocation is 0% because max funded trades reached (3).",
             },
         ],
@@ -111,11 +105,13 @@ def test_render_portfolio_plan_unfunded_table_shows_status_and_explanations():
 
     unfunded_df = st.dataframes[1][0]
     assert unfunded_df.iloc[0]["Decision Status"] == "eligible but constrained"
-    assert "max funded trades reached" in unfunded_df.iloc[0]["Reason"]
-    assert "Primary driver" in unfunded_df.iloc[0]["Primary Rule/Constraint"]
+    assert unfunded_df.iloc[0]["Why"] == "Not funded — better trades already used up the available slots. Ranked #5"
+    assert "Reason" not in unfunded_df.columns
+    assert "Explanation" not in unfunded_df.columns
+    assert "Primary Rule/Constraint" not in unfunded_df.columns
 
 
-def test_render_portfolio_plan_adds_context_note_for_funded_vs_unfunded():
+def test_render_portfolio_plan_adds_plain_language_context_note():
     st = DummyStreamlit()
     render_portfolio_plan(
         allocations=[
@@ -130,7 +126,7 @@ def test_render_portfolio_plan_adds_context_note_for_funded_vs_unfunded():
     assert "Why column" in st.captions[0]
 
 
-def test_render_portfolio_plan_shows_selection_rank_column():
+def test_render_portfolio_plan_shows_why_column_for_funded_and_unfunded():
     st = DummyStreamlit()
     render_portfolio_plan(
         allocations=[

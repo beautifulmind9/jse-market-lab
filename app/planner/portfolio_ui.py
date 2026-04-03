@@ -11,8 +11,6 @@ from app.planner.explanations import (
     classify_decision_status,
     explain_funded_trade_why,
     explain_portfolio_decision,
-    explain_primary_rule_or_constraint,
-    resolve_explicit_reason,
 )
 
 
