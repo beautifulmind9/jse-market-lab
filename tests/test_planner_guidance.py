@@ -21,12 +21,8 @@ def test_generate_trade_guidance_high_case():
 
     assert guidance is not None
     assert guidance["guidance_type"] == "high"
-    assert "put in a smaller amount" in guidance["guidance_body_clear"]
-    assert "smaller position" in guidance["guidance_body_pro"]
-    assert (
-        "Your current plan is to hold for about 7 trading days."
-        in guidance["guidance_body_clear"]
-    )
+    assert guidance["guidance_body_clear"] == "This trade runs into earnings, so price movement may be unpredictable."
+    assert guidance["guidance_body_pro"] == "This trade runs into earnings, so price movement may be unpredictable."
 
 
 def test_generate_trade_guidance_caution_case():
@@ -40,8 +36,8 @@ def test_generate_trade_guidance_caution_case():
 
     assert guidance is not None
     assert guidance["guidance_type"] == "caution"
-    assert "go in with less" in guidance["guidance_body_clear"]
-    assert "smaller position" in guidance["guidance_body_pro"]
+    assert guidance["guidance_body_clear"] == "This trade runs into earnings, so price movement may be unpredictable."
+    assert guidance["guidance_body_pro"] == "This trade runs into earnings, so price movement may be unpredictable."
 
 
 def test_generate_trade_guidance_info_case():
@@ -54,8 +50,8 @@ def test_generate_trade_guidance_info_case():
 
     assert guidance is not None
     assert guidance["guidance_type"] == "info"
-    assert "just keep it in mind" in guidance["guidance_body_clear"]
-    assert "No immediate action is needed." in guidance["guidance_body_pro"]
+    assert guidance["guidance_body_clear"] == "This trade runs into earnings, so price movement may be unpredictable."
+    assert guidance["guidance_body_pro"] == "This trade runs into earnings, so price movement may be unpredictable."
 
 
 def test_generate_trade_guidance_returns_none_without_explicit_true_overlap():

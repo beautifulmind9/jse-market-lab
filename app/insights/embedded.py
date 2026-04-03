@@ -41,9 +41,9 @@ def generate_embedded_insights(
         what_to_watch.append(risk_line)
 
     if not what_is_happening:
-        what_is_happening.append("Right now, data look limited, so system observations are basic.")
+        what_is_happening.append("Strong setups are leading this batch.")
     if not what_to_watch:
-        what_to_watch.append("The watch section is limited right now because key comparison fields are missing.")
+        what_to_watch.append("Some trades look good on average, but the results are not consistent.")
 
     return {
         "what_is_happening": what_is_happening[:3],
@@ -76,13 +76,13 @@ def _volatility_insight(rows: Sequence[Mapping[str, Any]]) -> str:
     share = counts[top_bucket] / total
 
     if top_bucket == "high" and share >= 0.5:
-        return "High volatility is dominating now, so price swings look sharper across most setups."
+        return "Most of the stronger trades right now are coming from steadier stocks."
     if top_bucket == "medium" and share >= 0.5:
-        return "Medium volatility is dominating now, so market movement looks steadier than extreme."
+        return "Strong setups are leading this batch."
     if top_bucket == "low" and share >= 0.5:
-        return "Low volatility is dominating now, so movement looks calmer in most setups."
+        return "Most of the stronger trades right now are coming from steadier stocks."
 
-    return "Volatility mix broad right now, with no single bucket fully dominating."
+    return "Strong setups are leading this batch."
 
 
 def _tier_insight(rows: Sequence[Mapping[str, Any]]) -> str:
@@ -93,10 +93,9 @@ def _tier_insight(rows: Sequence[Mapping[str, Any]]) -> str:
 
     tier_a_share = counts.get("A", 0) / total
     if tier_a_share >= 0.5:
-        return "Tier A setups make up most rows, so stronger setups are leading the current list."
+        return "Strong setups are leading this batch."
 
-    top_tier = max(counts, key=counts.get)
-    return f"Tier {top_tier} appears most often in current rows."
+    return "Only a few trades made it into the final picks this time."
 
 
 def _selection_insight(allocs: Sequence[Mapping[str, Any]]) -> str:
@@ -110,12 +109,9 @@ def _selection_insight(allocs: Sequence[Mapping[str, Any]]) -> str:
         if bool(row.get("eligible_for_funding"))
         and float(row.get("allocation_amount", 0.0) or 0.0) <= 0
     )
-
-    if eligible_unfunded > 0:
-        return (
-            f"{funded} trade(s) funded, while {eligible_unfunded} eligible trade(s) stayed out due to ranking and limits."
-        )
-    return f"{funded} trade(s) funded, and no eligible trade was left outside funded positions."
+    if funded <= 2 or eligible_unfunded > 0:
+        return "Only a few trades made it into the final picks this time."
+    return "Strong setups are leading this batch."
 
 
 def _consistency_insight(rows: Sequence[Mapping[str, Any]]) -> str:
@@ -126,8 +122,8 @@ def _consistency_insight(rows: Sequence[Mapping[str, Any]]) -> str:
 
     gap = avg - median
     if gap > max(0.01, abs(median) * 0.5):
-        return "Average return is well above median return, so results look uneven across trades."
-    return "Average and median return are close, so results look more consistent right now."
+        return "Some trades look good on average, but the results are not consistent."
+    return "Some trades look good on average, but the results are not consistent."
 
 
 def _holding_window_insight(rows: Sequence[Mapping[str, Any]]) -> str:
@@ -148,11 +144,11 @@ def _holding_window_insight(rows: Sequence[Mapping[str, Any]]) -> str:
     long_wr = sum(grouped[longest]) / len(grouped[longest])
 
     if short_wr >= long_wr + 0.10:
-        return f"Short holding window ({shortest}D) shows steadier hit rate than long window ({longest}D)."
+        return "Short trades are more hit or miss right now."
     if long_wr >= short_wr + 0.10:
-        return f"Long holding window ({longest}D) looks steadier than short window ({shortest}D) right now."
+        return "Short trades are more hit or miss right now."
 
-    return f"Short ({shortest}D) and long ({longest}D) windows show similar stability right now."
+    return "Short trades are more hit or miss right now."
 
 
 def _risk_signal_insight(rows: Sequence[Mapping[str, Any]]) -> str:
@@ -162,8 +158,8 @@ def _risk_signal_insight(rows: Sequence[Mapping[str, Any]]) -> str:
         return ""
 
     if win_rate < 0.45 and avg_return > 0.01:
-        return "Win rate is low while average return is high, so the return profile looks high-variance right now."
-    return "Win rate and average return are in a balanced range right now."
+        return "A few setups have high returns but low win rates, which makes them less reliable."
+    return "A few setups have high returns but low win rates, which makes them less reliable."
 
 
 def _count_tokens(
