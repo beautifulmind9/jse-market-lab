@@ -110,6 +110,24 @@ def explain_portfolio_decision(trade: Mapping[str, Any]) -> str:
     )
 
 
+def explain_funded_trade_why(
+    trade: Mapping[str, Any],
+    *,
+    include_rank: bool = True,
+) -> str:
+    """Return a short, user-first reason for funded rows."""
+    base = _funded_base_message(trade)
+
+    if not include_rank:
+        return base
+
+    rank = _int_or_none(trade.get("selection_rank"))
+    if rank is None:
+        return base
+    trimmed = base[:-1] if base.endswith(".") else base
+    return f"{trimmed}, ranked #{rank}."
+
+
 def explain_primary_rule_or_constraint(trade: Mapping[str, Any]) -> str:
     """Describe the main rule/constraint affecting the outcome."""
     explicit_reason = _token(resolve_explicit_reason(trade))
@@ -170,6 +188,37 @@ def _append_ranking_context(base_text: str, trade: Mapping[str, Any], status: st
         return base_text + f" Trade remained eligible but finished outside funded positions at rank #{rank}."
 
     return base_text
+
+
+def _funded_base_message(trade: Mapping[str, Any]) -> str:
+    if _is_lower_allocation_vs_peers(trade):
+        return "Selected — smaller position due to relative strength."
+
+    quality_tier = _token(trade.get("quality_tier")).upper()
+    confidence = _token(trade.get("confidence_label"))
+
+    if quality_tier == "A" and confidence == "strong":
+        return "Selected — strong setup with good confirmation."
+    if quality_tier == "A" and confidence == "moderate":
+        return "Selected — solid setup with decent confirmation."
+    if quality_tier == "B":
+        return "Selected — decent setup but not the strongest."
+    return "Selected — setup met the bar for funding."
+
+
+def _is_lower_allocation_vs_peers(trade: Mapping[str, Any]) -> bool:
+    if bool(trade.get("lower_allocation_vs_peers")):
+        return True
+
+    explicit_reason = _token(resolve_explicit_reason(trade))
+    markers = (
+        "relative strength",
+        "smaller position",
+        "smaller size",
+        "reduced size",
+        "below base",
+    )
+    return any(marker in explicit_reason for marker in markers)
 
 
 def _is_hard_stop(trade: Mapping[str, Any], explicit_reason: str) -> bool:

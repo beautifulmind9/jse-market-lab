@@ -6,6 +6,7 @@ sys.path.append(str(ROOT))
 
 from app.planner.explanations import (
     classify_decision_status,
+    explain_funded_trade_why,
     explain_portfolio_decision,
     explain_primary_rule_or_constraint,
     resolve_explicit_reason,
@@ -132,3 +133,37 @@ def test_generic_fallback_stays_unfunded_when_no_markers_present():
     }
 
     assert classify_decision_status(trade) == "unfunded"
+
+
+def test_funded_why_mapping_for_tier_a_strong():
+    text = explain_funded_trade_why({"quality_tier": "A", "confidence_label": "strong"})
+    assert text == "Selected — strong setup with good confirmation."
+
+
+def test_funded_why_mapping_for_tier_a_moderate():
+    text = explain_funded_trade_why({"quality_tier": "A", "confidence_label": "moderate"})
+    assert text == "Selected — solid setup with decent confirmation."
+
+
+def test_funded_why_mapping_for_tier_b():
+    text = explain_funded_trade_why({"quality_tier": "B", "confidence_label": "strong"})
+    assert text == "Selected — decent setup but not the strongest."
+
+
+def test_funded_why_uses_relative_strength_wording_for_smaller_position():
+    text = explain_funded_trade_why(
+        {
+            "quality_tier": "A",
+            "confidence_label": "strong",
+            "allocation_reason_clear": "Reduced size due to relative strength against peers.",
+        }
+    )
+    assert text == "Selected — smaller position due to relative strength."
+
+
+def test_funded_why_rank_stays_single_sentence():
+    text = explain_funded_trade_why(
+        {"quality_tier": "A", "confidence_label": "strong", "selection_rank": 2}
+    )
+    assert text.count(".") == 1
+    assert text.endswith("ranked #2.")
