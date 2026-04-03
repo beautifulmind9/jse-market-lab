@@ -158,3 +158,14 @@ def render_portfolio_plan(
         "- Max funded trades: 3\n"
         "- Tier C and liquidity failures are not funded"
     )
+
+
+def _first_sentence(text: str) -> str:
+    cleaned = str(text or "").strip()
+    if not cleaned:
+        return ""
+
+    sentence = cleaned.split(".")[0].strip()
+    if not sentence:
+        return ""
+    return f"{sentence}."
