@@ -9,6 +9,7 @@ import pandas as pd
 from app.planner.explanations import (
     REASON_KEYS,
     classify_decision_status,
+    explain_funded_trade_why,
     explain_portfolio_decision,
     resolve_explicit_reason,
 )
@@ -66,8 +67,8 @@ def split_trades_by_funding(
 
 
 def generate_funding_reason(trade: Mapping[str, Any]) -> str:
-    """Generate a compact funding explanation using explicit reasons first."""
-    return explain_portfolio_decision(trade)
+    """Generate a short single-sentence 'Why' message for funded rows."""
+    return explain_funded_trade_why(trade)
 
 
 def resolve_unfunded_reason(trade: Mapping[str, Any]) -> str:
@@ -158,3 +159,14 @@ def render_portfolio_plan(
         "- Max funded trades: 3\n"
         "- Tier C and liquidity failures are not funded"
     )
+
+
+def _first_sentence(text: str) -> str:
+    cleaned = str(text or "").strip()
+    if not cleaned:
+        return ""
+
+    sentence = cleaned.split(".")[0].strip()
+    if not sentence:
+        return ""
+    return f"{sentence}."

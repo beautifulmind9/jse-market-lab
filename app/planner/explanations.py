@@ -34,6 +34,14 @@ _REDUCED_TO_ZERO_MARKERS = (
     "reduced allocation to zero",
 )
 
+_STATUS_WHY_TEXT = {
+    "funded": "Selected — one of the strongest setups right now.",
+    "eligible but constrained": "Not funded — better trades already used up the available slots.",
+    "not eligible": "Not funded — this setup didn’t meet the rules.",
+    "reduced to zero": "Not funded — risk rules cut this position to zero.",
+    "unfunded": "Not funded — this setup wasn’t strong enough.",
+}
+
 
 def resolve_explicit_reason(trade: Mapping[str, Any]) -> str:
     """Return allocator-provided reason text using priority order."""
