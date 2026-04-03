@@ -208,3 +208,30 @@ Sprint 8 passes when:
 - wording is clear, natural, and easy to understand
 - confidence and warning explanations are validated in-app
 - final UI review is complete
+
+# UAT — Sprint 8
+
+## Overall Status
+Complete
+
+## Final Assessment
+
+| Area | Status | Notes |
+|-----|--------|------|
+| Trade explanations | Pass | Clear, short, and aligned with decisions |
+| Allocation explanations | Pass | No duplication, easy to understand |
+| Decision status model | Pass | Distinct and meaningful categories |
+| Embedded insights | Pass | Clear, observational, and readable |
+| Language quality | Pass | Simple, natural, and non-technical |
+| UI readability | Pass | Reduced friction, no excessive scrolling |
+
+## Summary
+Sprint 8 successfully delivers a usable decision-support layer.
+
+The product now:
+- communicates decisions clearly
+- reduces cognitive load
+- improves user trust
+
+## Closeout Decision
+Sprint 8 is complete and ready to transition to the next phase.
