@@ -490,3 +490,31 @@ was created for marketing/public-sharing support and does not automatically requ
 - validate warning explanations in-app
 - confirm final UI readability
 - complete Sprint 8 UAT and closeout
+
+### Sprint 8 — Decision Clarity Layer (Explanation + Embedded Insights)
+**Status:** Complete  
+**Priority:** High
+
+**Delivered**
+- In-app explanation layer for funded and unfunded trades
+- Clear decision-status model:
+  - Selected
+  - Not valid
+  - Not funded (limit reached)
+  - Not funded (cut to zero)
+  - Not funded
+- Simplified “Why” explanations (single-line, non-technical, non-repetitive)
+- Embedded insight layer:
+  - what_is_happening
+  - what_to_watch
+- Improved wording to simple, natural, Jamaican-friendly English
+- Reduced UI friction (no duplication, shorter rows, improved scanability)
+
+**Outcome**
+Users can:
+- understand decisions immediately
+- distinguish between different “not funded” reasons
+- scan the portfolio without decoding system logic
+
+**Notes**
+Further wording polish and UI refinement can be handled in later sprints.
