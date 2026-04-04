@@ -519,6 +519,53 @@ Users can:
 **Notes**
 Further wording polish and UI refinement can be handled in later sprints.
 
+# Sprint 9 Backlog
+
+## Core Tasks
+
+### Ticker Intelligence Module
+- [ ] create `app/analysis/ticker_intelligence.py`
+- [ ] implement `compute_ticker_metrics`
+- [ ] implement `build_ticker_summary`
+- [ ] implement `build_ticker_behavior`
+
+---
+
+### Logic Implementation
+- [ ] holding window comparison (5D vs 20D)
+- [ ] consistency (avg vs median)
+- [ ] reliability (win rate thresholds)
+- [ ] tier distribution analysis
+- [ ] sample size detection
+
+---
+
+### UI Implementation
+- [ ] add "Ticker Analysis" tab
+- [ ] add ticker dropdown
+- [ ] render summary
+- [ ] render stats table
+- [ ] render behavior insights
+
+---
+
+### Testing
+- [ ] add `tests/test_ticker_intelligence.py`
+- [ ] test output structure
+- [ ] test summary logic
+- [ ] test low sample size
+- [ ] test missing data handling
+
+---
+
+### Review & Refinement
+- [ ] review holding-window logic
+- [ ] refine reliability thresholds
+- [ ] tighten wording for clarity
+- [ ] run full regression tests
+- [ ] complete manual UI review
+
+
 ### Sprint 9 — Ticker Intelligence Layer
 **Status:** In progress  
 **Priority:** High
