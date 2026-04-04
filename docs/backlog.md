@@ -590,3 +590,11 @@ Further wording polish and UI refinement can be handled in later sprints.
 - confirm behavior insights are trustworthy and easy to understand
 - refine wording and logic where needed
 - complete Sprint 9 UAT
+
+### Sprint 9 — Ticker Intelligence Layer
+**Status:** Complete (functional)  
+**Follow-up:** Tone refinement (Jamaican English)
+
+**Note**
+- Outputs are clear and correct
+- Wording will be refined to better reflect natural Jamaican English tone
