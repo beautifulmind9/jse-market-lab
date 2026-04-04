@@ -518,3 +518,28 @@ Users can:
 
 **Notes**
 Further wording polish and UI refinement can be handled in later sprints.
+
+### Sprint 9 — Ticker Intelligence Layer
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added ticker intelligence module with:
+  - `compute_ticker_metrics(df, ticker)`
+  - `build_ticker_summary(metrics)`
+  - `build_ticker_behavior(metrics)`
+- Added new Ticker Analysis tab to the app
+- Added ticker dropdown, summary, stats table, and behavior insights
+- Added initial test coverage for output structure, summary generation, low sample size, and missing data handling
+
+**Open follow-up**
+- review holding-window comparison logic to ensure it reflects stability and reliability, not just average return
+- review reliability thresholds against the intended product rules
+- tighten wording so ticker summaries feel as natural and simple as Sprint 8 language
+- run broader regression and complete manual UI review
+
+**Remaining focus**
+- validate the Ticker Analysis tab in the running app
+- confirm behavior insights are trustworthy and easy to understand
+- refine wording and logic where needed
+- complete Sprint 9 UAT
