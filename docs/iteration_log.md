@@ -24,3 +24,4 @@
 | V13.5 | Sprint 8 wording and status refinement | Improved embedded insight wording and identified the need to separate hard-stop ineligibility from zero-allocation risk sizing outcomes |
 | V13.6 | Sprint 8 decision-status refinement | Added a distinct “reduced to zero” status so trades sized down to 0% are not misclassified as hard-stop ineligible |
 | V13.7 | Sprint 8 closeout | Completed decision clarity layer with simplified wording, improved status model, and embedded insights that make the portfolio immediately understandable |
+| V14 | Sprint 9 ticker intelligence first slice | Added ticker-level summary, stats, and behavior insights in a new Ticker Analysis tab, with follow-up review needed for comparison logic and wording quality |
