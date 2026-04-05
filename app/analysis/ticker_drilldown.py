@@ -8,7 +8,7 @@ import pandas as pd
 
 
 TICKER_COLUMNS = ["ticker", "instrument"]
-RETURN_COLUMNS = ["net_return_pct", "return_pct"]
+RETURN_COLUMNS = ["net_return_pct", "return_pct", "net_return", "return"]
 TIER_COLUMNS = ["quality_tier", "tier"]
 
 
@@ -138,8 +138,8 @@ def compute_return_distribution(df: pd.DataFrame, ticker: str) -> dict[str, int]
         return distribution
 
     distribution["negative"] = int((returns <= 0).sum())
-    distribution["small_positive"] = int(((returns > 0) & (returns < 0.03)).sum())
-    distribution["strong_positive"] = int((returns >= 0.03).sum())
+    distribution["small_positive"] = int(((returns > 0) & (returns < 3.0)).sum())
+    distribution["strong_positive"] = int((returns >= 3.0).sum())
     return distribution
 
 
