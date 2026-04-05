@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from app.analysis.ticker_intelligence import compute_ticker_metrics
+from app.analysis.ticker_drilldown import build_ticker_drilldown
 from app.data.ingest import ingest_dataset
 from app.demo.run_demo import run_demo
 from app.insights.analyst import render_analyst_insights
@@ -64,26 +64,72 @@ def main() -> None:
                 st.info("Ticker Analysis is unavailable because no tickers are available.")
             else:
                 selected_ticker = st.selectbox("Select ticker", ticker_options)
-                ticker_payload = compute_ticker_metrics(analyst_df, selected_ticker)
+                ticker_payload = build_ticker_drilldown(analyst_df, selected_ticker)
 
-                st.markdown("#### Summary")
-                st.write(ticker_payload["summary"])
+                st.markdown("#### Pattern Summary")
+                st.write(ticker_payload["pattern_summary"])
 
-                st.markdown("#### Stats")
-                stats_table = pd.DataFrame([ticker_payload["stats"]]).rename(
-                    columns={
-                        "win_rate": "Win Rate",
-                        "median_return": "Median Return",
-                        "avg_return": "Average Return",
-                        "best_window": "Best Window",
-                        "signal_count": "Signal Count",
+                signal_df = pd.DataFrame(ticker_payload["signals"])
+                signal_count = int(len(signal_df))
+                if signal_df.empty or "return_pct" not in signal_df.columns:
+                    key_stats = {
+                        "Signal Count": signal_count,
+                        "Win Rate": 0.0,
+                        "Median Return": 0.0,
+                        "Average Return": 0.0,
                     }
-                )
-                st.dataframe(stats_table, use_container_width=True)
+                else:
+                    returns = pd.to_numeric(signal_df["return_pct"], errors="coerce").dropna()
+                    if returns.empty:
+                        key_stats = {
+                            "Signal Count": signal_count,
+                            "Win Rate": 0.0,
+                            "Median Return": 0.0,
+                            "Average Return": 0.0,
+                        }
+                    else:
+                        key_stats = {
+                            "Signal Count": signal_count,
+                            "Win Rate": float((returns > 0).mean()),
+                            "Median Return": float(returns.median()),
+                            "Average Return": float(returns.mean()),
+                        }
 
-                st.markdown("#### Behavior")
-                for key in ["holding_window", "consistency", "reliability", "tier_profile"]:
-                    st.markdown(f"- {ticker_payload['behavior'][key]}")
+                st.markdown("#### Key Stats")
+                st.dataframe(pd.DataFrame([key_stats]), use_container_width=True)
+
+                st.markdown("#### Holding Window Comparison")
+                holding_window_df = pd.DataFrame.from_dict(
+                    ticker_payload["holding_window_stats"], orient="index"
+                )
+                if holding_window_df.empty:
+                    st.info("No holding window data is ready for this ticker yet.")
+                else:
+                    st.dataframe(holding_window_df.reset_index().rename(columns={"index": "holding_window"}), use_container_width=True)
+
+                st.markdown("#### Tier Performance")
+                tier_df = pd.DataFrame.from_dict(ticker_payload["tier_performance"], orient="index")
+                if tier_df.empty:
+                    st.info("No tier breakdown is ready for this ticker yet.")
+                else:
+                    st.dataframe(tier_df.reset_index().rename(columns={"index": "quality_tier"}), use_container_width=True)
+
+                st.markdown("#### Volatility Performance")
+                volatility_df = pd.DataFrame.from_dict(ticker_payload["volatility_performance"], orient="index")
+                if volatility_df.empty:
+                    st.info("No volatility breakdown is ready for this ticker yet.")
+                else:
+                    st.dataframe(volatility_df.reset_index().rename(columns={"index": "volatility_bucket"}), use_container_width=True)
+
+                st.markdown("#### Return Distribution")
+                distribution_df = pd.DataFrame([ticker_payload["return_distribution"]])
+                st.dataframe(distribution_df, use_container_width=True)
+
+                st.markdown("#### Signal Breakdown")
+                if signal_df.empty:
+                    st.info("No signal history is available for this ticker yet.")
+                else:
+                    st.dataframe(signal_df, use_container_width=True)
 
     with plan_tab:
         st.markdown("### Portfolio Plan")
