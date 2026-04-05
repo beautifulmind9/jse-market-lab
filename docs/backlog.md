@@ -598,3 +598,83 @@ Further wording polish and UI refinement can be handled in later sprints.
 **Note**
 - Outputs are clear and correct
 - Wording will be refined to better reflect natural Jamaican English tone
+
+
+---
+
+# 🧾 `docs/sprint_10_backlog.md`
+
+```md
+# Sprint 10 Backlog
+
+## Core Module
+
+### Drilldown Engine
+- [ ] create `app/analysis/ticker_drilldown.py`
+- [ ] implement `compute_signal_breakdown`
+- [ ] implement `compute_holding_window_stats`
+- [ ] implement `compute_return_distribution`
+- [ ] implement `compute_tier_performance`
+- [ ] implement `compute_volatility_performance`
+- [ ] implement `build_pattern_summary`
+
+---
+
+## Logic Tasks
+
+### Signals
+- [ ] filter by ticker
+- [ ] structure signal rows
+- [ ] calculate win/loss
+
+### Holding Windows
+- [ ] group by holding window
+- [ ] calculate win rate
+- [ ] calculate median + average return
+
+### Return Distribution
+- [ ] bucket returns:
+  - negative
+  - small positive
+  - strong positive
+
+### Tier Performance
+- [ ] group by tier
+- [ ] calculate metrics per tier
+
+### Volatility Performance
+- [ ] group by volatility bucket
+- [ ] calculate metrics
+
+---
+
+## UI Tasks
+
+- [ ] extend Ticker Analysis tab OR create Drilldown section
+- [ ] render:
+  - signal table
+  - holding window comparison
+  - tier breakdown
+  - volatility breakdown
+  - pattern summary
+
+---
+
+## Testing
+
+- [ ] create `tests/test_ticker_drilldown.py`
+- [ ] test signal extraction
+- [ ] test grouping logic
+- [ ] test distribution logic
+- [ ] test pattern summary
+- [ ] test empty/missing data
+
+---
+
+## Review
+
+- [ ] validate holding window comparison
+- [ ] validate distribution buckets
+- [ ] refine pattern summary wording
+- [ ] ensure no duplication with Sprint 9
+- [ ] run full regression tests
