@@ -10,6 +10,7 @@ import pandas as pd
 TICKER_COLUMNS = ["ticker", "instrument"]
 RETURN_COLUMNS = ["net_return_pct", "net_return", "return_pct", "return"]
 TIER_COLUMNS = ["quality_tier", "tier"]
+NORMALIZED_RETURN_COLUMN = "_normalized_return_pct"
 
 
 def _resolve_first_column(df: pd.DataFrame, candidates: list[str]) -> str | None:
@@ -31,6 +32,13 @@ def _normalize_returns_to_percentage_points(returns: pd.Series, return_column: s
     if return_column in {"net_return", "return"}:
         return returns * 100.0
     return returns
+
+
+def _attach_normalized_returns(df: pd.DataFrame, return_column: str) -> pd.DataFrame:
+    scoped = df.copy()
+    returns = pd.to_numeric(scoped[return_column], errors="coerce")
+    scoped[NORMALIZED_RETURN_COLUMN] = _normalize_returns_to_percentage_points(returns, return_column)
+    return scoped
 
 
 def _resolve_tier_column(df: pd.DataFrame) -> str | None:
@@ -84,6 +92,8 @@ def compute_signal_breakdown(df: pd.DataFrame, ticker: str) -> list[dict[str, An
         return []
 
     return_column = _resolve_return_column(scoped)
+    if return_column is not None:
+        scoped = _attach_normalized_returns(scoped, return_column)
     tier_column = _resolve_tier_column(scoped)
 
     if "date" in scoped.columns:
@@ -102,7 +112,7 @@ def compute_signal_breakdown(df: pd.DataFrame, ticker: str) -> list[dict[str, An
             signal["holding_window"] = _format_holding_window(row.get("holding_window"))
 
         if return_column is not None:
-            return_value = pd.to_numeric(row.get(return_column), errors="coerce")
+            return_value = pd.to_numeric(row.get(NORMALIZED_RETURN_COLUMN), errors="coerce")
             if not pd.isna(return_value):
                 return_float = float(return_value)
                 signal["return_pct"] = return_float
@@ -124,10 +134,11 @@ def compute_holding_window_stats(df: pd.DataFrame, ticker: str) -> dict[str, dic
     return_column = _resolve_return_column(scoped)
     if scoped.empty or return_column is None or "holding_window" not in scoped.columns:
         return {}
+    scoped = _attach_normalized_returns(scoped, return_column)
 
     stats: dict[str, dict[str, float | int]] = {}
     for window, group in scoped.groupby("holding_window", dropna=True):
-        stats[_format_holding_window(window)] = _build_group_stats(group, return_column)
+        stats[_format_holding_window(window)] = _build_group_stats(group, NORMALIZED_RETURN_COLUMN)
 
     return stats
 
@@ -139,15 +150,14 @@ def compute_return_distribution(df: pd.DataFrame, ticker: str) -> dict[str, int]
     if scoped.empty or return_column is None:
         return distribution
 
-    returns = pd.to_numeric(scoped[return_column], errors="coerce").dropna()
+    scoped = _attach_normalized_returns(scoped, return_column)
+    returns = pd.to_numeric(scoped[NORMALIZED_RETURN_COLUMN], errors="coerce").dropna()
     if returns.empty:
         return distribution
 
-    normalized_returns = _normalize_returns_to_percentage_points(returns, return_column)
-
-    distribution["negative"] = int((normalized_returns <= 0).sum())
-    distribution["small_positive"] = int(((normalized_returns > 0) & (normalized_returns < 3.0)).sum())
-    distribution["strong_positive"] = int((normalized_returns >= 3.0).sum())
+    distribution["negative"] = int((returns <= 0).sum())
+    distribution["small_positive"] = int(((returns > 0) & (returns < 3.0)).sum())
+    distribution["strong_positive"] = int((returns >= 3.0).sum())
     return distribution
 
 
@@ -157,10 +167,11 @@ def compute_tier_performance(df: pd.DataFrame, ticker: str) -> dict[str, dict[st
     tier_column = _resolve_tier_column(scoped)
     if scoped.empty or return_column is None or tier_column is None:
         return {}
+    scoped = _attach_normalized_returns(scoped, return_column)
 
     stats: dict[str, dict[str, float | int]] = {}
     for tier, group in scoped.groupby(tier_column, dropna=True):
-        stats[str(tier)] = _build_group_stats(group, return_column)
+        stats[str(tier)] = _build_group_stats(group, NORMALIZED_RETURN_COLUMN)
 
     return stats
 
@@ -170,10 +181,11 @@ def compute_volatility_performance(df: pd.DataFrame, ticker: str) -> dict[str, d
     return_column = _resolve_return_column(scoped)
     if scoped.empty or return_column is None or "volatility_bucket" not in scoped.columns:
         return {}
+    scoped = _attach_normalized_returns(scoped, return_column)
 
     stats: dict[str, dict[str, float | int]] = {}
     for bucket, group in scoped.groupby("volatility_bucket", dropna=True):
-        stats[str(bucket)] = _build_group_stats(group, return_column)
+        stats[str(bucket)] = _build_group_stats(group, NORMALIZED_RETURN_COLUMN)
 
     return stats
 

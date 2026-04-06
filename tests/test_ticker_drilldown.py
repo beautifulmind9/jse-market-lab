@@ -225,3 +225,52 @@ def test_metrics_stay_empty_safe_when_no_supported_return_alias_exists():
     assert distribution == {"negative": 0, "small_positive": 0, "strong_positive": 0}
     assert tier == {}
     assert volatility == {}
+
+
+def _equivalent_alias_df(return_column: str) -> pd.DataFrame:
+    percent_point_returns = [2.5, -1.0, 3.5, 1.0]
+    returns = (
+        [value / 100.0 for value in percent_point_returns]
+        if return_column in {"net_return", "return"}
+        else percent_point_returns
+    )
+    return pd.DataFrame(
+        {
+            "instrument": ["NCB", "NCB", "NCB", "NCB"],
+            "holding_window": [5, 5, 20, 20],
+            "quality_tier": ["A", "B", "A", "C"],
+            "volatility_bucket": ["low", "mid", "mid", "high"],
+            return_column: returns,
+        }
+    )
+
+
+def test_drilldown_outputs_are_schema_consistent_across_return_aliases():
+    aliases = ["net_return_pct", "net_return", "return_pct", "return"]
+    payloads = {alias: build_ticker_drilldown(_equivalent_alias_df(alias), "NCB") for alias in aliases}
+
+    def _rounded_stats(stats: dict[str, dict[str, float | int]]) -> dict[str, dict[str, float | int]]:
+        rounded: dict[str, dict[str, float | int]] = {}
+        for bucket, values in stats.items():
+            rounded[bucket] = {
+                key: (round(float(value), 8) if isinstance(value, float) else value) for key, value in values.items()
+            }
+        return rounded
+
+    baseline = payloads["net_return_pct"]
+    for alias in aliases[1:]:
+        assert len(payloads[alias]["signals"]) == len(baseline["signals"])
+        for candidate_signal, baseline_signal in zip(payloads[alias]["signals"], baseline["signals"], strict=True):
+            assert candidate_signal.keys() == baseline_signal.keys()
+            for key in candidate_signal:
+                if key == "return_pct":
+                    assert round(float(candidate_signal[key]), 8) == round(float(baseline_signal[key]), 8)
+                else:
+                    assert candidate_signal[key] == baseline_signal[key]
+        assert _rounded_stats(payloads[alias]["holding_window_stats"]) == _rounded_stats(baseline["holding_window_stats"])
+        assert payloads[alias]["return_distribution"] == baseline["return_distribution"]
+        assert _rounded_stats(payloads[alias]["tier_performance"]) == _rounded_stats(baseline["tier_performance"])
+        assert _rounded_stats(payloads[alias]["volatility_performance"]) == _rounded_stats(
+            baseline["volatility_performance"]
+        )
+        assert payloads[alias]["pattern_summary"] == baseline["pattern_summary"]
