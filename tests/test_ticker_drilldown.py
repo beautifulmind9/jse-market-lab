@@ -132,7 +132,7 @@ def _sample_df_with_alias(return_column: str) -> pd.DataFrame:
         {
             "instrument": ["NCB", "NCB", "NCB", "NCB", "JMMB"],
             "holding_window": [5, 5, 20, 20, 5],
-            return_column: [2.0, -1.0, 4.0, 1.0, 3.0],
+            return_column: [0.02, -0.01, 0.04, 0.01, 0.03],
             "quality_tier": ["A", "B", "A", "C", "B"],
             "volatility_bucket": ["low", "mid", "mid", "high", "mid"],
         }
@@ -172,16 +172,35 @@ def test_return_column_alias_resolution_supports_return():
 
 
 def test_return_distribution_uses_percentage_point_cutoffs_for_all_aliases():
-    expected = {"negative": 2, "small_positive": 2, "strong_positive": 2}
-    base = {
-        "instrument": ["NCB", "NCB", "NCB", "NCB", "NCB", "NCB"],
-        "values": [-2.0, 0.0, 0.5, 2.99, 3.0, 7.5],
-    }
+    pct_expected = {"negative": 2, "small_positive": 2, "strong_positive": 2}
+    pct_values = [-2.0, 0.0, 0.5, 2.99, 3.0, 7.5]
 
-    for column in ["net_return_pct", "return_pct", "net_return", "return"]:
-        df = pd.DataFrame({"instrument": base["instrument"], column: base["values"]})
+    for column in ["net_return_pct", "return_pct"]:
+        df = pd.DataFrame({"instrument": ["NCB"] * 6, column: pct_values})
         distribution = compute_return_distribution(df, "NCB")
-        assert distribution == expected
+        assert distribution == pct_expected
+
+    fractional_expected = {"negative": 2, "small_positive": 2, "strong_positive": 2}
+    fractional_values = [-0.02, 0.0, 0.005, 0.0299, 0.03, 0.075]
+
+    for column in ["net_return", "return"]:
+        df = pd.DataFrame({"instrument": ["NCB"] * 6, column: fractional_values})
+        distribution = compute_return_distribution(df, "NCB")
+        assert distribution == fractional_expected
+
+
+def test_return_column_priority_prefers_net_return_before_return_pct():
+    df = pd.DataFrame(
+        {
+            "instrument": ["NCB", "NCB", "NCB", "NCB"],
+            "net_return": [0.01, -0.01, 0.05, 0.02],
+            "return_pct": [100.0, 100.0, 100.0, 100.0],
+        }
+    )
+
+    distribution = compute_return_distribution(df, "NCB")
+
+    assert distribution == {"negative": 1, "small_positive": 2, "strong_positive": 1}
 
 
 def test_metrics_stay_empty_safe_when_no_supported_return_alias_exists():
