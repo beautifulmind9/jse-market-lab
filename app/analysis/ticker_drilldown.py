@@ -8,7 +8,7 @@ import pandas as pd
 
 
 TICKER_COLUMNS = ["ticker", "instrument"]
-RETURN_COLUMNS = ["net_return_pct", "return_pct"]
+RETURN_COLUMNS = ["net_return_pct", "net_return", "return_pct", "return"]
 TIER_COLUMNS = ["quality_tier", "tier"]
 
 
@@ -25,6 +25,12 @@ def _resolve_ticker_column(df: pd.DataFrame) -> str | None:
 
 def _resolve_return_column(df: pd.DataFrame) -> str | None:
     return _resolve_first_column(df, RETURN_COLUMNS)
+
+
+def _normalize_returns_to_percentage_points(returns: pd.Series, return_column: str) -> pd.Series:
+    if return_column in {"net_return", "return"}:
+        return returns * 100.0
+    return returns
 
 
 def _resolve_tier_column(df: pd.DataFrame) -> str | None:
@@ -137,9 +143,11 @@ def compute_return_distribution(df: pd.DataFrame, ticker: str) -> dict[str, int]
     if returns.empty:
         return distribution
 
-    distribution["negative"] = int((returns <= 0).sum())
-    distribution["small_positive"] = int(((returns > 0) & (returns < 0.03)).sum())
-    distribution["strong_positive"] = int((returns >= 0.03).sum())
+    normalized_returns = _normalize_returns_to_percentage_points(returns, return_column)
+
+    distribution["negative"] = int((normalized_returns <= 0).sum())
+    distribution["small_positive"] = int(((normalized_returns > 0) & (normalized_returns < 3.0)).sum())
+    distribution["strong_positive"] = int((normalized_returns >= 3.0).sum())
     return distribution
 
 
