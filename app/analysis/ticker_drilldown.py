@@ -11,6 +11,7 @@ TICKER_COLUMNS = ["ticker", "instrument"]
 RETURN_COLUMNS = ["net_return_pct", "net_return", "return_pct", "return"]
 TIER_COLUMNS = ["quality_tier", "tier"]
 NORMALIZED_RETURN_COLUMN = "_normalized_return_pct"
+PATTERN_SUMMARY_THRESHOLD_PCT = 0.3
 
 
 def _resolve_first_column(df: pd.DataFrame, candidates: list[str]) -> str | None:
@@ -232,7 +233,7 @@ def build_pattern_summary(
         if (
             float(top_stats.get("win_rate", 0.0)) >= float(second_stats.get("win_rate", 0.0)) + 0.1
             or float(top_stats.get("median_return", 0.0))
-            >= float(second_stats.get("median_return", 0.0)) + 0.003
+            >= float(second_stats.get("median_return", 0.0)) + PATTERN_SUMMARY_THRESHOLD_PCT
         ):
             return f"This stock tends to hold up better on {top_window} than {second_window} in this dataset."
 

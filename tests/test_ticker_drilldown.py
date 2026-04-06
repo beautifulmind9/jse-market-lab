@@ -274,3 +274,47 @@ def test_drilldown_outputs_are_schema_consistent_across_return_aliases():
             baseline["volatility_performance"]
         )
         assert payloads[alias]["pattern_summary"] == baseline["pattern_summary"]
+
+
+def _pattern_window_df(return_column: str, five_day_returns_pct: list[float], twenty_day_returns_pct: list[float]) -> pd.DataFrame:
+    all_returns_pct = five_day_returns_pct + twenty_day_returns_pct
+    returns = (
+        [value / 100.0 for value in all_returns_pct]
+        if return_column in {"net_return", "return"}
+        else all_returns_pct
+    )
+    return pd.DataFrame(
+        {
+            "instrument": ["NCB", "NCB", "NCB", "NCB"],
+            "holding_window": [5, 5, 20, 20],
+            "quality_tier": ["A", "A", "A", "A"],
+            "volatility_bucket": ["mid", "mid", "mid", "mid"],
+            return_column: returns,
+        }
+    )
+
+
+def test_pattern_summary_holding_window_threshold_does_not_trigger_below_point_three_pct():
+    aliases = ["net_return_pct", "return_pct", "net_return", "return"]
+
+    for alias in aliases:
+        df = _pattern_window_df(
+            return_column=alias,
+            five_day_returns_pct=[1.0, 3.0],   # median 2.0
+            twenty_day_returns_pct=[1.8, 1.8],  # median 1.8 (delta 0.2)
+        )
+        payload = build_ticker_drilldown(df, "NCB")
+        assert "tends to hold up better on" not in payload["pattern_summary"]
+
+
+def test_pattern_summary_holding_window_threshold_triggers_above_point_three_pct():
+    aliases = ["net_return_pct", "return_pct", "net_return", "return"]
+
+    for alias in aliases:
+        df = _pattern_window_df(
+            return_column=alias,
+            five_day_returns_pct=[1.0, 3.0],   # median 2.0
+            twenty_day_returns_pct=[1.5, 1.7],  # median 1.6 (delta 0.4)
+        )
+        payload = build_ticker_drilldown(df, "NCB")
+        assert "tends to hold up better on 5D than 20D" in payload["pattern_summary"]
