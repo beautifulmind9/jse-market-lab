@@ -25,3 +25,4 @@
 | V13.6 | Sprint 8 decision-status refinement | Added a distinct “reduced to zero” status so trades sized down to 0% are not misclassified as hard-stop ineligible |
 | V13.7 | Sprint 8 closeout | Completed decision clarity layer with simplified wording, improved status model, and embedded insights that make the portfolio immediately understandable |
 | V14 | Sprint 9 ticker intelligence first slice | Added ticker-level summary, stats, and behavior insights in a new Ticker Analysis tab, with follow-up review needed for comparison logic and wording quality |
+| V14.1 | Sprint 10 return normalization hardening | Improved return alias support and distribution bucketing, with one final follow-up identified to normalize return units across all drilldown calculations |
