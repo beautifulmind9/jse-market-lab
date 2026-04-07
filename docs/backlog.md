@@ -707,3 +707,10 @@ Further wording polish and UI refinement can be handled in later sprints.
 
 **Open follow-up**
 - normalize resolved return aliases across all return-based drilldown calculations, not only distribution bucketing, so equivalent schemas produce consistent stats and summaries
+
+### Sprint 10 — Ticker Drilldown (Deep Understanding Layer)
+**Status:** In progress  
+**Priority:** High
+
+**Open follow-up**
+- scale pattern-summary threshold to match normalized return units (percentage points) to maintain consistent summary behavior
