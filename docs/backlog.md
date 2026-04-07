@@ -678,3 +678,32 @@ Further wording polish and UI refinement can be handled in later sprints.
 - [ ] refine pattern summary wording
 - [ ] ensure no duplication with Sprint 9
 - [ ] run full regression tests
+
+### Sprint 10 — Ticker Drilldown (Deep Understanding Layer)
+**Status:** In progress  
+**Priority:** High
+
+**Open follow-ups**
+- restore support for return-column aliases (`net_return`, `return`) in ticker drilldown
+- fix return-distribution cutoffs so percentage-point fields are bucketed correctly
+
+### Sprint 10 — Ticker Drilldown (Deep Understanding Layer)
+**Status:** In progress  
+**Priority:** High
+
+**Open follow-ups**
+- align return-column priority with existing analysis paths
+- normalize fractional return aliases before applying percentage-point distribution buckets
+
+### Sprint 10 — Ticker Drilldown (Deep Understanding Layer)
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added ticker drilldown module and Ticker Analysis UI sections
+- Added grouped breakdowns for holding windows, tiers, volatility, return distribution, and signal history
+- Restored return-column alias support
+- Corrected distribution bucketing with percentage-point normalization
+
+**Open follow-up**
+- normalize resolved return aliases across all return-based drilldown calculations, not only distribution bucketing, so equivalent schemas produce consistent stats and summaries
