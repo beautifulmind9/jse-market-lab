@@ -78,3 +78,11 @@ Ticker Drilldown:
 **Open follow-ups**
 - restore support for return-column aliases (`net_return`, `return`) in ticker drilldown
 - fix return-distribution cutoffs so percentage-point fields are bucketed correctly
+
+### Sprint 10 — Ticker Drilldown (Deep Understanding Layer)
+**Status:** In progress  
+**Priority:** High
+
+**Open follow-ups**
+- align return-column priority with existing analysis paths
+- normalize fractional return aliases before applying percentage-point distribution buckets
