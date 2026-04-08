@@ -27,3 +27,4 @@
 | V14 | Sprint 9 ticker intelligence first slice | Added ticker-level summary, stats, and behavior insights in a new Ticker Analysis tab, with follow-up review needed for comparison logic and wording quality |
 | V14.1 | Sprint 10 return normalization hardening | Improved return alias support and distribution bucketing, with one final follow-up identified to normalize return units across all drilldown calculations |
 | V14.2 | Sprint 10 closeout | Completed ticker drilldown with schema-consistent return handling, grouped stock behavior breakdowns, and stable pattern-summary logic across supported return aliases |
+| V15 | Sprint 11 started | Introduced Review & Discipline Layer to evaluate user decision behavior and detect mistakes |
