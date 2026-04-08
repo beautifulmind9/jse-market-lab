@@ -6,6 +6,12 @@ from typing import Any, Mapping, Sequence
 
 import pandas as pd
 
+from app.planner.decision_review import (
+    build_behavior_summary,
+    compute_discipline_score,
+    compute_trade_review,
+    detect_decision_mistakes,
+)
 from app.planner.explanations import (
     REASON_KEYS,
     classify_decision_status,
@@ -79,6 +85,9 @@ def render_portfolio_plan(
     allocations: Sequence[Mapping[str, Any]],
     total_capital: float,
     st_module=None,
+    *,
+    signals_df: pd.DataFrame | None = None,
+    show_review_table: bool = True,
 ) -> None:
     """Render portfolio summary, funded/unfunded tables, and constraints."""
     if st_module is None:
@@ -158,6 +167,40 @@ def render_portfolio_plan(
         "- Max funded trades: 3\n"
         "- Tier C and liquidity failures are not funded"
     )
+
+    st_module.markdown("#### Decision Review")
+    trades_df = pd.DataFrame(list(allocations))
+    safe_signals_df = signals_df if signals_df is not None else pd.DataFrame()
+    review_df = compute_trade_review(trades_df, safe_signals_df)
+    mistake_list = detect_decision_mistakes(
+        trades_df,
+        safe_signals_df,
+        trades_df,
+    )
+    discipline_score = compute_discipline_score(review_df)
+
+    st_module.write({"Discipline Score": discipline_score})
+
+    behavior_summary = build_behavior_summary(trades_df, review_df)
+    st_module.markdown("**Behavior Summary**")
+    for item in behavior_summary:
+        st_module.markdown(f"- {item}")
+
+    st_module.markdown("**Mistakes Detected**")
+    if mistake_list:
+        for mistake in mistake_list:
+            st_module.markdown(
+                f"- **{mistake['type']}**: {mistake['message']} Impact: {mistake['impact']}"
+            )
+    else:
+        st_module.markdown("- No clear decision mistakes were detected.")
+
+    if show_review_table:
+        st_module.markdown("**Trade Review Table**")
+        if review_df.empty:
+            st_module.info("No review rows available for this run.")
+        else:
+            st_module.dataframe(review_df, use_container_width=True)
 
 
 def _first_sentence(text: str) -> str:
