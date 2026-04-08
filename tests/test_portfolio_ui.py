@@ -12,6 +12,7 @@ class DummyStreamlit:
         self.dataframes = []
         self.info_messages = []
         self.captions = []
+        self.writes = []
 
     def subheader(self, _text):
         return None
@@ -27,6 +28,9 @@ class DummyStreamlit:
 
     def dataframe(self, df, use_container_width=False):
         self.dataframes.append((df.copy(), use_container_width))
+
+    def write(self, payload):
+        self.writes.append(payload)
 
 
 def test_render_portfolio_plan_uses_why_column_and_no_primary_rule_column():

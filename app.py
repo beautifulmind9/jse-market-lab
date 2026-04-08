@@ -160,6 +160,7 @@ def main() -> None:
             enriched_allocations,
             total_capital=total_capital,
             st_module=st,
+            signals_df=ranked_df,
         )
 
 
