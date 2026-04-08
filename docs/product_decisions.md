@@ -77,3 +77,24 @@ Because of that, the need for real historical data in that workflow does not aut
 - real historical data may be needed for credible external insight generation
 - app-level replacement of demo-default behavior remains a separate product decision
 - marketing input needs and app implementation priorities should be evaluated independently
+
+## Decision — Introduce Review Layer
+
+### Context
+Users could interpret outputs but had no feedback on their own decisions.
+
+### Decision
+Add a post-decision evaluation layer focused on:
+- behavior
+- mistakes
+- discipline
+
+### Rationale
+Improves:
+- user learning
+- trust in system
+- differentiation from basic dashboards
+
+### Trade-offs
+- adds complexity
+- requires careful tone control (no advisory language)
