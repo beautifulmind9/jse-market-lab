@@ -62,3 +62,19 @@ So I can interpret it easily
 - Decision Review section exists
 - includes summary, mistakes, score
 - no clutter or duplication
+
+### Sprint 11 — Review & Discipline Layer
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Review layer implementation started
+- Mistake detection and decision review logic added
+- Initial Codex review surfaced edge cases in allocation-context handling
+
+**Open follow-ups**
+- keep over-allocation detection empty-safe when `allocation_pct` is missing
+- preserve cooldown funding checks when trade and allocation dataframes overlap and duplicate `allocation_pct` columns can appear
+
+**Note**
+These are correctness fixes for the review layer and should be resolved before Sprint 11 closeout.
