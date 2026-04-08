@@ -28,3 +28,4 @@
 | V14.1 | Sprint 10 return normalization hardening | Improved return alias support and distribution bucketing, with one final follow-up identified to normalize return units across all drilldown calculations |
 | V14.2 | Sprint 10 closeout | Completed ticker drilldown with schema-consistent return handling, grouped stock behavior breakdowns, and stable pattern-summary logic across supported return aliases |
 | V15 | Sprint 11 started | Introduced Review & Discipline Layer to evaluate user decision behavior and detect mistakes |
+| V15.1 | Sprint 11 review hardening | Fixed decision-review edge cases around missing allocation percentages and overlapping trade/allocation inputs so mistake detection stays accurate and empty-safe |
