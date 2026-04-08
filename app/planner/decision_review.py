@@ -109,10 +109,9 @@ def detect_decision_mistakes(
             )
 
     allocation_safe = allocation_df if allocation_df is not None else pd.DataFrame()
-    if not allocation_safe.empty:
-        over_allocated = allocation_safe[
-            pd.to_numeric(allocation_safe.get("allocation_pct"), errors="coerce").fillna(0.0) > 0.70
-        ]
+    allocation_pct_series = _coerce_allocation_pct_series(allocation_safe)
+    if not allocation_safe.empty and allocation_pct_series is not None:
+        over_allocated = allocation_safe[allocation_pct_series > 0.70]
         for _, row in over_allocated.iterrows():
             instrument = _as_text(row.get("instrument"), fallback="Trade")
             allocation_pct = float(pd.to_numeric(row.get("allocation_pct"), errors="coerce") or 0.0)
@@ -126,11 +125,13 @@ def detect_decision_mistakes(
 
     merged_df = trades_df.copy()
     if not allocation_safe.empty and "instrument" in merged_df.columns and "instrument" in allocation_safe.columns:
-        merged_df = merged_df.merge(
-            allocation_safe[["instrument", "allocation_pct"]],
-            on="instrument",
-            how="left",
-        )
+        if "allocation_pct" not in merged_df.columns and "allocation_pct" in allocation_safe.columns:
+            merged_df = merged_df.merge(
+                allocation_safe[["instrument", "allocation_pct"]],
+                on="instrument",
+                how="left",
+            )
+    merged_df = _normalize_allocation_pct_column(merged_df)
 
     cooldown_mask = _build_cooldown_mask(merged_df)
     if cooldown_mask.any():
@@ -148,6 +149,33 @@ def detect_decision_mistakes(
                 )
 
     return mistakes
+
+
+def _coerce_allocation_pct_series(df: pd.DataFrame) -> pd.Series | None:
+    if df is None or df.empty:
+        return None
+    if "allocation_pct" not in df.columns:
+        return None
+    return pd.to_numeric(df["allocation_pct"], errors="coerce").fillna(0.0)
+
+
+def _normalize_allocation_pct_column(df: pd.DataFrame) -> pd.DataFrame:
+    if df is None or df.empty:
+        return df
+
+    if "allocation_pct" in df.columns:
+        return df
+
+    candidates = [col for col in ("allocation_pct_x", "allocation_pct_y") if col in df.columns]
+    if not candidates:
+        return df
+
+    normalized = pd.to_numeric(df[candidates[0]], errors="coerce")
+    for col in candidates[1:]:
+        normalized = normalized.combine_first(pd.to_numeric(df[col], errors="coerce"))
+    df = df.copy()
+    df["allocation_pct"] = normalized
+    return df
 
 
 def build_behavior_summary(trades_df: pd.DataFrame, review_df: pd.DataFrame) -> list[str]:

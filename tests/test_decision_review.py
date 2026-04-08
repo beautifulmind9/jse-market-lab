@@ -190,3 +190,43 @@ def test_empty_inputs_are_safe():
     assert mistakes == []
     assert len(summary) >= 2
     assert score == 0.0
+
+
+def test_detect_decision_mistakes_handles_missing_allocation_pct_column():
+    trades_df = pd.DataFrame(
+        [
+            {
+                "instrument": "AAA",
+                "selection_rank": 1,
+                "quality_tier": "A",
+                "liquidity_pass": True,
+                "cooldown_active": False,
+            }
+        ]
+    )
+    allocation_df = pd.DataFrame([{"instrument": "AAA"}])
+
+    mistakes = detect_decision_mistakes(trades_df, _signals_df(), allocation_df)
+
+    assert isinstance(mistakes, list)
+    assert all(item["type"] != "over_allocation" for item in mistakes)
+
+
+def test_detect_decision_mistakes_keeps_cooldown_check_when_trades_are_allocation_context():
+    trades_df = pd.DataFrame(
+        [
+            {
+                "instrument": "AAA",
+                "selection_rank": 1,
+                "quality_tier": "A",
+                "liquidity_pass": True,
+                "cooldown_active": True,
+                "allocation_pct": 0.25,
+            }
+        ]
+    )
+
+    mistakes = detect_decision_mistakes(trades_df, _signals_df(), trades_df)
+    mistake_types = {item["type"] for item in mistakes}
+
+    assert "cooldown_violation" in mistake_types
