@@ -714,3 +714,41 @@ Further wording polish and UI refinement can be handled in later sprints.
 
 **Open follow-up**
 - scale pattern-summary threshold to match normalized return units (percentage points) to maintain consistent summary behavior
+
+### Sprint 10 — Ticker Drilldown (Deep Understanding Layer)
+**Status:** Complete  
+**Priority:** High
+
+**Delivered**
+- Added ticker drilldown module and Ticker Analysis UI sections
+- Added grouped drilldown outputs for:
+  - signal breakdown
+  - holding window stats
+  - return distribution
+  - tier performance
+  - volatility performance
+  - pattern summary
+- Added support for multiple return-column aliases:
+  - net_return_pct
+  - net_return
+  - return_pct
+  - return
+- Normalized return aliases to percentage-point units for consistent drilldown behavior
+- Corrected return-distribution bucketing using normalized percentage-point values
+- Centralized pattern-summary threshold in percentage-point units to preserve consistent summary behavior across schemas
+- Added test coverage for:
+  - alias resolution
+  - grouped stats
+  - distribution buckets
+  - threshold behavior
+  - empty-safe handling
+
+**Outcome**
+Users can:
+- select a ticker
+- understand how that stock behaves in more detail
+- compare holding windows, tiers, and volatility conditions
+- trust that equivalent return schemas produce consistent drilldown behavior
+
+**Notes**
+Further wording polish can still happen later, but Sprint 10 functionality and logic are complete.
