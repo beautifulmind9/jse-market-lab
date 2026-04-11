@@ -752,3 +752,34 @@ Users can:
 
 **Notes**
 Further wording polish can still happen later, but Sprint 10 functionality and logic are complete.
+
+### Sprint 11 — Review & Discipline Layer
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Added review engine in `app/planner/decision_review.py`
+- Added:
+  - trade review
+  - mistake detection
+  - behavior summary
+  - discipline score
+- Integrated Decision Review into Portfolio Plan
+- Refined Portfolio Plan into subtabs:
+  - Plan
+  - Review
+- Added interpretation layer:
+  - What this means
+  - What to improve
+- Grouped repeated mistake types into cleaner summary lines
+- Added tests for review logic and UI behavior
+
+**Validated slice**
+- Decision Review now feels structurally distinct from the planning view
+- Review output now includes interpretation, not just detection
+- Mistake presentation is more readable and less repetitive
+
+**Remaining focus**
+- manually review usefulness of Review tab across different scenarios
+- confirm wording tone is clear and not too stiff
+- complete Sprint 11 UAT and closeout
