@@ -122,3 +122,77 @@ It makes the app flow clearer:
 
 ### Outcome
 The review layer now feels intentional rather than appended, and users can move between planning and reflection more naturally.
+
+## Decision — Add interpretation to review outputs
+
+### Context
+The first version of Decision Review showed:
+- discipline score
+- behavior summary
+- mistake list
+- trade review table
+
+However, this left a “so what?” gap. Users could see the review data but not clearly understand what it meant for their behavior.
+
+### Decision
+Add two interpretation sections to the Review tab:
+- What this means
+- What to improve
+
+### Rationale
+The review layer should not only detect mistakes. It should help users understand:
+- what the detected behavior implies
+- what kind of discipline gaps are showing up
+
+This remains observational and non-advisory, while making the review output more useful.
+
+### Outcome
+Decision Review now supports reflection, not just detection.
+
+## Decision — Group repeated mistake types in review output
+
+### Context
+The first review-layer version displayed repeated mistake entries line by line.
+
+This made the review output noisy and harder to scan.
+
+### Decision
+Group repeated mistake types into count-based summary lines where possible.
+
+Example:
+- “3 trade(s) did not meet the quality tier rule.”
+
+### Rationale
+The goal of the review layer is clarity and learning, not log-style output.
+
+Grouped mistakes reduce clutter and make patterns easier to understand.
+
+### Outcome
+Mistake presentation is cleaner, more readable, and better aligned with the product’s discipline-focused purpose.
+
+## Decision — Sprint 11 review layer is observational, not judgmental
+
+### Context
+The Review & Discipline Layer evaluates user behavior against system rules.
+
+That creates a tone risk: the feature could feel accusatory or overly prescriptive.
+
+### Decision
+Sprint 11 outputs must remain:
+- observational
+- neutral
+- discipline-focused
+- non-advisory
+
+### Rationale
+The product is a decision-support system, not a scolding tool.
+
+The review layer should help users reflect on:
+- whether they followed the system
+- where discipline broke down
+- what patterns are emerging
+
+without becoming harsh or giving direct investment advice.
+
+### Outcome
+The review layer supports learning and trust rather than blame.
