@@ -1,3 +1,4 @@
+import errno
 import sys
 from pathlib import Path
 
@@ -67,9 +68,22 @@ def test_run_demo_logs_warning_when_artifact_writes_are_permission_restricted(ca
     assert "restricted filesystem permissions" in caplog.text
 
 
+def test_run_demo_logs_warning_when_artifact_writes_are_read_only_filesystem(caplog, monkeypatch):
+    def raise_read_only_os_error(*args, **kwargs):
+        raise OSError(errno.EROFS, "read-only filesystem")
+
+    monkeypatch.setattr(Path, "mkdir", raise_read_only_os_error)
+
+    with caplog.at_level("WARNING"):
+        result = run_demo_module.run_demo()
+
+    assert not result["ranked"].empty
+    assert "read-only filesystem" in caplog.text
+
+
 def test_run_demo_does_not_swallow_unexpected_os_errors(monkeypatch):
     def raise_unexpected_os_error(*args, **kwargs):
-        raise OSError("disk full")
+        raise OSError(errno.ENOSPC, "disk full")
 
     monkeypatch.setattr(Path, "mkdir", raise_unexpected_os_error)
 
