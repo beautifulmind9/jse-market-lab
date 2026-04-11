@@ -321,3 +321,38 @@ The core product must be understandable and accessible before advanced intellige
 
 ### Outcome
 Phase 1 ends with a clean, public-ready decision-support product, while Phase 2 becomes a clear expansion path.
+
+## Decision — Use Jamaican-friendly English instead of generic finance language
+
+### Context
+The product is built for Jamaican users, but much of the current wording still sounds generic, technical, or globally templated.
+
+### Decision
+Sprint 12 introduces a language standard based on:
+- simple, conversational English
+- Jamaican-friendly tone
+- explanation before numbers
+- no slang-heavy phrasing
+- no advisory language
+
+### Rationale
+The goal is to make the dashboard feel local, accessible, and easy to understand without reducing credibility.
+
+### Outcome
+The product becomes easier to use for everyday Jamaicans while still supporting analyst users through a separate mode.
+
+## Decision — Beginner and Analyst modes should differ by language as well as detail
+
+### Context
+Different users need different levels of explanation and numerical detail.
+
+### Decision
+Sprint 12 Beginner vs Analyst mode should affect both:
+- what information is shown
+- how information is explained
+
+### Rationale
+A simple column toggle is not enough. The product should speak differently depending on the user’s needs.
+
+### Outcome
+Beginner Mode prioritizes clarity and meaning, while Analyst Mode keeps precision without losing readability.
