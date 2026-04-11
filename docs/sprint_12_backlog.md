@@ -66,3 +66,14 @@
 - [ ] add screenshots
 - [ ] add simple product walkthrough
 - [ ] align docs with final Phase 1 scope
+
+## Language system + mode differentiation
+- [ ] define shared language rules for Jamaican-friendly English
+- [ ] define Beginner vs Analyst wording patterns
+- [ ] create lightweight language formatting module
+- [ ] apply mode-aware language to first-run experience
+- [ ] apply mode-aware language to insights
+- [ ] apply mode-aware language to Portfolio Plan
+- [ ] apply mode-aware language to Decision Review
+- [ ] apply mode-aware language to Ticker Analysis summaries
+- [ ] add language-mode tests
