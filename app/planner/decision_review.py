@@ -197,11 +197,11 @@ def build_behavior_summary(trades_df: pd.DataFrame, review_df: pd.DataFrame) -> 
 
     insights: list[str] = [
         f"{followed} of {total} trades followed the selection rules ({rule_rate:.0%}).",
-        f"Rank order mismatches appeared on {rank_misses} trade(s).",
+        f"Selection order drift showed on {rank_misses} trade(s).",
     ]
 
     if quality_fails > 0:
-        insights.append(f"{quality_fails} trade(s) were below the quality rule.")
+        insights.append(f"{quality_fails} trade(s) came in below the quality rule.")
     else:
         insights.append("All reviewed trades stayed within the quality rule.")
 

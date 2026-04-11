@@ -235,19 +235,19 @@ def build_pattern_summary(
             or float(top_stats.get("median_return", 0.0))
             >= float(second_stats.get("median_return", 0.0)) + PATTERN_SUMMARY_THRESHOLD_PCT
         ):
-            return f"This stock tends to hold up better on {top_window} than {second_window} in this dataset."
+            return f"This stock has looked stronger on {top_window} than {second_window} in this dataset."
 
     best_tier = _pick_best_bucket(tier_performance)
     if best_tier is not None and len(tier_performance) >= 2:
         tier_name, tier_stats = best_tier
         if int(tier_stats.get("count", 0)) >= 2 and float(tier_stats.get("win_rate", 0.0)) >= 0.6:
-            return f"This stock looks strongest when the {tier_name} quality setups show up."
+            return f"This stock looks strongest when {tier_name} setups show up."
 
     best_volatility = _pick_best_bucket(volatility_performance)
     if best_volatility is not None and len(volatility_performance) >= 2:
         bucket, bucket_stats = best_volatility
         if int(bucket_stats.get("count", 0)) >= 2:
-            return f"For this stock, {bucket} volatility setups have looked more stable so far."
+            return f"For this stock, {bucket} volatility setups have looked steadier so far."
 
     negative = int(return_distribution.get("negative", 0))
     strong_positive = int(return_distribution.get("strong_positive", 0))

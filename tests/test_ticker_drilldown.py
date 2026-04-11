@@ -317,4 +317,4 @@ def test_pattern_summary_holding_window_threshold_triggers_above_point_three_pct
             twenty_day_returns_pct=[1.5, 1.7],  # median 1.6 (delta 0.4)
         )
         payload = build_ticker_drilldown(df, "NCB")
-        assert "tends to hold up better on 5D than 20D" in payload["pattern_summary"]
+        assert "looked stronger on 5D than 20D" in payload["pattern_summary"]

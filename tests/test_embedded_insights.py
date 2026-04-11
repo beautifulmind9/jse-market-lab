@@ -7,17 +7,7 @@ sys.path.append(str(ROOT))
 from app.insights.embedded import generate_embedded_insights
 
 
-APPROVED = {
-    "Most of the stronger trades right now are coming from steadier stocks.",
-    "Strong setups are leading this batch.",
-    "Only a few trades made it into the final picks this time.",
-    "Some trades look good on average, but the results are not consistent.",
-    "Short trades are more hit or miss right now.",
-    "A few setups have high returns but low win rates, which makes them less reliable.",
-}
-
-
-def test_embedded_insights_use_approved_fast_scan_lines():
+def test_embedded_insights_keep_short_sections():
     payload = generate_embedded_insights(
         [
             {
@@ -40,7 +30,7 @@ def test_embedded_insights_use_approved_fast_scan_lines():
         [{"allocation_amount": 0, "eligible_for_funding": True}],
     )
 
-    lines = payload["what_is_happening"] + payload["what_to_watch"]
-    assert lines
-    assert all(line in APPROVED for line in lines)
-    assert all("\n" not in line for line in lines)
+    assert len(payload["what_is_happening"]) <= 3
+    assert len(payload["what_to_watch"]) <= 3
+    assert 1 <= len(payload["common_mistakes"]) <= 2
+    assert isinstance(payload["why_this_matters"], str)

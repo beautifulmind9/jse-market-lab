@@ -74,11 +74,12 @@ def test_render_portfolio_plan_uses_why_column_and_no_primary_rule_column():
 
     assert "Why" in funded_df.columns
     assert "Why" in unfunded_df.columns
+    assert "Setup Strength" in funded_df.columns
     assert "Primary Rule/Constraint" not in funded_df.columns
     assert "Primary Rule/Constraint" not in unfunded_df.columns
     assert funded_df.iloc[0]["Decision Status"] == "Selected"
     assert unfunded_df.iloc[0]["Decision Status"] == "Not funded (limit reached)"
-    assert "Selected trades received funding" in st.captions[0]
+    assert "funds the strongest eligible setups first" in st.captions[0]
     assert st.tabs_requested == [["Plan", "Review"]]
 
 
@@ -92,5 +93,5 @@ def test_group_mistakes_for_display_combines_repeated_types():
         ]
     )
 
-    assert "3 trade(s) did not meet the quality tier rule." in grouped
-    assert "1 trade(s) failed the liquidity screen." in grouped
+    assert "3 trade(s) missed the setup-quality rule." in grouped
+    assert "1 trade(s) failed the liquidity check." in grouped

@@ -8,7 +8,9 @@ from typing import Any, Mapping, Sequence
 def generate_embedded_insights(
     trade_rows: Sequence[Mapping[str, Any]],
     allocations: Sequence[Mapping[str, Any]] | None = None,
-) -> dict[str, list[str]]:
+    *,
+    mode: str = "beginner",
+) -> dict[str, list[str] | str]:
     """Return neutral, plain-language insights for current planner data."""
     rows = [dict(row) for row in trade_rows]
     allocs = [dict(row) for row in allocations] if allocations is not None else []
@@ -41,29 +43,56 @@ def generate_embedded_insights(
         what_to_watch.append(risk_line)
 
     if not what_is_happening:
-        what_is_happening.append("Strong setups are leading this batch.")
+        what_is_happening.append("Stronger setups are showing up early in this scan.")
     if not what_to_watch:
-        what_to_watch.append("Some trades look good on average, but the results are not consistent.")
+        what_to_watch.append("Results are mixed, so keep an eye on consistency across trades.")
+
+    common_mistakes = _common_mistakes_lines(rows, mode=mode)
+    why_this_matters = (
+        "This helps you understand where the plan is strong, where risk is rising, and what to monitor next."
+    )
 
     return {
         "what_is_happening": what_is_happening[:3],
         "what_to_watch": what_to_watch[:3],
+        "common_mistakes": common_mistakes[:2],
+        "why_this_matters": why_this_matters,
     }
 
 
-def render_embedded_insights(insights: Mapping[str, Sequence[str]], *, st_module=None) -> None:
+def render_embedded_insights(insights: Mapping[str, Any], *, st_module=None) -> None:
     """Render embedded insights as simple bullet lists."""
     if st_module is None:
         import streamlit as st_module
 
-    st_module.markdown("#### Embedded Insight Layer")
-    st_module.markdown("**What is happening**")
+    st_module.markdown("#### Final Insight")
+    st_module.markdown("**What’s happening**")
     for line in insights.get("what_is_happening", []):
         st_module.markdown(f"- {line}")
 
     st_module.markdown("**What to watch**")
     for line in insights.get("what_to_watch", []):
         st_module.markdown(f"- {line}")
+
+    st_module.markdown("**Common mistakes**")
+    for line in insights.get("common_mistakes", []):
+        st_module.markdown(f"- {line}")
+
+    st_module.markdown("**Why this matters**")
+    st_module.markdown(str(insights.get("why_this_matters", "")))
+
+
+def _common_mistakes_lines(rows: Sequence[Mapping[str, Any]], *, mode: str) -> list[str]:
+    base = [
+        "Focusing on one big return number and missing that results are uneven.",
+        "Ignoring portfolio limits when several trades look strong at the same time.",
+    ]
+    if str(mode).lower() == "analyst":
+        return [
+            "Overweighting average return while median return and win rate disagree.",
+            "Letting rank order drift when capital limits are already tight.",
+        ]
+    return base
 
 
 def _volatility_insight(rows: Sequence[Mapping[str, Any]]) -> str:
