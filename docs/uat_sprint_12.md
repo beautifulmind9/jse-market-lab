@@ -61,3 +61,34 @@ Sprint 12 passes when:
 - first-time users can understand what they are seeing quickly
 - the dashboard feels clear, structured, and credible
 - the product is clearly positioned as a decision-support system
+
+# UAT — Sprint 12
+
+## Overall Status
+In progress — public deployment complete
+
+## Public-readiness checklist
+
+| Area | Status | Notes |
+|---|---|---|
+| App loads from a public URL | Pass | https://jsemarketlab.streamlit.app/ |
+| No technical setup required | Pass | Public deployment complete |
+| Demo data loads automatically | In progress | Needs live validation |
+| Default landing view feels sensible | In progress | Needs live validation |
+| Insight section is visible immediately | In progress | Needs live validation |
+| UI feels clean and readable | In progress | Needs live validation |
+| Beginner Mode works | Not started | |
+| Analyst Mode works | Not started | |
+| Language is simple and clear | In progress | Needs live validation |
+| Language feels Jamaican-friendly | In progress | Needs live validation |
+| No confusing labels remain | In progress | Needs live validation |
+| Free vs Pro framing is understandable | Not started | |
+| Deployment dependencies are complete | Pass | Streamlit deployment succeeded |
+| Restricted filesystem behavior is safe | Pass | Deployment hardening completed |
+
+## Pass criteria
+Sprint 12 passes when:
+- users can open the app through a public link
+- first-time users can understand what they are seeing quickly
+- the dashboard feels clear, structured, and credible
+- the product is clearly positioned as a decision-support system
