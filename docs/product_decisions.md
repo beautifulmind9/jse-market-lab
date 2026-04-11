@@ -276,3 +276,48 @@ This protects:
 
 ### Outcome
 Public-ready messaging remains centered on structured decision-making rather than conviction-selling.
+
+## Decision — Public deployment is part of Phase 1 completion
+
+### Context
+The dashboard had been usable only through a local Streamlit workflow.
+
+### Decision
+Phase 1 is not complete until the app is accessible through a public URL.
+
+### Rationale
+A public-ready product must remove technical setup friction for users.
+
+This supports:
+- easier testing
+- easier sharing
+- better validation
+- stronger portfolio presentation
+
+### Outcome
+Sprint 12 includes deployment to Streamlit Community Cloud as part of product completion.
+
+## Decision — Phase 2 intelligence features are deferred until after public-ready launch
+
+### Context
+Advanced ideas were proposed for:
+- earnings intelligence
+- dividend intelligence
+- news and qualitative-data intelligence
+- AI-powered event interpretation
+
+### Decision
+These ideas are deferred to Phase 2.
+
+Sprint 12 remains focused on:
+- clarity
+- usability
+- onboarding
+- deployment
+- public-ready positioning
+
+### Rationale
+The core product must be understandable and accessible before advanced intelligence layers are added.
+
+### Outcome
+Phase 1 ends with a clean, public-ready decision-support product, while Phase 2 becomes a clear expansion path.
