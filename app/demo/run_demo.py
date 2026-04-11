@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 import pandas as pd
@@ -13,6 +14,9 @@ from app.demo.language import get_explanatory_copy
 from app.events.earnings import tag_earnings_phase
 from app.events.phase_metrics import compute_phase_metrics
 from app.ranking.engine import rank_instruments
+
+
+logger = logging.getLogger(__name__)
 
 
 def run_demo(language_mode: str = "plain") -> dict:
@@ -49,9 +53,9 @@ def run_demo(language_mode: str = "plain") -> dict:
         phase_metrics.to_csv(artifacts_dir / "phase_metrics.csv", index=False)
         meta_payload = {"meta": meta, "issues": issues}
         (artifacts_dir / "meta.json").write_text(json.dumps(meta_payload, indent=2))
-    except OSError:
+    except PermissionError as exc:
         # Continue when running in restricted environments where local writes are unavailable.
-        pass
+        logger.warning("Demo artifacts not written due to restricted filesystem permissions: %s", exc)
 
     return {
         "ranked": ranked,
