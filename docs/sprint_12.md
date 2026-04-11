@@ -167,3 +167,53 @@ After Sprint 12, users should be able to:
 - explore opportunities and risk clearly
 - use the product without technical setup
 - experience a product that feels structured, credible, and public-ready
+
+## 8. Language System + Mode Differentiation
+
+Sprint 12 introduces a shared language system so the dashboard feels clear, consistent, and Jamaican-friendly across major user-facing surfaces.
+
+### Core language principles
+- simple, conversational English
+- not Patois
+- not academic
+- not jargon-heavy
+- short and direct
+- explanation before numbers
+- observational, not advisory
+
+### Translation approach
+Technical terms should be translated into familiar language where possible.
+
+Examples:
+- Win Rate → How often this works
+- Median Return → Typical return
+- Volatility → How much price moves
+- Liquidity Filter → Enough trading activity
+- Cooldown → Wait time before next trade
+- Tier A → Strong setup
+- Tier B → Decent setup
+- Tier C → Weak setup
+
+### Mode differentiation
+
+#### Beginner Mode
+- fewer numbers
+- simpler wording
+- focus on meaning and risk
+- minimal technical phrasing
+
+#### Analyst Mode
+- explanation first
+- key metrics second
+- includes percentages and holding-window detail
+- still avoids unnecessary jargon
+
+### Sprint 12 implementation focus
+The language system should first be applied to:
+- first-run header
+- insight sections
+- Portfolio Plan
+- Decision Review
+- Ticker Analysis summaries
+
+A broader full-app wording pass can continue later if needed.
