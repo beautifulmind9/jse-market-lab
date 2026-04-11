@@ -42,8 +42,7 @@ def test_compute_ticker_metrics_returns_required_structure():
 def test_compute_ticker_metrics_generates_summary_with_best_window():
     payload = compute_ticker_metrics(_sample_df(), "NCB")
 
-    assert "NCB closed positive" in payload["summary"]
-    assert payload["stats"]["best_window"] in payload["summary"]
+    assert "NCB had more positive closes" in payload["summary"]
 
 
 def test_compute_ticker_metrics_flags_low_sample_size_in_summary():

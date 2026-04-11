@@ -35,33 +35,39 @@ def _empty_payload() -> dict[str, Any]:
     }
 
 
-def build_ticker_summary(metrics: dict[str, Any]) -> str:
+def build_ticker_summary(metrics: dict[str, Any], *, mode: str = "beginner") -> str:
     stats = metrics["stats"]
     signal_count = int(stats["signal_count"])
     win_rate = float(stats["win_rate"]) * 100
     median_return = float(stats["median_return"]) * 100
     best_window = stats["best_window"]
 
-    base = (
-        f"{metrics['ticker']} closed positive {win_rate:.0f}% of the time with a median return of "
-        f"{median_return:.2f}% and looked strongest at the {best_window} window."
-    )
+    if str(mode).lower() == "analyst":
+        base = (
+            f"{metrics['ticker']} closed positive {win_rate:.0f}% of the time, with median return {median_return:.2f}%, "
+            f"and the strongest read at {best_window}."
+        )
+    else:
+        base = (
+            f"{metrics['ticker']} had more positive closes than negative ones in {win_rate:.0f}% of signals, "
+            f"with a typical return near {median_return:.2f}%."
+        )
 
     if signal_count < 8:
-        return base[:-1] + f", but this read comes from only {signal_count} signals."
+        return base[:-1] + f" This read comes from only {signal_count} signals, so confidence is limited."
     return base
 
 
-def build_ticker_behavior(metrics: dict[str, Any]) -> dict[str, str]:
+def build_ticker_behavior(metrics: dict[str, Any], *, mode: str = "beginner") -> dict[str, str]:
     by_window = metrics.get("by_window", {})
 
     five_day = by_window.get(5)
     twenty_day = by_window.get(20)
     if five_day and twenty_day:
         if five_day["avg_return"] > twenty_day["avg_return"]:
-            holding_window = "The 5D window moved stronger than 20D for this ticker in this dataset."
+            holding_window = "5D looks stronger than 20D in this dataset."
         elif five_day["avg_return"] < twenty_day["avg_return"]:
-            holding_window = "The 20D window moved stronger than 5D for this ticker in this dataset."
+            holding_window = "20D looks stronger than 5D in this dataset."
         else:
             holding_window = "The 5D and 20D windows came out nearly the same for this ticker."
     else:
@@ -72,13 +78,13 @@ def build_ticker_behavior(metrics: dict[str, Any]) -> dict[str, str]:
     if abs(avg_return - median_return) <= 0.002:
         consistency = "Average and median returns are close, so results look fairly steady."
     elif avg_return > median_return:
-        consistency = "Average return sits above median return, so a few bigger wins are lifting the average."
+        consistency = "Average return is above typical return, so a few bigger wins are lifting the average."
     else:
         consistency = "Median return sits above average return, so weaker outliers are pulling the average down."
 
     win_rate = float(metrics["stats"]["win_rate"])
     if win_rate >= 0.6:
-        reliability = "Win rate reads as reliable because most signals closed positive."
+        reliability = "How often this works looks steady because most signals closed positive."
     elif win_rate >= 0.5:
         reliability = "Win rate reads as moderate because positive and negative closes are fairly mixed."
     else:
@@ -88,9 +94,12 @@ def build_ticker_behavior(metrics: dict[str, Any]) -> dict[str, str]:
     if tier_counts:
         top_tier = max(tier_counts, key=tier_counts.get)
         top_share = (tier_counts[top_tier] / sum(tier_counts.values())) * 100
-        tier_profile = f"Tier mix leans to {top_tier}, with about {top_share:.0f}% of tagged rows in that tier."
+        tier_profile = f"Setup mix leans to {top_tier}, with about {top_share:.0f}% of rows in that tier."
     else:
         tier_profile = "Tier profile cannot be read because tier data is missing."
+
+    if str(mode).lower() == "analyst":
+        reliability = reliability + f" (Win rate: {win_rate:.0%})"
 
     return {
         "holding_window": holding_window,
@@ -100,7 +109,7 @@ def build_ticker_behavior(metrics: dict[str, Any]) -> dict[str, str]:
     }
 
 
-def compute_ticker_metrics(df: pd.DataFrame, ticker: str) -> dict[str, Any]:
+def compute_ticker_metrics(df: pd.DataFrame, ticker: str, *, mode: str = "beginner") -> dict[str, Any]:
     if df.empty or "instrument" not in df.columns:
         return _empty_payload()
 
@@ -159,8 +168,8 @@ def compute_ticker_metrics(df: pd.DataFrame, ticker: str) -> dict[str, Any]:
         "by_window": by_window,
         "tier_counts": tier_counts,
     }
-    metrics["summary"] = build_ticker_summary(metrics)
-    metrics["behavior"] = build_ticker_behavior(metrics)
+    metrics["summary"] = build_ticker_summary(metrics, mode=mode)
+    metrics["behavior"] = build_ticker_behavior(metrics, mode=mode)
     return {
         "summary": metrics["summary"],
         "stats": metrics["stats"],

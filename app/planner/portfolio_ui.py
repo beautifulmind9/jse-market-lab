@@ -6,6 +6,7 @@ from typing import Any, Mapping, Sequence
 
 import pandas as pd
 
+from app.language.formatter import generate_explanation
 from app.planner.decision_review import (
     build_behavior_summary,
     compute_discipline_score,
@@ -88,14 +89,16 @@ def render_portfolio_plan(
     *,
     signals_df: pd.DataFrame | None = None,
     show_review_table: bool = True,
+    mode: str = "beginner",
 ) -> None:
     """Render portfolio summary and review details with plan/review subtabs."""
     if st_module is None:
         import streamlit as st_module
 
     st_module.subheader("Portfolio Plan")
+    analyst_mode = str(mode or "beginner").lower() == "analyst"
     st_module.caption(
-        "Selected trades received funding, and the rest stayed out for clear rule or limit reasons."
+        "The plan funds the strongest eligible setups first, while other trades stay out when rules or limits block them."
     )
 
     if not allocations:
@@ -114,9 +117,9 @@ def render_portfolio_plan(
                 {
                     "Total Capital": float(total_capital or 0.0),
                     "Allocated Amount": summary["total_allocated_amount"],
-                    "Allocated %": summary["total_allocated_pct"],
+                    **({"Allocated %": summary["total_allocated_pct"]} if analyst_mode else {}),
                     "Cash Reserve Amount": summary["cash_reserve_amount"],
-                    "Cash Reserve %": summary["cash_reserve_pct"],
+                    **({"Cash Reserve %": summary["cash_reserve_pct"]} if analyst_mode else {}),
                     "Funded Trades": summary["funded_trade_count"],
                 }
             ]
@@ -129,13 +132,14 @@ def render_portfolio_plan(
                 [
                     {
                         "Instrument": trade.get("instrument", "Unknown"),
-                        "Quality Tier": trade.get("quality_tier", "N/A"),
+                        "Setup Strength": trade.get("quality_tier", "N/A"),
                         "Confidence": trade.get("confidence_label", "N/A"),
-                        "Allocation %": trade.get("allocation_pct", 0.0),
+                        **({"Allocation %": trade.get("allocation_pct", 0.0)} if analyst_mode else {}),
                         "Allocation Amount": trade.get("allocation_amount", 0.0),
-                        "Selection Rank": trade.get("selection_rank", "N/A"),
+                        **({"Selection Rank": trade.get("selection_rank", "N/A")} if analyst_mode else {}),
                         "Decision Status": classify_decision_status(trade),
-                        "Why": explain_funded_trade_why(trade),
+                        "Why": generate_explanation(trade, mode=mode),
+                        **({"Rule Note": explain_funded_trade_why(trade)} if analyst_mode else {}),
                     }
                     for trade in funded_trades
                 ]
@@ -150,9 +154,9 @@ def render_portfolio_plan(
                 [
                     {
                         "Instrument": trade.get("instrument", "Unknown"),
-                        "Quality Tier": trade.get("quality_tier", "N/A"),
+                        "Setup Strength": trade.get("quality_tier", "N/A"),
                         "Confidence": trade.get("confidence_label", "N/A"),
-                        "Selection Rank": trade.get("selection_rank", "N/A"),
+                        **({"Selection Rank": trade.get("selection_rank", "N/A")} if analyst_mode else {}),
                         "Decision Status": classify_decision_status(trade),
                         "Why": resolve_unfunded_reason(trade),
                     }
@@ -163,7 +167,7 @@ def render_portfolio_plan(
         else:
             st_module.info("No unfunded trades for the selected inputs.")
 
-        st_module.markdown("#### Constraints")
+        st_module.markdown("#### Portfolio Rules")
         st_module.markdown(
             "- Max portfolio exposure: 70%\n"
             "- Min cash reserve: 30%\n"
@@ -191,15 +195,15 @@ def render_portfolio_plan(
             st_module.markdown(f"- {item}")
 
         st_module.markdown("**What this means**")
-        for paragraph in _build_review_interpretation_paragraphs(review_df):
+        for paragraph in _build_review_interpretation_paragraphs(review_df, mode=mode):
             st_module.markdown(paragraph)
 
         st_module.markdown("**What to improve**")
-        for bullet in _build_behavior_improvement_points(review_df):
+        for bullet in _build_behavior_improvement_points(review_df, mode=mode):
             st_module.markdown(f"- {bullet}")
 
         st_module.markdown("**Mistakes Detected**")
-        grouped_mistakes = _group_mistakes_for_display(mistake_list)
+        grouped_mistakes = _group_mistakes_for_display(mistake_list, mode=mode)
         if grouped_mistakes:
             for line in grouped_mistakes:
                 st_module.markdown(f"- {line}")
@@ -214,12 +218,9 @@ def render_portfolio_plan(
                 st_module.dataframe(review_df, use_container_width=True)
 
 
-def _build_review_interpretation_paragraphs(review_df: pd.DataFrame) -> list[str]:
+def _build_review_interpretation_paragraphs(review_df: pd.DataFrame, *, mode: str = "beginner") -> list[str]:
     if review_df is None or review_df.empty:
-        return [
-            "There is not enough decision activity yet to interpret behavior patterns.",
-            "As reviewed trades accumulate, this section will describe recurring discipline signals.",
-        ]
+        return ["There is not enough decision activity yet to read a clear behavior pattern."]
 
     total = max(int(len(review_df)), 1)
     followed = int(review_df["followed_rules"].fillna(False).astype(bool).sum())
@@ -227,34 +228,37 @@ def _build_review_interpretation_paragraphs(review_df: pd.DataFrame) -> list[str
     quality_fails = int((review_df["quality_flag"] == "fail").sum())
     liquidity_fails = int((review_df["liquidity_flag"] == "fail").sum())
 
+    if str(mode).lower() == "analyst":
+        return [
+            f"Rule alignment was {followed}/{total} ({followed / total:.0%}), showing current process consistency.",
+            f"Deviation mix: rank {rank_misses}, quality {quality_fails}, liquidity {liquidity_fails}.",
+        ]
     return [
-        (
-            f"Rule alignment was observed on {followed} of {total} reviewed trades "
-            f"({followed / total:.0%}), indicating the current level of process consistency."
-        ),
-        (
-            f"The review shows {rank_misses} ranking deviation(s), {quality_fails} quality rule break(s), "
-            f"and {liquidity_fails} liquidity break(s), which reflects where decision discipline varied."
-        ),
+        f"{followed} of {total} reviewed trades followed the full process.",
+        "The misses are mostly from rank order, quality checks, or liquidity checks.",
     ]
 
 
-def _build_behavior_improvement_points(review_df: pd.DataFrame) -> list[str]:
+def _build_behavior_improvement_points(review_df: pd.DataFrame, *, mode: str = "beginner") -> list[str]:
     if review_df is None or review_df.empty:
-        return [
-            "Continue logging decisions so ranking and quality patterns can be measured.",
-            "Track whether each selection follows the same process before finalizing.",
-        ]
+        return ["Keep logging decisions so this section can track repeat behavior over time."]
 
     rank_misses = int((review_df["deviation_type"] == "rank_deviation").sum())
     quality_fails = int((review_df["quality_flag"] == "fail").sum())
     liquidity_fails = int((review_df["liquidity_flag"] == "fail").sum())
 
-    bullets = [
-        "Keep selection order aligned with the highest-ranked eligible setups.",
-        "Hold quality filtering steady so lower-tier entries appear less often.",
-        "Apply liquidity checks consistently before entries are finalized.",
-    ]
+    if str(mode).lower() == "analyst":
+        bullets = [
+            "Keep selection order aligned with the highest-ranked eligible setups.",
+            "Hold quality filtering steady so weaker setups appear less often.",
+            "Apply liquidity checks consistently before entries are finalized.",
+        ]
+    else:
+        bullets = [
+            "Keep the strongest eligible setups at the top of selection order.",
+            "Keep quality checks steady so weak setups stay out.",
+            "Run liquidity checks before final funding.",
+        ]
 
     if rank_misses == 0:
         bullets[0] = "Ranking discipline was stable; maintain this ordering consistency."
@@ -266,7 +270,7 @@ def _build_behavior_improvement_points(review_df: pd.DataFrame) -> list[str]:
     return bullets
 
 
-def _group_mistakes_for_display(mistakes: Sequence[Mapping[str, Any]]) -> list[str]:
+def _group_mistakes_for_display(mistakes: Sequence[Mapping[str, Any]], *, mode: str = "beginner") -> list[str]:
     grouped: dict[str, dict[str, Any]] = {}
     for item in mistakes:
         mistake_type = str(item.get("type", "rule_violation"))
@@ -277,18 +281,20 @@ def _group_mistakes_for_display(mistakes: Sequence[Mapping[str, Any]]) -> list[s
     lines: list[str] = []
     for mistake_type, payload in grouped.items():
         count = int(payload["count"])
-        lines.append(_render_grouped_mistake_line(mistake_type, count))
+        lines.append(_render_grouped_mistake_line(mistake_type, count, mode=mode))
     return lines
 
 
-def _render_grouped_mistake_line(mistake_type: str, count: int) -> str:
+def _render_grouped_mistake_line(mistake_type: str, count: int, *, mode: str = "beginner") -> str:
     templates = {
-        "low_quality_trade": "{count} trade(s) did not meet the quality tier rule.",
-        "ignored_higher_rank": "{count} trade(s) were selected below a higher-ranked available setup.",
-        "liquidity_violation": "{count} trade(s) failed the liquidity screen.",
-        "over_allocation": "{count} trade(s) exceeded the allocation cap.",
+        "low_quality_trade": "{count} trade(s) missed the setup-quality rule.",
+        "ignored_higher_rank": "{count} trade(s) were picked while a stronger-ranked setup was available.",
+        "liquidity_violation": "{count} trade(s) failed the liquidity check.",
+        "over_allocation": "{count} trade(s) went above the allocation cap.",
         "cooldown_violation": "{count} trade(s) were funded while cooldown was active.",
     }
+    if str(mode).lower() == "analyst":
+        templates["low_quality_trade"] = "{count} trade(s) did not meet the quality tier rule."
     template = templates.get(mistake_type, "{count} trade(s) showed a decision rule deviation.")
     return template.format(count=count)
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import pandas as pd
 
 from app.analysis.ticker_drilldown import build_ticker_drilldown
+from app.analysis.ticker_intelligence import compute_ticker_metrics
 from app.data.ingest import ingest_dataset
 from app.demo.run_demo import run_demo
 from app.insights.analyst import render_analyst_insights
@@ -24,8 +25,9 @@ def main() -> None:
         layout="wide",
     )
 
-    st.title("JSE Decision Support Dashboard")
-    st.caption("Sprint 8 shell: dataset loading, Analyst Insights, Portfolio Plan, and Explanation Layer.")
+    st.title("JSE Market Lab")
+    mode = st.radio("Mode", options=["Beginner", "Analyst"], horizontal=True, index=0)
+    mode_token = mode.lower()
 
     canonical_df, meta, issues = ingest_dataset("demo")
     st.markdown("### Data Status")
@@ -42,17 +44,29 @@ def main() -> None:
         st.warning("No rows were loaded from the data layer. Please verify demo dataset files.")
         return
 
-    st.markdown("### Main Dashboard")
-    st.dataframe(canonical_df.head(50), use_container_width=True)
-
     demo_payload = run_demo()
     ranked_df = demo_payload.get("ranked", pd.DataFrame())
     analyst_df = build_analyst_dataset(canonical_df, ranked_df)
+    trade_rows = coerce_trade_rows_from_ranked(ranked_df) if not ranked_df.empty else []
+
+    if trade_rows:
+        preview_allocation = generate_portfolio_allocation(trade_rows, 100_000.0)
+        preview_allocations = preview_allocation.get("allocations", [])
+        enriched_preview = [{**allocation, **row} for row, allocation in zip(trade_rows, preview_allocations)]
+        insights_payload = generate_embedded_insights(trade_rows, enriched_preview, mode=mode_token)
+    else:
+        insights_payload = generate_embedded_insights([], [], mode=mode_token)
+
+    _render_first_run_header(st, mode=mode_token)
+    render_embedded_insights(insights_payload, st_module=st)
+
+    st.markdown("### Main Dashboard")
+    st.dataframe(canonical_df.head(50), use_container_width=True)
 
     insights_tab, ticker_tab, plan_tab = st.tabs(["Analyst Insights", "Ticker Analysis", "Portfolio Plan"])
 
     with insights_tab:
-        render_analyst_insights(analyst_df, st_module=st, analyst_mode=True)
+        render_analyst_insights(analyst_df, st_module=st, analyst_mode=mode_token == "analyst")
 
     with ticker_tab:
         st.markdown("### Ticker Analysis")
@@ -65,6 +79,14 @@ def main() -> None:
             else:
                 selected_ticker = st.selectbox("Select ticker", ticker_options)
                 ticker_payload = build_ticker_drilldown(analyst_df, selected_ticker)
+                ticker_metrics = compute_ticker_metrics(analyst_df, selected_ticker, mode=mode_token)
+
+                st.markdown("#### Ticker Summary")
+                st.write(ticker_metrics["summary"])
+
+                st.markdown("#### Behavior Insights")
+                for line in ticker_metrics["behavior"].values():
+                    st.markdown(f"- {line}")
 
                 st.markdown("#### Pattern Summary")
                 st.write(ticker_payload["pattern_summary"])
@@ -95,8 +117,9 @@ def main() -> None:
                             "Average Return": float(returns.mean()),
                         }
 
-                st.markdown("#### Key Stats")
-                st.dataframe(pd.DataFrame([key_stats]), use_container_width=True)
+                if mode_token == "analyst":
+                    st.markdown("#### Key Stats")
+                    st.dataframe(pd.DataFrame([key_stats]), use_container_width=True)
 
                 st.markdown("#### Holding Window Comparison")
                 holding_window_df = pd.DataFrame.from_dict(
@@ -144,7 +167,6 @@ def main() -> None:
             st.info("Portfolio Plan unavailable: ranked outputs were not generated.")
             return
 
-        trade_rows = coerce_trade_rows_from_ranked(ranked_df)
         allocation_payload = generate_portfolio_allocation(trade_rows, total_capital)
         allocations = allocation_payload.get("allocations", [])
 
@@ -153,15 +175,28 @@ def main() -> None:
         for row, allocation in zip(trade_rows, allocations):
             enriched_allocations.append({**allocation, **row})
 
-        insights_payload = generate_embedded_insights(trade_rows, enriched_allocations)
-        render_embedded_insights(insights_payload, st_module=st)
-
         render_portfolio_plan(
             enriched_allocations,
             total_capital=total_capital,
             st_module=st,
             signals_df=ranked_df,
+            mode=mode_token,
         )
+
+
+def _render_first_run_header(st_module, *, mode: str) -> None:
+    st_module.markdown("### JSE Market Lab")
+    st_module.markdown(
+        "A tool that helps you review stock opportunities on the Jamaican market using structured rules and risk checks."
+    )
+    st_module.markdown("**How to read this**")
+    st_module.markdown("- The system scans the market and ranks possible trades.")
+    st_module.markdown("- Only the strongest setups are funded in the plan below.")
+    st_module.markdown("- Each trade shows why it was selected and what risk is involved.")
+    if mode == "beginner":
+        st_module.caption("Beginner mode keeps the view simple: explanation first, fewer metrics.")
+    else:
+        st_module.caption("Analyst mode adds more metrics while keeping explanations first.")
 
 
 if __name__ == "__main__":
