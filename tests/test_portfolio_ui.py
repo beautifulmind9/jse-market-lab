@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
-from app.planner.portfolio_ui import render_portfolio_plan
+from app.planner.portfolio_ui import _group_mistakes_for_display, render_portfolio_plan
 
 
 class DummyStreamlit:
@@ -13,6 +13,14 @@ class DummyStreamlit:
         self.info_messages = []
         self.captions = []
         self.writes = []
+        self.tabs_requested = []
+
+    class _DummyTab:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
 
     def subheader(self, _text):
         return None
@@ -31,6 +39,10 @@ class DummyStreamlit:
 
     def write(self, payload):
         self.writes.append(payload)
+
+    def tabs(self, names):
+        self.tabs_requested.append(list(names))
+        return [self._DummyTab(), self._DummyTab()]
 
 
 def test_render_portfolio_plan_uses_why_column_and_no_primary_rule_column():
@@ -67,3 +79,18 @@ def test_render_portfolio_plan_uses_why_column_and_no_primary_rule_column():
     assert funded_df.iloc[0]["Decision Status"] == "Selected"
     assert unfunded_df.iloc[0]["Decision Status"] == "Not funded (limit reached)"
     assert "Selected trades received funding" in st.captions[0]
+    assert st.tabs_requested == [["Plan", "Review"]]
+
+
+def test_group_mistakes_for_display_combines_repeated_types():
+    grouped = _group_mistakes_for_display(
+        [
+            {"type": "low_quality_trade", "message": "a"},
+            {"type": "low_quality_trade", "message": "b"},
+            {"type": "low_quality_trade", "message": "c"},
+            {"type": "liquidity_violation", "message": "d"},
+        ]
+    )
+
+    assert "3 trade(s) did not meet the quality tier rule." in grouped
+    assert "1 trade(s) failed the liquidity screen." in grouped
