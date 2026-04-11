@@ -197,46 +197,82 @@ without becoming harsh or giving direct investment advice.
 ### Outcome
 The review layer supports learning and trust rather than blame.
 
-## Decision — Prioritize Public Readiness Before Intelligence Expansion
+## Decision — Phase 1 ends with public readiness, not intelligence expansion
 
 ### Context
-Advanced features were proposed, including:
+Advanced ideas were proposed for:
 - earnings intelligence
-- dividend tracking
-- AI-powered news analysis
+- dividend intelligence
+- news and qualitative data integration
+- AI-assisted event interpretation
+
+These ideas are valuable and strongly aligned with future differentiation.
 
 ### Decision
 These features are deferred to Phase 2.
 
-Sprint 12 focuses on:
+Sprint 12 closes Phase 1 by focusing on:
 - usability
 - clarity
-- accessibility
-- onboarding experience
+- first-run understanding
+- deployment
+- public-ready product framing
 
 ### Rationale
-- reduces complexity
-- enables faster launch
-- ensures users understand the system before adding advanced layers
+Public readiness requires a stable, understandable, accessible product first.
+
+Adding event-aware intelligence now would:
+- expand scope too far
+- delay public release
+- increase complexity before the core experience is fully polished
 
 ### Outcome
-A clean, usable product is released with a clear roadmap for future expansion.
+The product launches as a clear decision-support system first, with a defined path for future intelligence expansion.
 
-## Decision — Require Public Deployment for Product Completion
+## Decision — Deployment is required for Sprint 12 completion
 
 ### Context
-The dashboard currently runs locally using Streamlit.
+The dashboard currently runs through a local Streamlit workflow.
 
 ### Decision
-Public deployment is required as part of Sprint 12.
+Public deployment is a required Sprint 12 deliverable.
 
 ### Rationale
-A product is only usable if users can access it easily.
+A public-ready product must be accessible without local setup.
 
-Removing setup friction:
-- increases adoption
-- enables feedback
-- supports portfolio use
+This enables:
+- portfolio use
+- user testing
+- public sharing
+- product validation
 
 ### Outcome
-The dashboard is accessible via a public URL.
+Sprint 12 includes deployment to a public URL using Streamlit Community Cloud.
+
+## Decision — Product positioning must stay away from pick-selling
+
+### Context
+The Jamaican market gap includes limited accessible research and strong appetite for guidance.
+
+This creates a temptation to drift toward “top picks” or signal-selling behavior.
+
+### Decision
+Sprint 12 must reinforce the dashboard as:
+- a decision-support product
+- a structured analytics platform
+- an education + execution tool
+
+It must not present itself as:
+- a recommendation engine
+- a stock-pick subscription
+- a hype-driven investor tool
+
+### Rationale
+This protects:
+- credibility
+- user expectations
+- product trust
+- long-term monetization quality
+
+### Outcome
+Public-ready messaging remains centered on structured decision-making rather than conviction-selling.
