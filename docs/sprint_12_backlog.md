@@ -1,61 +1,68 @@
 # Sprint 12 Backlog
 
-## UI Refinement
-- [ ] simplify layout across all tabs
-- [ ] improve spacing and readability
-- [ ] remove redundant columns
-- [ ] ensure consistent formatting
+## UI refinement
+- [ ] improve spacing and readability across the app
+- [ ] reduce clutter in main surfaces
+- [ ] remove or consolidate redundant labels and columns
+- [ ] keep page structure consistent
 
 ---
 
-## Insight Layer
-- [ ] implement final insight structure:
+## Final insight structure
+- [ ] implement final public-ready insight layout:
   - what’s happening
   - what to watch
   - common mistakes
   - feature explanation
-- [ ] ensure insights are simple and readable
+- [ ] ensure insight text is simple and readable
+- [ ] keep tone observational and non-advisory
 
 ---
 
-## Modes
+## Beginner vs Analyst mode
+- [ ] design mode split clearly
 - [ ] implement Beginner Mode
-- [ ] implement Analyst Mode toggle
-- [ ] ensure both modes render correctly
+- [ ] implement Analyst Mode
+- [ ] validate that each mode shows the right level of detail
 
 ---
 
-## First-Run Experience
+## First-run experience
 - [ ] auto-load demo dataset
-- [ ] default to Portfolio Plan
-- [ ] ensure insights appear immediately
+- [ ] confirm default landing view
+- [ ] show useful insight immediately
+- [ ] remove unnecessary friction for first-time users
 
 ---
 
-## Language
-- [ ] simplify wording across app
-- [ ] remove technical phrasing
-- [ ] apply Jamaican-friendly tone
+## Language standardization
+- [ ] review wording across app
+- [ ] simplify technical phrasing
+- [ ] align tone to plain Jamaican-friendly English
+- [ ] keep tone neutral and clear
 
 ---
 
-## Monetization Surface
-- [ ] define Free vs Pro UI differences
-- [ ] show limited features in Free view
-- [ ] no hard paywall
+## Product framing / monetization surface
+- [ ] define light Free vs Pro framing in UI
+- [ ] highlight what is available in Free
+- [ ] lightly signal what deeper access would unlock
+- [ ] avoid aggressive upgrade prompts
 
 ---
 
 ## Deployment
-- [ ] clean requirements.txt
-- [ ] confirm app runs locally from repo
-- [ ] connect GitHub repo to Streamlit Cloud
+- [ ] add `streamlit` to `requirements.txt`
+- [ ] confirm `app.py` works from repo root
+- [ ] verify demo data paths work in cloud deployment
+- [ ] connect GitHub repo to Streamlit Community Cloud
 - [ ] deploy app
 - [ ] test public URL
 
 ---
 
 ## Documentation
-- [ ] update README
+- [ ] update README for public use
 - [ ] add screenshots
-- [ ] write simple walkthrough
+- [ ] add simple product walkthrough
+- [ ] align docs with final Phase 1 scope
