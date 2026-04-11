@@ -853,3 +853,24 @@ Language can be refined further in a later product-wide tone pass, but Sprint 11
 - deploy to Streamlit Community Cloud
 - validate the public URL
 - complete Sprint 12 first-run/public UAT
+
+### Sprint 12 — Public-Ready Product
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Sprint 12 artefacts defined
+- deployment-readiness hardening completed
+- app deployed publicly to Streamlit Community Cloud
+- public URL created:
+  - https://jsemarketlab.streamlit.app/
+
+**Validated slice**
+- the dashboard is now publicly accessible without local setup
+- Phase 1 has crossed from internal tool to public product surface
+
+**Remaining focus**
+- complete live smoke test on deployed app
+- validate first-run clarity
+- refine public-facing language where needed
+- complete Sprint 12 UAT and closeout
