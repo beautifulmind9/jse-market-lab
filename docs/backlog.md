@@ -829,3 +829,27 @@ Language can be refined further in a later product-wide tone pass, but Sprint 11
 **Open follow-up**
 - narrow artifact-write exception handling so restricted filesystems are tolerated without hiding real I/O failures
 - resolve or document pre-existing failing test before final Sprint 12 closeout
+
+### Sprint 12 — Public-Ready Product
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- Sprint 12 artefacts defined
+- deployment-readiness hardening completed
+- `requirements.txt` updated to include Streamlit
+- demo artifact writes now tolerate restricted filesystem conditions safely:
+  - `PermissionError`
+  - read-only filesystem `OSError(errno.EROFS)`
+- unexpected filesystem errors still surface
+- focused deployment-readiness tests added
+
+**Validated slice**
+- the app is better prepared for Streamlit Community Cloud deployment
+- restricted filesystem behavior is now non-fatal without hiding real I/O failures
+
+**Remaining focus**
+- resolve or document the unrelated pre-existing failing test in planner explanations
+- deploy to Streamlit Community Cloud
+- validate the public URL
+- complete Sprint 12 first-run/public UAT
