@@ -31,4 +31,4 @@
 | V15.1 | Sprint 11 review hardening | Fixed decision-review edge cases around missing allocation percentages and overlapping trade/allocation inputs so mistake detection stays accurate and empty-safe |
 | V15.3 | Sprint 11 UX refinement | Moved Decision Review into a Review subtab, added interpretation and improvement guidance, and grouped repeated mistakes into clearer summary output |
 | V15.4 | Sprint 11 closeout | Completed the Review & Discipline Layer with separate Plan/Review subtabs, interpretation guidance, grouped mistake summaries, and hardened mistake-detection logic |
-| V16 | Sprint 12 started | Focused on public readiness including UI refinement, insight clarity, language simplification, and deployment |
+| V16 | Sprint 12 started | Began final Phase 1 sprint focused on public readiness, language clarity, first-run experience, product framing, and public deployment |
