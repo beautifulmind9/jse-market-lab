@@ -98,3 +98,27 @@ Improves:
 ### Trade-offs
 - adds complexity
 - requires careful tone control (no advisory language)
+
+## Decision — Separate planning from review inside Portfolio Plan
+
+### Context
+When Decision Review was first added, it appeared inline with the main portfolio output.
+
+This made the review layer feel secondary and mixed a forward-looking workflow with a backward-looking workflow.
+
+### Decision
+Portfolio Plan is split into two subtabs:
+- Plan
+- Review
+
+### Rationale
+This separates:
+- planning decisions
+- post-decision reflection
+
+It makes the app flow clearer:
+- Plan = what the system is doing now
+- Review = how the decisions held up
+
+### Outcome
+The review layer now feels intentional rather than appended, and users can move between planning and reflection more naturally.
