@@ -196,3 +196,28 @@ without becoming harsh or giving direct investment advice.
 
 ### Outcome
 The review layer supports learning and trust rather than blame.
+
+## Decision — Prioritize Public Readiness Before Intelligence Expansion
+
+### Context
+Advanced features were proposed, including:
+- earnings intelligence
+- dividend tracking
+- AI-powered news analysis
+
+### Decision
+These features are deferred to Phase 2.
+
+Sprint 12 focuses on:
+- usability
+- clarity
+- accessibility
+- onboarding experience
+
+### Rationale
+- reduces complexity
+- enables faster launch
+- ensures users understand the system before adding advanced layers
+
+### Outcome
+A clean, usable product is released with a clear roadmap for future expansion.
