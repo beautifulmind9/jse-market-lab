@@ -221,3 +221,22 @@ Sprint 12 focuses on:
 
 ### Outcome
 A clean, usable product is released with a clear roadmap for future expansion.
+
+## Decision — Require Public Deployment for Product Completion
+
+### Context
+The dashboard currently runs locally using Streamlit.
+
+### Decision
+Public deployment is required as part of Sprint 12.
+
+### Rationale
+A product is only usable if users can access it easily.
+
+Removing setup friction:
+- increases adoption
+- enables feedback
+- supports portfolio use
+
+### Outcome
+The dashboard is accessible via a public URL.
