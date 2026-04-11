@@ -3,33 +3,27 @@
 ## Overall Status
 Not started
 
----
-
-## Checklist
+## Public-readiness checklist
 
 | Area | Status | Notes |
 |---|---|---|
-| App loads from public URL | Not started | |
-| No setup required | Not started | |
-| Portfolio Plan visible on load | Not started | |
-| Insights render immediately | Not started | |
-| Layout is clean and readable | Not started | |
-| No confusing labels | Not started | |
+| App loads from a public URL | Not started | |
+| No technical setup required | Not started | |
+| Demo data loads automatically | Not started | |
+| Default landing view feels sensible | Not started | |
+| Insight section is visible immediately | Not started | |
+| UI feels clean and readable | Not started | |
 | Beginner Mode works | Not started | |
 | Analyst Mode works | Not started | |
 | Language is simple and clear | Not started | |
-| No technical jargon | Not started | |
-| App runs without errors | Not started | |
+| Language feels Jamaican-friendly | Not started | |
+| No confusing labels remain | Not started | |
+| Free vs Pro framing is understandable | Not started | |
+| App runs without deployment errors | Not started | |
 
----
-
-## Pass Criteria
-
-User can:
-- open the app
-- understand what they are looking at
-- interpret the output
-- navigate without confusion
-
-Time to understanding:
-👉 < 10 seconds
+## Pass criteria
+Sprint 12 passes when:
+- users can open the app through a public link
+- first-time users can understand what they are seeing quickly
+- the dashboard feels clear, structured, and credible
+- the product is clearly positioned as a decision-support system
