@@ -92,3 +92,15 @@ Sprint 12 passes when:
 - first-time users can understand what they are seeing quickly
 - the dashboard feels clear, structured, and credible
 - the product is clearly positioned as a decision-support system
+
+## Language + mode checks
+
+| Area | Status | Notes |
+|---|---|---|
+| Beginner Mode avoids jargon | Not started | |
+| Beginner Mode explains meaning before metrics | Not started | |
+| Analyst Mode includes key percentages where helpful | Not started | |
+| Analyst Mode still reads clearly | Not started | |
+| Jamaican-friendly tone feels natural | Not started | |
+| No advisory language appears | Not started | |
+| Core sections use consistent tone | Not started | |
