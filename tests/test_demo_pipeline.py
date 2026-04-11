@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
@@ -14,6 +15,7 @@ from app.demo.generate_prices import generate_demo_prices
 from app.events.earnings import tag_earnings_phase
 from app.events.phase_metrics import compute_phase_metrics
 from app.ranking.engine import rank_instruments
+from app.demo import run_demo as run_demo_module
 
 
 def test_demo_pipeline_outputs():
@@ -50,3 +52,26 @@ def test_demo_pipeline_outputs():
         "net_return_pct",
     )
     assert {"insufficient_history", "n"}.issubset(phase_metrics.columns)
+
+
+def test_run_demo_logs_warning_when_artifact_writes_are_permission_restricted(caplog, monkeypatch):
+    def raise_permission_error(*args, **kwargs):
+        raise PermissionError("read-only filesystem")
+
+    monkeypatch.setattr(Path, "mkdir", raise_permission_error)
+
+    with caplog.at_level("WARNING"):
+        result = run_demo_module.run_demo()
+
+    assert not result["ranked"].empty
+    assert "restricted filesystem permissions" in caplog.text
+
+
+def test_run_demo_does_not_swallow_unexpected_os_errors(monkeypatch):
+    def raise_unexpected_os_error(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(Path, "mkdir", raise_unexpected_os_error)
+
+    with pytest.raises(OSError, match="disk full"):
+        run_demo_module.run_demo()
