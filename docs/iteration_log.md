@@ -30,3 +30,4 @@
 | V15 | Sprint 11 started | Introduced Review & Discipline Layer to evaluate user decision behavior and detect mistakes |
 | V15.1 | Sprint 11 review hardening | Fixed decision-review edge cases around missing allocation percentages and overlapping trade/allocation inputs so mistake detection stays accurate and empty-safe |
 | V15.3 | Sprint 11 UX refinement | Moved Decision Review into a Review subtab, added interpretation and improvement guidance, and grouped repeated mistakes into clearer summary output |
+| V15.4 | Sprint 11 closeout | Completed the Review & Discipline Layer with separate Plan/Review subtabs, interpretation guidance, grouped mistake summaries, and hardened mistake-detection logic |
