@@ -783,3 +783,36 @@ Further wording polish can still happen later, but Sprint 10 functionality and l
 - manually review usefulness of Review tab across different scenarios
 - confirm wording tone is clear and not too stiff
 - complete Sprint 11 UAT and closeout
+
+### Sprint 11 — Review & Discipline Layer
+**Status:** Complete  
+**Priority:** High
+
+**Delivered**
+- Added review engine in `app/planner/decision_review.py`
+- Added:
+  - trade review
+  - mistake detection
+  - behavior summary
+  - discipline score
+- Integrated Decision Review into Portfolio Plan
+- Split Portfolio Plan into:
+  - Plan
+  - Review
+- Added interpretation sections:
+  - What this means
+  - What to improve
+- Grouped repeated mistake types into cleaner summary lines
+- Added tests for review logic, empty-state handling, and UI integration
+- Completed review hardening for:
+  - missing `allocation_pct` handling
+  - overlapping trade/allocation inputs that could suppress cooldown detection
+
+**Outcome**
+Users can:
+- review whether they followed the system
+- understand where discipline broke down
+- see behavior patterns without decoding raw review data
+
+**Notes**
+Language can be refined further in a later product-wide tone pass, but Sprint 11 functionality and UX are complete.
