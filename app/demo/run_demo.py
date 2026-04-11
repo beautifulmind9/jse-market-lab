@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import errno
 from pathlib import Path
 
 import pandas as pd
@@ -56,6 +57,11 @@ def run_demo(language_mode: str = "plain") -> dict:
     except PermissionError as exc:
         # Continue when running in restricted environments where local writes are unavailable.
         logger.warning("Demo artifacts not written due to restricted filesystem permissions: %s", exc)
+    except OSError as exc:
+        if exc.errno == errno.EROFS:
+            logger.warning("Demo artifacts not written due to read-only filesystem: %s", exc)
+        else:
+            raise
 
     return {
         "ranked": ranked,
