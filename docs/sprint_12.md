@@ -1,145 +1,169 @@
 # Sprint 12 — Public-Ready Product
 
 ## Goal
-Transform the JSE Dashboard from a working system into a public-ready product that users can access, understand, and use immediately.
+Make the JSE Dashboard ready for public use by improving clarity, first-run understanding, deployment, and product framing.
 
 ---
 
 ## Context
-The system already includes:
+The product now includes:
 - signal engine
 - allocation engine
 - explanation layer
-- ticker analysis (Sprint 9/10)
-- review & discipline layer (Sprint 11)
+- embedded insights
+- ticker analysis and drilldown
+- review & discipline layer
 
-However, it still requires:
-- local setup
-- technical understanding
-- interpretation effort
+The system works, but it still needs:
+- a cleaner public-facing experience
+- simplified entry for first-time users
+- clearer product positioning
+- deployment to a public URL
 
-Sprint 12 focuses on:
-👉 clarity  
-👉 usability  
-👉 accessibility  
-👉 first-time user experience  
+Sprint 12 is the final Phase 1 sprint.
+
+---
+
+## Core objective
+Turn the dashboard from a working internal tool into a public-ready decision-support product that users can open from a link and understand quickly.
 
 ---
 
 ## Scope
 
-### 1. UI Refinement
-- simplify layout
-- improve spacing and readability
-- remove redundant columns and repeated information
-- ensure consistent structure across tabs
+### 1. Public-ready UI refinement
+- improve spacing and layout
+- reduce clutter
+- remove redundant labels or repeated information
+- keep structure consistent across tabs and views
 
 ---
 
-### 2. Final Insight Layer
-
-Each run must output:
+### 2. Final insight structure
+Each run should present a clear public-ready insight block made up of:
 
 #### What’s happening
-- 2–3 simple observations
-- based on current dataset
+- 2–3 simple observations about current conditions
 
 #### What to watch
-- 2–3 risk signals
-- instability, volatility, inconsistency
+- 2–3 clear risk or instability signals
 
 #### Common mistakes
-- 1–2 behavioral warnings
+- 1–2 behavioral warnings or pitfalls
 
 #### Feature explanation
-- 1 short explanation of a core concept
+- 1 short explanation of a core feature or concept
+
+These should remain:
+- observational
+- non-advisory
+- simple
+- useful for both product understanding and public demo purposes
 
 ---
 
-### 3. Beginner vs Analyst Mode
+### 3. Beginner vs Analyst mode
+Introduce a clearer split between:
 
 #### Beginner Mode
-- simplified tables
 - fewer columns
-- more explanation
-- focus on clarity
+- simpler wording
+- more guidance
+- focus on understanding and decision clarity
 
 #### Analyst Mode
-- full data
 - full tables
 - detailed metrics
+- richer breakdowns
+- focus on depth and validation
 
 ---
 
-### 4. First-Run Experience
+### 4. First-run experience
+The first experience should:
+- load with demo data automatically
+- open into a sensible default view
+- show useful insight immediately
+- require no technical setup
 
-- demo dataset loads automatically
-- Portfolio Plan opens by default
-- insights are visible immediately
-- no setup required
-
-Goal:
-User understands the product in < 10 seconds
+The product should feel understandable within the first few seconds.
 
 ---
 
-### 5. Language Standardization
-
-All text must be:
-- simple
+### 5. Language standardization
+All user-facing language should be reviewed and simplified so it feels:
 - clear
-- Jamaican-friendly (not Patois)
-- non-technical where possible
+- natural
+- Jamaican-friendly
+- not slang-heavy
+- not overly technical
 
-Example:
-❌ “Volatility is elevated”  
-✅ “Price movement is more jumpy than usual”
-
----
-
-### 6. Monetization Surface (Light)
-
-Introduce:
-- Free vs Pro structure (visual only)
-- no aggressive paywalls
-- no intrusive prompts
+The goal is not Patois.
+The goal is plain, familiar English that feels local and easy to follow.
 
 ---
 
-### 7. Deployment (Public Access)
+### 6. Product framing and monetization surface
+Sprint 12 should introduce clear product framing inside the experience:
 
-#### Goal
-Make the dashboard accessible via a public URL
+#### Free tier (light surface)
+- simplified view
+- limited features
+- education and trust-building
 
-#### Approach
-Deploy using Streamlit Community Cloud
+#### Pro tier (future main product)
+- full signal rankings
+- portfolio planning
+- deeper decision support
+
+This should be presented lightly.
+No aggressive paywall behavior is needed in Sprint 12.
+
+---
+
+### 7. Deployment
+The dashboard must be accessible through a public link.
 
 #### Requirements
-- app.py is entry point
-- requirements.txt is clean
-- no local-only file paths
-- demo dataset included
+- root `app.py` remains the entry point
+- `requirements.txt` includes all required dependencies
+- demo dataset is bundled
+- no local-only file paths break deployment
+- public app loads successfully
 
-#### Outcome
-Users can access the dashboard via a link without installing anything
+Deployment target for Sprint 12:
+- Streamlit Community Cloud
 
 ---
 
-## Out of Scope
-
-The following are deferred to Phase 2:
+## Out of scope
+The following are intentionally deferred to Phase 2:
+- AI summarization
 - earnings intelligence
 - dividend intelligence
-- news + AI integration
-- event-aware signal overlays
+- event-aware overlays
+- news ingestion
+- qualitative-data intelligence layer
+
+---
+
+## Product positioning guardrail
+Sprint 12 must reinforce that the dashboard is:
+- a decision-support platform
+- a structured analytics tool
+- a risk-aware trading framework
+
+It must not drift into:
+- pick selling
+- recommendation service behavior
+- hype-style investor messaging
 
 ---
 
 ## Outcome
-
-User can:
-- open the app via a link
-- understand it immediately
-- see structured opportunities
-- understand risk context
-- use the system without technical knowledge
+After Sprint 12, users should be able to:
+- open the app from a public link
+- understand what the product does quickly
+- explore opportunities and risk clearly
+- use the product without technical setup
+- experience a product that feels structured, credible, and public-ready
