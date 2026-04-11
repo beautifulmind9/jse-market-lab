@@ -43,11 +43,15 @@ def run_demo(language_mode: str = "plain") -> dict:
     )
 
     artifacts_dir = Path(__file__).resolve().parents[2] / "artifacts" / "demo"
-    artifacts_dir.mkdir(parents=True, exist_ok=True)
-    ranked.to_csv(artifacts_dir / "ranked.csv", index=False)
-    phase_metrics.to_csv(artifacts_dir / "phase_metrics.csv", index=False)
-    meta_payload = {"meta": meta, "issues": issues}
-    (artifacts_dir / "meta.json").write_text(json.dumps(meta_payload, indent=2))
+    try:
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+        ranked.to_csv(artifacts_dir / "ranked.csv", index=False)
+        phase_metrics.to_csv(artifacts_dir / "phase_metrics.csv", index=False)
+        meta_payload = {"meta": meta, "issues": issues}
+        (artifacts_dir / "meta.json").write_text(json.dumps(meta_payload, indent=2))
+    except OSError:
+        # Continue when running in restricted environments where local writes are unavailable.
+        pass
 
     return {
         "ranked": ranked,
