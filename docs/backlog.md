@@ -816,3 +816,16 @@ Users can:
 
 **Notes**
 Language can be refined further in a later product-wide tone pass, but Sprint 11 functionality and UX are complete.
+
+### Sprint 12 — Public-Ready Product
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- deployment-readiness hardening started
+- requirements.txt updated to include Streamlit
+- demo pipeline reviewed for hosted runtime compatibility
+
+**Open follow-up**
+- narrow artifact-write exception handling so restricted filesystems are tolerated without hiding real I/O failures
+- resolve or document pre-existing failing test before final Sprint 12 closeout
