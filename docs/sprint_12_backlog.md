@@ -77,3 +77,20 @@
 - [ ] apply mode-aware language to Decision Review
 - [ ] apply mode-aware language to Ticker Analysis summaries
 - [ ] add language-mode tests
+
+## Sprint 12 Step 2 — First-run experience + language system + mode differentiation
+- [ ] add first-run header and “How to read this” block
+- [ ] extend insight block to final structure:
+  - what’s happening
+  - what to watch
+  - common mistakes
+  - why this matters
+- [ ] create lightweight language formatting module
+- [ ] add Beginner vs Analyst mode toggle
+- [ ] apply mode-aware language to:
+  - first-run experience
+  - insights
+  - Portfolio Plan
+  - Decision Review
+  - Ticker Analysis summaries
+- [ ] add language-mode tests
