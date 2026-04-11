@@ -66,3 +66,36 @@ Sprint 11 passes when:
 - discipline score and summary feel believable
 - mistake detection feels accurate and readable
 - no contradictory or confusing review output appears
+
+# UAT — Sprint 11
+
+## Overall Status
+Complete
+
+## Final Assessment
+
+| Area | Status | Notes |
+|---|---|---|
+| Decision Review renders | Pass | Review content appears in its own subtab under Portfolio Plan |
+| Trade Review output renders | Pass | Review table appears and loads correctly |
+| Mistake Detection renders | Pass | Mistake output is grouped and readable |
+| Behavior Summary renders | Pass | Summary bullets appear clearly |
+| Interpretation layer renders | Pass | “What this means” and “What to improve” connect review output to user behavior |
+| Discipline Score renders | Pass | Score displays clearly and feels useful in context |
+| Empty state is safe | Pass | Covered by unit tests |
+| Over-allocation check stays safe without allocation_pct | Pass | Review hardening completed |
+| Cooldown violation detection survives overlapping trade/allocation inputs | Pass | Review hardening completed |
+| UI remains readable | Pass | Review now has a clearer structure after subtab split |
+| Language remains observational | Pass with note | Tone is useful and neutral; a later language pass may further localize the voice |
+
+## Summary
+Sprint 11 successfully adds a Review & Discipline Layer that helps users reflect on how they are using the system, not just what the system selected.
+
+The Review tab now:
+- separates reflection from planning
+- explains what the detected behavior means
+- shows what users can improve without drifting into trade advice
+- presents mistakes in a cleaner, more useful format
+
+## Closeout Decision
+Sprint 11 is complete.
