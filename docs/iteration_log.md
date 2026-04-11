@@ -32,3 +32,4 @@
 | V15.3 | Sprint 11 UX refinement | Moved Decision Review into a Review subtab, added interpretation and improvement guidance, and grouped repeated mistakes into clearer summary output |
 | V15.4 | Sprint 11 closeout | Completed the Review & Discipline Layer with separate Plan/Review subtabs, interpretation guidance, grouped mistake summaries, and hardened mistake-detection logic |
 | V16 | Sprint 12 started | Began final Phase 1 sprint focused on public readiness, language clarity, first-run experience, product framing, and public deployment |
+| V16.1 | Sprint 12 deployment hardening | Added Streamlit dependency and hardened demo artifact writes so restricted hosted filesystems do not break the app while unexpected I/O failures still surface |
