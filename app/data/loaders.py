@@ -17,7 +17,12 @@ def load_internal_dataset() -> pd.DataFrame:
     """Load and normalize the bundled internal JSE dataset from disk."""
     dataset_path = INTERNAL_DATASET_PATH if INTERNAL_DATASET_PATH.exists() else LEGACY_INTERNAL_DATASET_PATH
     raw = pd.read_csv(dataset_path)
-    return normalize_jse_dataset(raw)
+    normalized = normalize_jse_dataset(raw)
+
+    # Backward compatibility: downstream app paths still expect `instrument`.
+    # Keep `ticker` from the normalized dataset while exposing a mirrored alias.
+    normalized["instrument"] = normalized["ticker"]
+    return normalized
 
 
 def load_upload(uploaded_file: Optional[IO]) -> pd.DataFrame:
