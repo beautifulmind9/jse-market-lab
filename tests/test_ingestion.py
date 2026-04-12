@@ -214,6 +214,8 @@ def test_demo_ingestion_collapses_marker_variants_to_single_instrument(monkeypat
 
     canonical, _meta, _issues = ingest_dataset("demo")
     assert set(canonical["instrument"]) == {"CAR", "GK"}
+    assert "display_symbol" in canonical.columns
+    assert set(canonical["raw_symbol"]) == {"CAR", "CARXD", "CAR (XD)", "GK", "GKXD", "GK (XD)"}
 
 
 def test_normalize_data_collapses_marker_variants_to_single_canonical_ticker():
@@ -246,3 +248,68 @@ def test_normalize_data_parenthesized_gk_xd_maps_to_gk():
     assert fmt == "long"
     assert set(canonical["ticker"]) == {"GK"}
     assert set(canonical["instrument"]) == {"GK"}
+
+
+def test_normalize_data_preserves_existing_raw_symbol_metadata_in_long_format():
+    raw = pd.DataFrame(
+        {
+            "date": ["2024-01-01", "2024-01-02", "2024-01-03"],
+            "instrument": ["CAR", "CAR", "CAR"],
+            "ticker": ["CAR", "CAR", "CAR"],
+            "raw_symbol": ["CAR", "CARXD", "CAR (XD)"],
+            "symbol_marker": [None, "XD", "XD"],
+            "display_symbol": ["CAR", "CARXD", "CAR (XD)"],
+            "close": [10.0, 10.1, 10.2],
+        }
+    )
+
+    canonical, fmt = normalize_data(raw, source="demo", dataset_id="dataset-preserve-1")
+
+    assert fmt == "long"
+    assert canonical["ticker"].tolist() == ["CAR", "CAR", "CAR"]
+    assert canonical["instrument"].tolist() == ["CAR", "CAR", "CAR"]
+    assert canonical["raw_symbol"].tolist() == ["CAR", "CARXD", "CAR (XD)"]
+    assert canonical["symbol_marker"].tolist() == [None, "XD", "XD"]
+    assert canonical["display_symbol"].tolist() == ["CAR", "CARXD", "CAR (XD)"]
+
+
+def test_normalize_data_preserves_parenthesized_xd_metadata_with_canonical_ticker():
+    raw = pd.DataFrame(
+        {
+            "date": ["2024-01-01"],
+            "instrument": ["CAR"],
+            "raw_symbol": ["CAR (XD)"],
+            "symbol_marker": ["XD"],
+            "display_symbol": ["CAR (XD)"],
+            "close": [10.3],
+        }
+    )
+
+    canonical, _fmt = normalize_data(raw, source="demo", dataset_id="dataset-preserve-2")
+    row = canonical.iloc[0]
+
+    assert row["ticker"] == "CAR"
+    assert row["instrument"] == "CAR"
+    assert row["raw_symbol"] == "CAR (XD)"
+    assert row["symbol_marker"] == "XD"
+    assert row["display_symbol"] == "CAR (XD)"
+
+
+def test_normalize_data_keeps_canonical_universe_collapsed_when_raw_metadata_varies():
+    raw = pd.DataFrame(
+        {
+            "date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
+            "instrument": ["CAR", "CAR", "CAR", "CAR"],
+            "raw_symbol": ["CAR", "CARXD", "CAR (XD)", "CAR XD"],
+            "symbol_marker": [None, "XD", "XD", "XD"],
+            "display_symbol": ["CAR", "CARXD", "CAR (XD)", "CAR XD"],
+            "close": [10.0, 10.1, 10.2, 10.3],
+        }
+    )
+
+    canonical, _fmt = normalize_data(raw, source="demo", dataset_id="dataset-preserve-3")
+
+    assert set(canonical["ticker"]) == {"CAR"}
+    assert set(canonical["instrument"]) == {"CAR"}
+    assert canonical["raw_symbol"].nunique() == 4
+    assert canonical["display_symbol"].tolist() == ["CAR", "CARXD", "CAR (XD)", "CAR XD"]

@@ -6,6 +6,7 @@ CANONICAL_COLUMNS = [
     "instrument",
     "raw_symbol",
     "symbol_marker",
+    "display_symbol",
     "close",
     "volume",
     "market",
