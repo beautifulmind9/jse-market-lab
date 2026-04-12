@@ -161,10 +161,20 @@ def _consistency_insight(rows: Sequence[Mapping[str, Any]]) -> str:
     if avg is None or median is None:
         return ""
 
-    gap = avg - median
-    if gap > max(0.01, abs(median) * 0.5):
-        return "Some trades look good on average, but the results are not consistent."
-    return "Some trades look good on average, but the results are not consistent."
+    gap = abs(avg - median)
+    if gap <= max(0.003, abs(median) * 0.25):
+        return "Median and average returns are close, so outcome consistency looks steadier."
+
+    if avg > median:
+        return (
+            "Median return is the primary typical read, while average return is higher, "
+            "so a few larger wins may be inflating the average."
+        )
+
+    return (
+        "Median return is the primary typical read, while average return is lower, "
+        "so weaker outliers may be dragging the average down."
+    )
 
 
 def _holding_window_insight(rows: Sequence[Mapping[str, Any]]) -> str:
@@ -195,11 +205,15 @@ def _holding_window_insight(rows: Sequence[Mapping[str, Any]]) -> str:
 def _risk_signal_insight(rows: Sequence[Mapping[str, Any]]) -> str:
     win_rate = _mean_numeric(rows, "win_rate")
     avg_return = _mean_numeric(rows, "avg_return")
-    if win_rate is None or avg_return is None:
+    median_return = _mean_numeric(rows, "median_return")
+    if win_rate is None or avg_return is None or median_return is None:
         return ""
 
-    if win_rate < 0.45 and avg_return > 0.01:
-        return "A few setups have high returns but low win rates, which makes them less reliable."
+    if win_rate < 0.45 and avg_return > median_return + 0.01:
+        return (
+            "Win rate is weak while average return sits above median return, "
+            "which suggests a few larger wins are masking uneven outcomes."
+        )
     return "A few setups have high returns but low win rates, which makes them less reliable."
 
 

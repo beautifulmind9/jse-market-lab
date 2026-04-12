@@ -16,6 +16,7 @@ from app.insights.embedded import generate_embedded_insights, render_embedded_in
 from app.planner.allocation import generate_portfolio_allocation
 from app.planner.portfolio_ui import render_portfolio_plan
 from app.shell import build_analyst_dataset, coerce_trade_rows_from_ranked
+from app.ui.display_labels import clean_dataframe_labels
 
 _BEGINNER_TABS = ["Portfolio", "Review", "Ticker Analysis"]
 _ANALYST_TABS = [*_BEGINNER_TABS, "Analyst Insights", "Data"]
@@ -72,6 +73,7 @@ def _build_quick_take(*, stats: dict, holding_window_stats: dict[str, dict]) -> 
         sorted_windows = sorted(
             holding_window_stats.items(),
             key=lambda item: (
+                float(item[1].get("median_return", 0.0)),
                 float(item[1].get("win_rate", 0.0)),
                 float(item[1].get("avg_return", 0.0)),
             ),
@@ -85,7 +87,7 @@ def _build_quick_take(*, stats: dict, holding_window_stats: dict[str, dict]) -> 
     return [
         f"This stock looks {strength} based on past signals.",
         f"It closed positive about {win_rate:.0%} of the time.",
-        f"So far, {consistency}.",
+        f"Typical outcome centers around median return near {median_return:.2%}; {consistency}.",
         hold_line,
     ]
 
@@ -96,9 +98,10 @@ def _build_holding_window_table(holding_window_stats: dict[str, dict], *, analys
     rows: list[dict] = []
     for window, values in holding_window_stats.items():
         win_rate = float(values.get("win_rate", 0.0))
+        median_return = float(values.get("median_return", 0.0))
         avg_return = float(values.get("avg_return", 0.0))
         count = int(values.get("count", 0))
-        if win_rate >= 0.6 and avg_return > 0:
+        if win_rate >= 0.6 and median_return > 0:
             verdict = "More steady"
         elif win_rate >= 0.5:
             verdict = "Mixed"
@@ -107,6 +110,7 @@ def _build_holding_window_table(holding_window_stats: dict[str, dict], *, analys
         row = {
             "holding_window": window,
             "win_rate": f"{win_rate:.0%}",
+            "median_return": f"{median_return:.2f}%",
             "average_return": f"{avg_return:.2f}%",
             "verdict": verdict,
         }
@@ -373,7 +377,7 @@ def main() -> None:
                 best_window = str(metrics_stats.get("best_window") or "N/A")
                 st.markdown(f"**Best holding period:** {best_window}")
                 st.markdown(f"{metrics_behavior.get('holding_window', 'Holding-window comparison is limited right now.')}")
-                st.dataframe(holding_window_df, use_container_width=True, hide_index=True)
+                st.dataframe(clean_dataframe_labels(holding_window_df), use_container_width=True, hide_index=True)
 
             st.markdown("#### C) Risk Profile")
             st.caption("This explains how steady or uneven the returns have been.")
@@ -421,14 +425,14 @@ def main() -> None:
 
                 st.markdown("This table shows full holding-window stats including raw sample count.")
                 raw_holding_df = pd.DataFrame.from_dict(ticker_payload["holding_window_stats"], orient="index")
-                st.dataframe(raw_holding_df.reset_index().rename(columns={"index": "holding_window"}), use_container_width=True)
+                st.dataframe(clean_dataframe_labels(raw_holding_df.reset_index().rename(columns={"index": "holding_window"})), use_container_width=True)
 
                 st.markdown("This table shows how each quality tier has performed for this ticker.")
                 tier_df = pd.DataFrame.from_dict(ticker_payload["tier_performance"], orient="index")
                 if tier_df.empty:
                     st.info("No tier breakdown is ready for this ticker yet.")
                 else:
-                    st.dataframe(tier_df.reset_index().rename(columns={"index": "quality_tier"}), use_container_width=True)
+                    st.dataframe(clean_dataframe_labels(tier_df.reset_index().rename(columns={"index": "quality_tier"})), use_container_width=True)
 
                 st.markdown("This table shows whether results changed across volatility buckets.")
                 volatility_df = pd.DataFrame.from_dict(ticker_payload["volatility_performance"], orient="index")
@@ -436,20 +440,20 @@ def main() -> None:
                     st.info("No volatility breakdown is ready for this ticker yet.")
                 else:
                     st.dataframe(
-                        volatility_df.reset_index().rename(columns={"index": "volatility_bucket"}),
+                        clean_dataframe_labels(volatility_df.reset_index().rename(columns={"index": "volatility_bucket"})),
                         use_container_width=True,
                     )
 
                 st.markdown("This table shows the return distribution split between losses and stronger wins.")
                 distribution_df = pd.DataFrame([ticker_payload["return_distribution"]])
-                st.dataframe(distribution_df, use_container_width=True)
+                st.dataframe(clean_dataframe_labels(distribution_df), use_container_width=True)
 
                 st.markdown("This table lists the raw signal history for analyst review.")
                 signal_df = pd.DataFrame(ticker_payload["signals"])
                 if signal_df.empty:
                     st.info("No signal history is available for this ticker yet.")
                 else:
-                    st.dataframe(signal_df, use_container_width=True)
+                    st.dataframe(clean_dataframe_labels(signal_df), use_container_width=True)
             else:
                 st.markdown("**Analyst Deep Dive** is available in Analyst mode for full raw tables.")
 
@@ -479,7 +483,7 @@ def main() -> None:
                     {"stage": "ranked", "rows": int(len(ranked_df)), "unique_tickers": _extract_unique_ticker_count(ranked_df)},
                 ]
             )
-            st.dataframe(diagnostics_df, use_container_width=True, hide_index=True)
+            st.dataframe(clean_dataframe_labels(diagnostics_df), use_container_width=True, hide_index=True)
             st.code(
                 (
                     f"canonical first 20 tickers: {_extract_ticker_preview(canonical_df)}\n"
@@ -488,7 +492,7 @@ def main() -> None:
                 language="text",
             )
             st.markdown("#### Main Dashboard")
-            st.dataframe(canonical_df.head(50), use_container_width=True)
+            st.dataframe(clean_dataframe_labels(canonical_df.head(50)), use_container_width=True)
 
 
 def _render_first_run_header(st_module, *, mode: str) -> None:

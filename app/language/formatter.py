@@ -74,13 +74,16 @@ def format_beginner_explanation(signal_or_row: Mapping[str, Any]) -> str:
 def format_analyst_explanation(signal_or_row: Mapping[str, Any]) -> str:
     strength = get_strength_label(signal_or_row.get("quality_tier"))
     win_rate = _pct_or_none(signal_or_row.get("win_rate"), 0)
+    median_return = _pct_or_none(signal_or_row.get("median_return"), 2)
     avg_return = _pct_or_none(signal_or_row.get("avg_return"), 2)
 
     metric_bits: list[str] = []
     if win_rate is not None:
         metric_bits.append(f"How often this works: {win_rate}")
+    if median_return is not None:
+        metric_bits.append(f"Typical move (median): {median_return}")
     if avg_return is not None:
-        metric_bits.append(f"Typical move: {avg_return}")
+        metric_bits.append(f"Supporting average move: {avg_return}")
     metric_line = "; ".join(metric_bits) if metric_bits else "Key performance metrics are limited in this row."
     return f"{strength}. {_risk_sentence(signal_or_row)} {metric_line}"
 

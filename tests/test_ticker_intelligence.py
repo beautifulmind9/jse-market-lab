@@ -122,3 +122,31 @@ def test_compute_ticker_metrics_execution_typical_outcome_is_median_first():
     assert "median return" in typical_outcome
     assert "Supporting average return" in typical_outcome
     assert typical_outcome.index("median return") < typical_outcome.index("Supporting average return")
+
+
+def test_compute_ticker_metrics_holding_window_prefers_median_before_average():
+    df = pd.DataFrame(
+        {
+            "instrument": ["TEST"] * 8,
+            "holding_window": [5, 5, 5, 5, 20, 20, 20, 20],
+            "net_return_pct": [0.20, -0.04, -0.04, 0.01, 0.03, 0.03, 0.03, 0.03],
+        }
+    )
+
+    payload = compute_ticker_metrics(df, "TEST", mode="analyst")
+
+    assert payload["behavior"]["holding_window"] == "20D looks stronger than 5D in this dataset."
+
+
+def test_compute_ticker_metrics_consistency_calls_out_median_as_primary():
+    df = pd.DataFrame(
+        {
+            "instrument": ["TEST"] * 6,
+            "holding_window": [5, 5, 5, 20, 20, 20],
+            "net_return_pct": [0.01, 0.01, 0.01, 0.01, 0.08, -0.01],
+        }
+    )
+
+    payload = compute_ticker_metrics(df, "TEST", mode="analyst")
+
+    assert "Median return is the primary typical-outcome read" in payload["behavior"]["consistency"]
