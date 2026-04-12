@@ -1,4 +1,4 @@
-# Prioritized Backlog
+  # Prioritized Backlog
 
 This backlog reflects the current state of the JSE Decision Support Dashboard after completion of the core strategy engine, risk-awareness layers, confidence system, allocation engine, and analyst validation surfaces.
 
@@ -873,4 +873,26 @@ Language can be refined further in a later product-wide tone pass, but Sprint 11
 - complete live smoke test on deployed app
 - validate first-run clarity
 - refine public-facing language where needed
+- complete Sprint 12 UAT and closeout
+### Sprint 12 — Public-Ready Product
+**Status:** In progress  
+**Priority:** High
+
+**Current progress**
+- app deployed publicly to Streamlit Community Cloud
+- first-run experience added
+- Jamaican-friendly language system introduced
+- Beginner vs Analyst mode introduced
+- app information architecture improved
+- bundled internal dataset upgraded from generic demo data to historical JSE data
+- backward-compatible loader contract preserved with both `ticker` and `instrument`
+
+**Validated slice**
+- the dashboard now opens with historical JSE data by default
+- the app remains compatible with older downstream code expecting `instrument`
+- first-time users now see a more credible data foundation
+
+**Remaining focus**
+- finish current UI / Data tab correctness fixes from latest review feedback
+- review public-facing wording and visual polish
 - complete Sprint 12 UAT and closeout
