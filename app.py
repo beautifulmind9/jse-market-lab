@@ -30,15 +30,6 @@ def main() -> None:
     mode_token = mode.lower()
 
     canonical_df, meta, issues = ingest_dataset("demo")
-    st.markdown("### Data Status")
-    st.write(
-        {
-            "dataset_id": meta.get("dataset_id"),
-            "source": meta.get("source"),
-            "row_count": int(len(canonical_df)),
-            "validation_issues": issues,
-        }
-    )
 
     if canonical_df.empty:
         st.warning("No rows were loaded from the data layer. Please verify demo dataset files.")
@@ -60,10 +51,69 @@ def main() -> None:
     _render_first_run_header(st, mode=mode_token)
     render_embedded_insights(insights_payload, st_module=st)
 
-    st.markdown("### Main Dashboard")
-    st.dataframe(canonical_df.head(50), use_container_width=True)
+    if ranked_df.empty:
+        allocations: list[dict] = []
+    else:
+        default_capital = 100_000.0
+        allocation_payload = generate_portfolio_allocation(trade_rows, default_capital)
+        base_allocations = allocation_payload.get("allocations", [])
+        allocations = [{**allocation, **row} for row, allocation in zip(trade_rows, base_allocations)]
 
-    insights_tab, ticker_tab, plan_tab = st.tabs(["Analyst Insights", "Ticker Analysis", "Portfolio Plan"])
+    portfolio_tab, review_tab, insights_tab, ticker_tab = st.tabs(
+        ["Portfolio", "Review", "Analyst Insights", "Ticker Analysis"]
+    )
+
+    with portfolio_tab:
+        st.markdown("### Portfolio Plan")
+        total_capital = st.number_input(
+            "Total capital",
+            min_value=0.0,
+            value=100_000.0,
+            step=5_000.0,
+        )
+        if ranked_df.empty:
+            st.info("Portfolio Plan unavailable: ranked outputs were not generated.")
+        else:
+            allocation_payload = generate_portfolio_allocation(trade_rows, total_capital)
+            refreshed_allocations = allocation_payload.get("allocations", [])
+            enriched_allocations = [
+                {**allocation, **row} for row, allocation in zip(trade_rows, refreshed_allocations)
+            ]
+            render_portfolio_plan(
+                enriched_allocations,
+                total_capital=total_capital,
+                st_module=st,
+                signals_df=ranked_df,
+                mode=mode_token,
+                section="plan",
+                show_header=False,
+            )
+
+    with review_tab:
+        st.markdown("### Review")
+        st.markdown("#### Data Status")
+        st.write(
+            {
+                "dataset_id": meta.get("dataset_id"),
+                "source": meta.get("source"),
+                "row_count": int(len(canonical_df)),
+                "validation_issues": issues,
+            }
+        )
+        st.markdown("#### Main Dashboard")
+        st.dataframe(canonical_df.head(50), use_container_width=True)
+        if ranked_df.empty:
+            st.info("Review unavailable: ranked outputs were not generated.")
+        else:
+            render_portfolio_plan(
+                allocations,
+                total_capital=100_000.0,
+                st_module=st,
+                signals_df=ranked_df,
+                mode=mode_token,
+                section="review",
+                show_header=False,
+            )
 
     with insights_tab:
         render_analyst_insights(analyst_df, st_module=st, analyst_mode=mode_token == "analyst")
@@ -153,35 +203,6 @@ def main() -> None:
                     st.info("No signal history is available for this ticker yet.")
                 else:
                     st.dataframe(signal_df, use_container_width=True)
-
-    with plan_tab:
-        st.markdown("### Portfolio Plan")
-        total_capital = st.number_input(
-            "Total capital",
-            min_value=0.0,
-            value=100_000.0,
-            step=5_000.0,
-        )
-
-        if ranked_df.empty:
-            st.info("Portfolio Plan unavailable: ranked outputs were not generated.")
-            return
-
-        allocation_payload = generate_portfolio_allocation(trade_rows, total_capital)
-        allocations = allocation_payload.get("allocations", [])
-
-        # Attach lightweight context fields used by portfolio UI reason labels.
-        enriched_allocations = []
-        for row, allocation in zip(trade_rows, allocations):
-            enriched_allocations.append({**allocation, **row})
-
-        render_portfolio_plan(
-            enriched_allocations,
-            total_capital=total_capital,
-            st_module=st,
-            signals_df=ranked_df,
-            mode=mode_token,
-        )
 
 
 def _render_first_run_header(st_module, *, mode: str) -> None:
