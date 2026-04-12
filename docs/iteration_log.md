@@ -34,3 +34,4 @@
 | V16 | Sprint 12 started | Began final Phase 1 sprint focused on public readiness, language clarity, first-run experience, product framing, and public deployment |
 | V16.1 | Sprint 12 deployment hardening | Added Streamlit dependency and hardened demo artifact writes so restricted hosted filesystems do not break the app while unexpected I/O failures still surface |
 | V16.2 | Sprint 12 public deployment | Deployed the JSE Dashboard to Streamlit Community Cloud and made the product accessible through a public URL |
+| V16.3 | Sprint 12 JSE data integration | Replaced the generic demo source with bundled historical JSE data and preserved backward compatibility by exposing both ticker and instrument through the loader |
