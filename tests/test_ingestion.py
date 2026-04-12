@@ -86,7 +86,7 @@ def test_internal_loader_returns_ticker_and_instrument_columns(monkeypatch):
     )
     monkeypatch.setattr("app.data.loaders.pd.read_csv", lambda *_args, **_kwargs: sample_raw)
 
-    loaded = load_internal_dataset()
+    loaded, source_label = load_internal_dataset()
 
     assert "ticker" in loaded.columns
     assert "instrument" in loaded.columns
@@ -95,6 +95,7 @@ def test_internal_loader_returns_ticker_and_instrument_columns(monkeypatch):
         loaded["ticker"],
         check_names=False,
     )
+    assert source_label in {"internal_jse_dataset", "legacy_demo_dataset"}
 
 
 def test_demo_ingestion_path_accepts_internal_loader_compatibility_contract(monkeypatch):
@@ -136,6 +137,7 @@ def test_internal_loader_prefers_bundled_jse_dataset(monkeypatch, tmp_path):
     monkeypatch.setattr("app.data.loaders.INTERNAL_DATASET_PATH", bundled_path)
     monkeypatch.setattr("app.data.loaders.LEGACY_INTERNAL_DATASET_PATH", legacy_path)
 
-    _ = load_internal_dataset()
+    _, source_label = load_internal_dataset()
 
     assert calls == [bundled_path]
+    assert source_label == "internal_jse_dataset"

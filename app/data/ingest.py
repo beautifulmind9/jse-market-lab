@@ -20,7 +20,7 @@ def ingest_dataset(
         raise ValueError("mode must be 'demo' or 'upload'.")
 
     if mode == "demo":
-        raw = load_internal_dataset()
+        raw, _source_label = load_internal_dataset()
         source = "demo"
     else:
         raw = load_upload(uploaded_file)
