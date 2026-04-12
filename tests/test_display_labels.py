@@ -33,3 +33,15 @@ def test_clean_dataframe_labels_renames_headers_and_selected_value_columns():
 
     assert list(cleaned.columns) == ["Quality Tier", "Exit Reason", "Win Rate"]
     assert cleaned.loc[0, "Exit Reason"] == "Target Hit"
+
+
+def test_display_label_preserves_zero_label():
+    assert display_label(0) == "0"
+
+
+def test_display_label_preserves_false_label():
+    assert display_label(False) == "False"
+
+
+def test_display_label_handles_none_as_missing():
+    assert display_label(None) == ""

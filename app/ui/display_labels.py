@@ -24,7 +24,10 @@ _LABEL_OVERRIDES = {
 
 def display_label(raw_label: Any) -> str:
     """Convert common raw labels (snake_case) into cleaned UI labels."""
-    token = str(raw_label or "").strip()
+    if raw_label is None:
+        return ""
+
+    token = str(raw_label).strip()
     if token == "":
         return ""
 
