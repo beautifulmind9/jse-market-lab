@@ -22,7 +22,9 @@ def test_snapshot_contains_required_interpretation_sections():
     assert snapshot["title"] == "Portfolio Snapshot"
     assert "found 2 possible trades" in blob.lower()
     assert "were funded" in blob.lower()
-    assert "stronger" in blob.lower()
+    assert "current funded setup mix" in blob.lower()
+    assert "current funded confidence" in blob.lower()
+    assert "example glossary only" in blob.lower()
     assert "cash" in blob.lower()
 
 
@@ -68,3 +70,64 @@ def test_snapshot_and_reserved_cash_copy_has_no_advisory_language():
 
     combined = " ".join(snapshot["lines"] + reserved_cash["lines"])
     assert contains_advisory_language(combined) is False
+
+
+def test_snapshot_strong_funded_portfolio_is_data_driven_not_hardcoded():
+    snapshot = build_portfolio_snapshot(
+        [
+            {"allocation_amount": 3_000, "quality_tier": "A", "confidence_label": "high"},
+            {"allocation_amount": 2_000, "quality_tier": "A", "confidence_label": "strong"},
+            {"allocation_amount": 1_500, "quality_tier": "B", "confidence_label": "high"},
+        ],
+        10_000,
+        mode="analyst",
+    )
+
+    blob = " ".join(snapshot["lines"]).lower()
+    assert "current funded setup mix is strong" in blob
+    assert "current funded confidence mix is high/reliable" in blob
+
+
+def test_snapshot_mixed_funded_portfolio_uses_mixed_language():
+    snapshot = build_portfolio_snapshot(
+        [
+            {"allocation_amount": 3_000, "quality_tier": "A", "confidence_label": "high"},
+            {"allocation_amount": 2_500, "quality_tier": "B", "confidence_label": "medium"},
+            {"allocation_amount": 1_500, "quality_tier": "C", "confidence_label": "low"},
+        ],
+        10_000,
+        mode="beginner",
+    )
+
+    blob = " ".join(snapshot["lines"]).lower()
+    assert "mixed but still constructive" in blob
+    assert "current funded confidence is mixed" in blob
+    assert "high confidence" not in blob or "example glossary only" in blob
+
+
+def test_snapshot_unfunded_portfolio_does_not_claim_strong_or_high_confidence():
+    snapshot = build_portfolio_snapshot(
+        [
+            {"allocation_amount": 0, "quality_tier": "B", "confidence_label": "medium"},
+            {"allocation_amount": 0, "quality_tier": "C", "confidence_label": "low"},
+        ],
+        10_000,
+        mode="beginner",
+    )
+
+    blob = " ".join(snapshot["lines"]).lower()
+    assert "no trades were funded" in blob
+    assert "current funded confidence is mostly high" not in blob
+    assert "current funded confidence mix is high/reliable" not in blob
+
+
+def test_snapshot_glossary_text_is_clearly_separated_from_live_interpretation():
+    snapshot = build_portfolio_snapshot(
+        [
+            {"allocation_amount": 2_000, "quality_tier": "C", "confidence_label": "low"},
+        ],
+        10_000,
+        mode="analyst",
+    )
+
+    assert any(line.startswith("How to read setup strength and confidence:") for line in snapshot["lines"])
