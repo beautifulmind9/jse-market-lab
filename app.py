@@ -364,13 +364,21 @@ def main() -> None:
             ):
                 st.markdown("- The average can be lifted by a smaller number of bigger wins.")
 
-            st.markdown("#### D) What Usually Happens")
+            execution_summary = ticker_metrics.get("execution", {})
+            st.markdown("#### D) Execution Lens")
+            st.caption("Rule-based execution framing for reference timing, default exit, typical outcome, and practical risks.")
+            st.markdown(f"- Entry reference: {execution_summary.get('entry_reference', '')}")
+            st.markdown(f"- Planned exit: {execution_summary.get('planned_exit', '')}")
+            st.markdown(f"- Typical outcome: {execution_summary.get('typical_outcome', '')}")
+            st.markdown(f"- Execution risk: {execution_summary.get('execution_risk', '')}")
+
+            st.markdown("#### E) What Usually Happens")
             st.caption("This section translates recurring behavior seen in the historical sample.")
             st.markdown(f"- {ticker_payload['pattern_summary']}")
             st.markdown(f"- {metrics_behavior.get('holding_window', '')}")
             st.markdown(f"- {metrics_behavior.get('tier_profile', '')}")
 
-            st.markdown("#### E) What to Watch")
+            st.markdown("#### F) What to Watch")
             st.caption("These points flag caution areas that can make results look better or worse than expected.")
             if "20D looks stronger" in metrics_behavior.get("holding_window", ""):
                 st.markdown("- Short-term setups have looked weaker than longer holds in this sample.")
@@ -378,7 +386,7 @@ def main() -> None:
             st.markdown("- A smaller number of bigger moves can shape the average return.")
 
             if analyst_mode:
-                st.markdown("#### F) Analyst Deep Dive")
+                st.markdown("#### G) Analyst Deep Dive")
                 st.caption("These tables provide the full raw breakdown for deeper inspection.")
 
                 st.markdown("This table shows full holding-window stats including raw sample count.")
