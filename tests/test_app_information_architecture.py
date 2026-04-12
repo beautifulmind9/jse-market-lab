@@ -331,6 +331,60 @@ def test_app_does_not_depend_on_global_cache_data_clear():
     assert "cache_data.clear" not in app_source
 
 
+def test_run_demo_uses_active_dataset_context_when_supported(monkeypatch):
+    app_main = _load_app_module()
+
+    canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+    meta = {"dataset_id": "demo-1", "dataset_source_label": "internal_jse_dataset"}
+    issues = {"errors": [], "warnings": []}
+    calls = {}
+
+    def run_demo_with_context(*, canonical_df, meta, issues):
+        calls["canonical_df"] = canonical_df
+        calls["meta"] = meta
+        calls["issues"] = issues
+        return {"ranked": pd.DataFrame()}
+
+    monkeypatch.setattr(app_main, "run_demo", run_demo_with_context)
+
+    result = app_main._run_demo_with_active_dataset(
+        canonical_df=canonical_df,
+        meta=meta,
+        issues=issues,
+    )
+
+    assert "ranked" in result
+    assert isinstance(result["ranked"], pd.DataFrame)
+    assert calls["canonical_df"] is canonical_df
+    assert calls["meta"] is meta
+    assert calls["issues"] is issues
+
+
+def test_run_demo_falls_back_to_legacy_signature_when_context_not_supported(monkeypatch):
+    app_main = _load_app_module()
+
+    canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+    meta = {"dataset_id": "demo-1"}
+    issues = {"errors": [], "warnings": []}
+    calls = {"count": 0}
+
+    def legacy_run_demo():
+        calls["count"] += 1
+        return {"ranked": pd.DataFrame()}
+
+    monkeypatch.setattr(app_main, "run_demo", legacy_run_demo)
+
+    result = app_main._run_demo_with_active_dataset(
+        canonical_df=canonical_df,
+        meta=meta,
+        issues=issues,
+    )
+
+    assert "ranked" in result
+    assert isinstance(result["ranked"], pd.DataFrame)
+    assert calls["count"] == 1
+
+
 def test_ticker_analysis_selector_uses_canonical_dataset_universe(monkeypatch):
     app_main = _load_app_module()
     dummy_st = DummyStreamlit()

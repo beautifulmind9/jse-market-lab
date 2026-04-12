@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import inspect
+
 import pandas as pd
 
 from app.analysis.ticker_drilldown import build_ticker_drilldown
@@ -44,6 +46,23 @@ def _extract_ticker_options(df: pd.DataFrame) -> list[str]:
     tickers = df[ticker_column].dropna().astype(str).str.strip()
     tickers = tickers[tickers != ""]
     return sorted(tickers.unique())
+
+
+def _run_demo_with_active_dataset(
+    *,
+    canonical_df: pd.DataFrame,
+    meta: dict,
+    issues: dict,
+) -> dict:
+    """Run demo pipeline while preferring the active app dataset when supported."""
+    run_demo_signature = inspect.signature(run_demo)
+    supports_context_injection = all(
+        param_name in run_demo_signature.parameters
+        for param_name in ("canonical_df", "meta", "issues")
+    )
+    if supports_context_injection:
+        return run_demo(canonical_df=canonical_df, meta=meta, issues=issues)
+    return run_demo()
 
 
 def _render_visual_polish(st_module) -> None:
@@ -138,10 +157,11 @@ def main() -> None:
         st.warning("No rows were loaded from the data layer. Please verify the internal sample data file.")
         return
 
-    try:
-        demo_payload = run_demo(canonical_df=canonical_df, meta=meta, issues=issues)
-    except TypeError:
-        demo_payload = run_demo()
+    demo_payload = _run_demo_with_active_dataset(
+        canonical_df=canonical_df,
+        meta=meta,
+        issues=issues,
+    )
     ranked_df = demo_payload.get("ranked", pd.DataFrame())
     analyst_df = build_analyst_dataset(canonical_df, ranked_df)
     trade_rows = coerce_trade_rows_from_ranked(ranked_df) if not ranked_df.empty else []
