@@ -15,6 +15,41 @@ from app.planner.portfolio_ui import render_portfolio_plan
 from app.shell import build_analyst_dataset, coerce_trade_rows_from_ranked
 
 
+def _has_analyst_insight_content(trades_df: pd.DataFrame, *, analyst_mode: bool) -> bool:
+    if not analyst_mode or trades_df.empty:
+        return False
+    return any(column in trades_df.columns for column in ("net_return_pct", "net_return", "return_pct", "return"))
+
+
+def _render_data_status_summary(
+    st_module,
+    *,
+    source: str | None,
+    row_count: int,
+    issues: list[str],
+    dataset_id: str | None,
+    analyst_mode: bool,
+) -> None:
+    st_module.markdown("#### Data Status")
+    status_col, quality_col = st_module.columns(2)
+    with status_col:
+        st_module.markdown(f"**Source:** {source or 'Unknown'}")
+        st_module.markdown(f"**Rows loaded:** {row_count}")
+        st_module.markdown(f"**Errors:** {0 if row_count > 0 else 1}")
+    with quality_col:
+        warning_count = len(issues)
+        st_module.markdown(f"**Warnings:** {warning_count}")
+        if analyst_mode:
+            st_module.markdown(f"**Dataset ID:** {dataset_id or 'N/A'}")
+
+    if issues:
+        st_module.markdown("**Warning details**")
+        for issue in issues:
+            st_module.markdown(f"- {issue}")
+    elif row_count > 0:
+        st_module.caption("No ingestion warnings were reported for this dataset.")
+
+
 def main() -> None:
     """Run the Streamlit shell with Analyst Insights and Portfolio Plan sections."""
     import streamlit as st
@@ -40,12 +75,8 @@ def main() -> None:
     analyst_df = build_analyst_dataset(canonical_df, ranked_df)
     trade_rows = coerce_trade_rows_from_ranked(ranked_df) if not ranked_df.empty else []
 
-    selected_capital = st.number_input(
-        "Total capital",
-        min_value=0.0,
-        value=100_000.0,
-        step=5_000.0,
-    )
+    default_capital = 100_000.0
+    selected_capital = float(st.session_state.get("total_capital", default_capital))
 
     if ranked_df.empty:
         enriched_allocations: list[dict] = []
@@ -62,12 +93,19 @@ def main() -> None:
     _render_first_run_header(st, mode=mode_token)
     render_embedded_insights(insights_payload, st_module=st)
 
-    portfolio_tab, review_tab, insights_tab, ticker_tab = st.tabs(
-        ["Portfolio", "Review", "Analyst Insights", "Ticker Analysis"]
+    portfolio_tab, review_tab, ticker_tab, insights_tab, data_tab = st.tabs(
+        ["Portfolio", "Review", "Ticker Analysis", "Analyst Insights", "Data"]
     )
 
     with portfolio_tab:
         st.markdown("### Portfolio Plan")
+        selected_capital = st.number_input(
+            "Total capital",
+            min_value=0.0,
+            value=selected_capital,
+            step=5_000.0,
+            key="total_capital",
+        )
         if ranked_df.empty:
             st.info("Portfolio Plan unavailable: ranked outputs were not generated.")
         else:
@@ -83,17 +121,6 @@ def main() -> None:
 
     with review_tab:
         st.markdown("### Review")
-        st.markdown("#### Data Status")
-        st.write(
-            {
-                "dataset_id": meta.get("dataset_id"),
-                "source": meta.get("source"),
-                "row_count": int(len(canonical_df)),
-                "validation_issues": issues,
-            }
-        )
-        st.markdown("#### Main Dashboard")
-        st.dataframe(canonical_df.head(50), use_container_width=True)
         if ranked_df.empty:
             st.info("Review unavailable: ranked outputs were not generated.")
         else:
@@ -106,9 +133,6 @@ def main() -> None:
                 section="review",
                 show_header=False,
             )
-
-    with insights_tab:
-        render_analyst_insights(analyst_df, st_module=st, analyst_mode=mode_token == "analyst")
 
     with ticker_tab:
         st.markdown("### Ticker Analysis")
@@ -195,6 +219,26 @@ def main() -> None:
                     st.info("No signal history is available for this ticker yet.")
                 else:
                     st.dataframe(signal_df, use_container_width=True)
+
+    with insights_tab:
+        st.markdown("### Analyst Insights")
+        if _has_analyst_insight_content(analyst_df, analyst_mode=mode_token == "analyst"):
+            render_analyst_insights(analyst_df, st_module=st, analyst_mode=True)
+        else:
+            st.info("Analyst insights are not available for this dataset yet.")
+
+    with data_tab:
+        st.markdown("### Data")
+        _render_data_status_summary(
+            st,
+            source=meta.get("source"),
+            row_count=int(len(canonical_df)),
+            issues=issues,
+            dataset_id=meta.get("dataset_id"),
+            analyst_mode=mode_token == "analyst",
+        )
+        st.markdown("#### Main Dashboard")
+        st.dataframe(canonical_df.head(50), use_container_width=True)
 
 
 def _render_first_run_header(st_module, *, mode: str) -> None:
