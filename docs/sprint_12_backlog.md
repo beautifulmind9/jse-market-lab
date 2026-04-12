@@ -94,3 +94,17 @@
   - Decision Review
   - Ticker Analysis summaries
 - [ ] add language-mode tests
+
+## Sprint 12 Step 4 — Mode-based tab access + visual polish
+- [ ] restrict Analyst Insights to Analyst mode
+- [ ] restrict Data tab to Analyst mode
+- [ ] build mode-aware top-level tabs
+- [ ] improve visual polish of:
+  - first-run intro
+  - final insight block
+  - Portfolio summary
+  - Review summary
+- [ ] add one restrained accent color
+- [ ] improve spacing and section hierarchy
+- [ ] reduce harsh black/white/grey feel
+- [ ] add/update tests for mode-based tab visibility
