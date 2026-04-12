@@ -86,3 +86,12 @@ def test_embedded_insights_dedupes_duplicate_lines_per_section():
     assert payload["what_is_happening"].count(
         "Only a few trades made it into the final picks this time."
     ) == 1
+
+
+def test_embedded_insight_dedupe_is_case_insensitive_with_spacing():
+    from app.insights.embedded import _dedupe_lines
+
+    lines = ["Mixed result read", "  mixed result read  ", "Different line"]
+    deduped = _dedupe_lines(lines)
+
+    assert deduped == ["Mixed result read", "Different line"]

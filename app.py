@@ -8,6 +8,7 @@ import pandas as pd
 
 from app.analysis.ticker_drilldown import build_ticker_drilldown
 from app.analysis.ticker_intelligence import compute_ticker_metrics
+from app.data.processor import canonicalize_symbol
 from app.data.ingest import ingest_dataset
 from app.demo.run_demo import run_demo
 from app.insights.analyst import render_analyst_insights
@@ -43,9 +44,78 @@ def _extract_ticker_options(df: pd.DataFrame) -> list[str]:
     if ticker_column is None:
         return []
 
-    tickers = df[ticker_column].dropna().astype(str).str.strip()
+    tickers = df[ticker_column].dropna().astype(str).str.strip().map(canonicalize_symbol)
     tickers = tickers[tickers != ""]
     return sorted(tickers.unique())
+
+
+def _ticker_strength_label(win_rate: float) -> str:
+    if win_rate >= 0.60:
+        return "strong"
+    if win_rate >= 0.45:
+        return "mixed"
+    return "weak"
+
+
+def _build_quick_take(*, stats: dict, holding_window_stats: dict[str, dict]) -> list[str]:
+    win_rate = float(stats.get("win_rate", 0.0))
+    avg_return = float(stats.get("avg_return", 0.0))
+    median_return = float(stats.get("median_return", 0.0))
+
+    strength = _ticker_strength_label(win_rate)
+    consistency = (
+        "returns are fairly steady"
+        if abs((avg_return - median_return) * 100) <= 0.3
+        else "returns are a bit uneven"
+    )
+    if len(holding_window_stats) >= 2:
+        sorted_windows = sorted(
+            holding_window_stats.items(),
+            key=lambda item: (
+                float(item[1].get("win_rate", 0.0)),
+                float(item[1].get("avg_return", 0.0)),
+            ),
+            reverse=True,
+        )
+        best_label = sorted_windows[0][0]
+        hold_line = f"{best_label} has looked better than shorter alternatives in this sample."
+    else:
+        hold_line = "There is not enough history yet to compare short and long holding styles."
+
+    return [
+        f"This stock looks {strength} based on past signals.",
+        f"It closed positive about {win_rate:.0%} of the time.",
+        f"So far, {consistency}.",
+        hold_line,
+    ]
+
+
+def _build_holding_window_table(holding_window_stats: dict[str, dict], *, analyst_mode: bool) -> pd.DataFrame:
+    if not holding_window_stats:
+        return pd.DataFrame()
+    rows: list[dict] = []
+    for window, values in holding_window_stats.items():
+        win_rate = float(values.get("win_rate", 0.0))
+        avg_return = float(values.get("avg_return", 0.0))
+        count = int(values.get("count", 0))
+        if win_rate >= 0.6 and avg_return > 0:
+            verdict = "More steady"
+        elif win_rate >= 0.5:
+            verdict = "Mixed"
+        else:
+            verdict = "Less steady"
+        row = {
+            "holding_window": window,
+            "win_rate": f"{win_rate:.0%}",
+            "average_return": f"{avg_return:.2f}%",
+            "verdict": verdict,
+        }
+        if analyst_mode:
+            row["count"] = count
+        else:
+            row["sample_note"] = f"Based on ~{count} historical trades"
+        rows.append(row)
+    return pd.DataFrame(rows)
 
 
 def _extract_unique_ticker_count(df: pd.DataFrame) -> int:
@@ -257,91 +327,93 @@ def main() -> None:
             selected_ticker = st.selectbox("Select ticker", ticker_options)
             ticker_payload = build_ticker_drilldown(analyst_df, selected_ticker)
             ticker_metrics = compute_ticker_metrics(analyst_df, selected_ticker, mode=mode_token)
+            analyst_mode = mode_token == "analyst"
+            metrics_stats = ticker_metrics.get("stats", {})
+            metrics_behavior = ticker_metrics.get("behavior", {})
 
-            st.markdown("#### Ticker Summary")
-            st.write(ticker_metrics["summary"])
-
-            st.markdown("#### Behavior Insights")
-            for line in ticker_metrics["behavior"].values():
+            st.markdown("#### A) Quick Take")
+            st.caption("A fast read of what this stock has looked like so far.")
+            for line in _build_quick_take(
+                stats=metrics_stats, holding_window_stats=ticker_payload["holding_window_stats"]
+            ):
                 st.markdown(f"- {line}")
 
-            st.markdown("#### Pattern Summary")
-            st.write(ticker_payload["pattern_summary"])
-
-            signal_df = pd.DataFrame(ticker_payload["signals"])
-            signal_count = int(len(signal_df))
-            if signal_df.empty or "return_pct" not in signal_df.columns:
-                key_stats = {
-                    "Signal Count": signal_count,
-                    "Win Rate": 0.0,
-                    "Median Return": 0.0,
-                    "Average Return": 0.0,
-                }
-            else:
-                returns = pd.to_numeric(signal_df["return_pct"], errors="coerce").dropna()
-                if returns.empty:
-                    key_stats = {
-                        "Signal Count": signal_count,
-                        "Win Rate": 0.0,
-                        "Median Return": 0.0,
-                        "Average Return": 0.0,
-                    }
-                else:
-                    key_stats = {
-                        "Signal Count": signal_count,
-                        "Win Rate": float((returns > 0).mean()),
-                        "Median Return": float(returns.median()),
-                        "Average Return": float(returns.mean()),
-                    }
-
-            st.markdown(
-                (
-                    '<div class="jse-metric-grid">'
-                    f'<div class="jse-metric"><div class="jse-metric-label">Signal Count</div><div class="jse-metric-value">{key_stats["Signal Count"]}</div></div>'
-                    f'<div class="jse-metric"><div class="jse-metric-label">Win Rate</div><div class="jse-metric-value">{key_stats["Win Rate"]:.1%}</div></div>'
-                    f'<div class="jse-metric"><div class="jse-metric-label">Median Return</div><div class="jse-metric-value">{key_stats["Median Return"]:.2%}</div></div>'
-                    f'<div class="jse-metric"><div class="jse-metric-label">Average Return</div><div class="jse-metric-value">{key_stats["Average Return"]:.2%}</div></div>'
-                    "</div>"
-                ),
-                unsafe_allow_html=True,
-            )
-
-            if mode_token == "analyst":
-                st.markdown("#### Key Stats")
-                st.dataframe(pd.DataFrame([key_stats]), use_container_width=True)
-
-            st.markdown("#### Holding Window Comparison")
-            holding_window_df = pd.DataFrame.from_dict(
-                ticker_payload["holding_window_stats"], orient="index"
+            st.markdown("#### B) Best Holding Strategy")
+            st.caption("This compares how the stock has behaved across holding periods and highlights the strongest window.")
+            holding_window_df = _build_holding_window_table(
+                ticker_payload["holding_window_stats"], analyst_mode=analyst_mode
             )
             if holding_window_df.empty:
                 st.info("No holding window data is ready for this ticker yet.")
             else:
-                st.dataframe(holding_window_df.reset_index().rename(columns={"index": "holding_window"}), use_container_width=True)
+                best_window = str(metrics_stats.get("best_window") or "N/A")
+                st.markdown(f"**Best holding period:** {best_window}")
+                st.markdown(f"{metrics_behavior.get('holding_window', 'Holding-window comparison is limited right now.')}")
+                st.dataframe(holding_window_df, use_container_width=True, hide_index=True)
 
-            st.markdown("#### Tier Performance")
-            tier_df = pd.DataFrame.from_dict(ticker_payload["tier_performance"], orient="index")
-            if tier_df.empty:
-                st.info("No tier breakdown is ready for this ticker yet.")
+            st.markdown("#### C) Risk Profile")
+            st.caption("This explains how steady or uneven the returns have been.")
+            for key in ("reliability", "consistency"):
+                st.markdown(f"- {metrics_behavior.get(key, '')}")
+            distribution = ticker_payload["return_distribution"]
+            st.markdown(
+                f"- Losses: {distribution.get('negative', 0)} | Smaller wins: {distribution.get('small_positive', 0)} | Strong wins: {distribution.get('strong_positive', 0)}."
+            )
+            if distribution.get("strong_positive", 0) > 0 and distribution.get("strong_positive", 0) <= distribution.get(
+                "small_positive", 0
+            ):
+                st.markdown("- The average can be lifted by a smaller number of bigger wins.")
+
+            st.markdown("#### D) What Usually Happens")
+            st.caption("This section translates recurring behavior seen in the historical sample.")
+            st.markdown(f"- {ticker_payload['pattern_summary']}")
+            st.markdown(f"- {metrics_behavior.get('holding_window', '')}")
+            st.markdown(f"- {metrics_behavior.get('tier_profile', '')}")
+
+            st.markdown("#### E) What to Watch")
+            st.caption("These points flag caution areas that can make results look better or worse than expected.")
+            if "20D looks stronger" in metrics_behavior.get("holding_window", ""):
+                st.markdown("- Short-term setups have looked weaker than longer holds in this sample.")
+            st.markdown("- Results can look mixed when win rate and average return move in different directions.")
+            st.markdown("- A smaller number of bigger moves can shape the average return.")
+
+            if analyst_mode:
+                st.markdown("#### F) Analyst Deep Dive")
+                st.caption("These tables provide the full raw breakdown for deeper inspection.")
+
+                st.markdown("This table shows full holding-window stats including raw sample count.")
+                raw_holding_df = pd.DataFrame.from_dict(ticker_payload["holding_window_stats"], orient="index")
+                st.dataframe(raw_holding_df.reset_index().rename(columns={"index": "holding_window"}), use_container_width=True)
+
+                st.markdown("This table shows how each quality tier has performed for this ticker.")
+                tier_df = pd.DataFrame.from_dict(ticker_payload["tier_performance"], orient="index")
+                if tier_df.empty:
+                    st.info("No tier breakdown is ready for this ticker yet.")
+                else:
+                    st.dataframe(tier_df.reset_index().rename(columns={"index": "quality_tier"}), use_container_width=True)
+
+                st.markdown("This table shows whether results changed across volatility buckets.")
+                volatility_df = pd.DataFrame.from_dict(ticker_payload["volatility_performance"], orient="index")
+                if volatility_df.empty:
+                    st.info("No volatility breakdown is ready for this ticker yet.")
+                else:
+                    st.dataframe(
+                        volatility_df.reset_index().rename(columns={"index": "volatility_bucket"}),
+                        use_container_width=True,
+                    )
+
+                st.markdown("This table shows the return distribution split between losses and stronger wins.")
+                distribution_df = pd.DataFrame([ticker_payload["return_distribution"]])
+                st.dataframe(distribution_df, use_container_width=True)
+
+                st.markdown("This table lists the raw signal history for analyst review.")
+                signal_df = pd.DataFrame(ticker_payload["signals"])
+                if signal_df.empty:
+                    st.info("No signal history is available for this ticker yet.")
+                else:
+                    st.dataframe(signal_df, use_container_width=True)
             else:
-                st.dataframe(tier_df.reset_index().rename(columns={"index": "quality_tier"}), use_container_width=True)
-
-            st.markdown("#### Volatility Performance")
-            volatility_df = pd.DataFrame.from_dict(ticker_payload["volatility_performance"], orient="index")
-            if volatility_df.empty:
-                st.info("No volatility breakdown is ready for this ticker yet.")
-            else:
-                st.dataframe(volatility_df.reset_index().rename(columns={"index": "volatility_bucket"}), use_container_width=True)
-
-            st.markdown("#### Return Distribution")
-            distribution_df = pd.DataFrame([ticker_payload["return_distribution"]])
-            st.dataframe(distribution_df, use_container_width=True)
-
-            st.markdown("#### Signal Breakdown")
-            if signal_df.empty:
-                st.info("No signal history is available for this ticker yet.")
-            else:
-                st.dataframe(signal_df, use_container_width=True)
+                st.markdown("**Analyst Deep Dive** is available in Analyst mode for full raw tables.")
 
     if "Analyst Insights" in tab_map:
         with tab_map["Analyst Insights"]:

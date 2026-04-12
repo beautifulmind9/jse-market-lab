@@ -84,3 +84,17 @@ def test_compute_ticker_metrics_handles_missing_data():
     assert payload["stats"]["signal_count"] == 0
     assert payload["stats"]["best_window"] == "N/A"
     assert "No clean return data" in payload["summary"]
+
+
+def test_compute_ticker_metrics_scopes_to_canonical_ticker_with_marker_variants():
+    df = pd.DataFrame(
+        {
+            "instrument": ["CAR", "CARXD", "CAR XD", "CAR (XD)", "GK"],
+            "holding_window": [5, 20, 5, 20, 5],
+            "net_return_pct": [0.01, 0.02, -0.01, 0.015, 0.04],
+        }
+    )
+
+    payload = compute_ticker_metrics(df, "CAR")
+
+    assert payload["stats"]["signal_count"] == 4

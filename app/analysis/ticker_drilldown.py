@@ -6,6 +6,7 @@ from typing import Any
 
 import pandas as pd
 
+from app.data.processor import canonicalize_symbol
 
 TICKER_COLUMNS = ["ticker", "instrument"]
 RETURN_COLUMNS = ["net_return_pct", "net_return", "return_pct", "return"]
@@ -50,7 +51,8 @@ def _scope_to_ticker(df: pd.DataFrame, ticker: str) -> pd.DataFrame:
     ticker_column = _resolve_ticker_column(df)
     if df.empty or ticker_column is None:
         return pd.DataFrame(columns=df.columns)
-    scoped = df[df[ticker_column].astype(str) == str(ticker)].copy()
+    ticker_token = canonicalize_symbol(ticker)
+    scoped = df[df[ticker_column].astype(str).map(canonicalize_symbol) == ticker_token].copy()
     return scoped
 
 
