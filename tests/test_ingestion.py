@@ -103,6 +103,7 @@ def test_internal_loader_returns_ticker_and_instrument_columns(monkeypatch):
     )
     assert source_label in {"internal_jse_dataset", "legacy_demo_dataset"}
     assert isinstance(loaded, pd.DataFrame)
+    assert not isinstance(loaded, tuple)
 
 
 def test_demo_ingestion_path_accepts_internal_loader_compatibility_contract(monkeypatch):
@@ -166,3 +167,15 @@ def test_internal_loader_real_bundled_dataset_has_more_than_legacy_ticker_univer
     ticker_count = int(loaded["instrument"].dropna().astype(str).nunique())
 
     assert ticker_count > 9
+
+
+def test_demo_ingestion_preserves_large_ticker_universe_from_internal_dataset():
+    loaded = load_internal_dataset()
+    canonical, _meta, _issues = ingest_dataset("demo")
+
+    loaded_tickers = int(loaded["instrument"].dropna().astype(str).nunique())
+    canonical_tickers = int(canonical["instrument"].dropna().astype(str).nunique())
+
+    assert loaded_tickers > 9
+    assert canonical_tickers > 9
+    assert canonical_tickers >= int(loaded_tickers * 0.8)

@@ -89,6 +89,9 @@ class DummyStreamlit:
     def subheader(self, _text):
         return None
 
+    def code(self, _text, **_kwargs):
+        return None
+
 
 def _load_app_module():
     spec = importlib.util.spec_from_file_location("app_main", ROOT / "app.py")
@@ -248,6 +251,47 @@ def test_analyst_insights_empty_state_when_no_content(monkeypatch):
 
     insight_messages = [text for tab, text in dummy_st.info_messages if tab == "Analyst Insights"]
     assert "Analyst insights are not available for this dataset yet." in insight_messages
+
+
+def test_ticker_analysis_options_come_from_canonical_dataset_not_ranked_subset(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Analyst")
+
+    large_ticker_universe = [f"T{i:03d}" for i in range(1, 21)]
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": large_ticker_universe,
+            "date": pd.to_datetime(["2024-01-01"] * len(large_ticker_universe)),
+            "close": [10.0] * len(large_ticker_universe),
+        }
+    )
+    ranked_subset = pd.DataFrame({"instrument": ["T001", "T002"], "selection_rank": [1, 2], "tier": ["A", "B"]})
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (
+            canonical_df,
+            {"source": "demo", "dataset_id": "dataset-42"},
+            {"errors": [], "warnings": []},
+        ),
+    )
+    monkeypatch.setattr(
+        app_main,
+        "run_demo",
+        lambda **_kwargs: {"ranked": ranked_subset},
+    )
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
+    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
+
+    app_main.main()
+
+    ticker_options = dummy_st.selectbox_calls[0]
+    assert len(ticker_options) > 9
+    assert set(large_ticker_universe).issubset(set(ticker_options))
 
 
 def test_data_status_uses_warning_bucket_for_counts_and_details():
