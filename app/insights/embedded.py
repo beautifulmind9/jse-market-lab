@@ -47,7 +47,11 @@ def generate_embedded_insights(
     if not what_to_watch:
         what_to_watch.append("Results are mixed, so keep an eye on consistency across trades.")
 
+    what_is_happening = _dedupe_lines(what_is_happening)
+    what_to_watch = _dedupe_lines(what_to_watch)
+
     common_mistakes = _common_mistakes_lines(rows, mode=mode)
+    common_mistakes = _dedupe_lines(common_mistakes)
     why_this_matters = (
         "Based on historical data, this helps you understand where the plan is strong, where risk is rising, and what to monitor next. Use it as a decision-support tool, not a guarantee."
     )
@@ -216,6 +220,19 @@ def _count_tokens(
         token = token.upper() if uppercase else token.lower()
         counts[token] = counts.get(token, 0) + 1
     return counts
+
+
+def _dedupe_lines(lines: Sequence[str]) -> list[str]:
+    """Drop duplicate lines while preserving first-seen order."""
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for line in lines:
+        token = str(line).strip()
+        if not token or token in seen:
+            continue
+        seen.add(token)
+        deduped.append(token)
+    return deduped
 
 
 def _mean_numeric(rows: Sequence[Mapping[str, Any]], field: str) -> float | None:
