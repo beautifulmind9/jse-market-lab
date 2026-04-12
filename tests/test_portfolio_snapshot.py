@@ -88,6 +88,38 @@ def test_snapshot_strong_funded_portfolio_is_data_driven_not_hardcoded():
     assert "current funded confidence mix is high/reliable" in blob
 
 
+def test_snapshot_missing_labels_do_not_inflate_to_mostly_high():
+    snapshot = build_portfolio_snapshot(
+        [
+            {"allocation_amount": 3_000, "quality_tier": "A", "confidence_label": "high"},
+            {"allocation_amount": 2_000, "quality_tier": "B", "confidence_label": "strong"},
+            {"allocation_amount": 1_500, "quality_tier": "C", "confidence_label": ""},
+            {"allocation_amount": 1_000, "quality_tier": "C"},
+        ],
+        10_000,
+        mode="beginner",
+    )
+
+    blob = " ".join(snapshot["lines"]).lower()
+    assert "current funded confidence is mostly high" not in blob
+    assert "current funded confidence is mixed across the funded portfolio" in blob
+
+
+def test_snapshot_low_coverage_triggers_limited_confidence_detail():
+    snapshot = build_portfolio_snapshot(
+        [
+            {"allocation_amount": 3_000, "quality_tier": "A", "confidence_label": "high"},
+            {"allocation_amount": 2_500, "quality_tier": "B", "confidence_label": ""},
+            {"allocation_amount": 1_500, "quality_tier": "C"},
+        ],
+        10_000,
+        mode="beginner",
+    )
+
+    blob = " ".join(snapshot["lines"])
+    assert "Confidence detail is limited for this plan." in blob
+
+
 def test_snapshot_mixed_funded_portfolio_uses_mixed_language():
     snapshot = build_portfolio_snapshot(
         [
@@ -105,6 +137,40 @@ def test_snapshot_mixed_funded_portfolio_uses_mixed_language():
     assert "high confidence" not in blob or "example glossary only" in blob
 
 
+def test_snapshot_mixed_labeled_and_unlabeled_uses_total_funded_denominator():
+    snapshot = build_portfolio_snapshot(
+        [
+            {"allocation_amount": 3_000, "quality_tier": "A", "confidence_label": "high"},
+            {"allocation_amount": 2_500, "quality_tier": "B", "confidence_label": "medium"},
+            {"allocation_amount": 1_500, "quality_tier": "C", "confidence_label": "low"},
+            {"allocation_amount": 1_000, "quality_tier": "C"},
+        ],
+        10_000,
+        mode="beginner",
+    )
+
+    blob = " ".join(snapshot["lines"]).lower()
+    assert "current funded confidence is mixed across the funded portfolio" in blob
+
+
+def test_snapshot_analyst_mode_includes_coverage_and_unknown_details():
+    snapshot = build_portfolio_snapshot(
+        [
+            {"allocation_amount": 3_000, "quality_tier": "A", "confidence_label": "high"},
+            {"allocation_amount": 2_500, "quality_tier": "B", "confidence_label": "medium"},
+            {"allocation_amount": 1_500, "quality_tier": "C", "confidence_label": "low"},
+            {"allocation_amount": 1_000, "quality_tier": "C"},
+        ],
+        10_000,
+        mode="analyst",
+    )
+
+    blob = " ".join(snapshot["lines"]).lower()
+    assert "current funded confidence mix is medium/mixed" in blob
+    assert "high: 1, medium: 1, low: 1, unknown: 1" in blob
+    assert "coverage ~75%" in blob
+
+
 def test_snapshot_unfunded_portfolio_does_not_claim_strong_or_high_confidence():
     snapshot = build_portfolio_snapshot(
         [
@@ -119,6 +185,21 @@ def test_snapshot_unfunded_portfolio_does_not_claim_strong_or_high_confidence():
     assert "no trades were funded" in blob
     assert "current funded confidence is mostly high" not in blob
     assert "current funded confidence mix is high/reliable" not in blob
+
+
+def test_snapshot_confidence_copy_remains_non_advisory_with_coverage_logic():
+    snapshot = build_portfolio_snapshot(
+        [
+            {"allocation_amount": 3_000, "quality_tier": "A", "confidence_label": "high"},
+            {"allocation_amount": 2_500, "quality_tier": "B", "confidence_label": ""},
+            {"allocation_amount": 1_500, "quality_tier": "C"},
+        ],
+        10_000,
+        mode="analyst",
+    )
+
+    combined = " ".join(snapshot["lines"])
+    assert contains_advisory_language(combined) is False
 
 
 def test_snapshot_glossary_text_is_clearly_separated_from_live_interpretation():
