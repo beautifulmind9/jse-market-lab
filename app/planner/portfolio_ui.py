@@ -28,7 +28,7 @@ from app.planner.explanations import (
 
 
 _ALLOCATOR_REASON_KEYS = REASON_KEYS
-_SENTENCE_BOUNDARY_PATTERN = re.compile(r"(?<=[.!?])\s+(?=[A-Z]|$)")
+_SENTENCE_BOUNDARY_PATTERN = re.compile(r"([.!?])\s+")
 
 
 def build_portfolio_summary(
@@ -358,8 +358,19 @@ def _first_sentence(text: str) -> str:
     if not cleaned:
         return ""
 
-    sentence = _SENTENCE_BOUNDARY_PATTERN.split(cleaned, maxsplit=1)[0].strip()
-    return sentence
+    for match in _SENTENCE_BOUNDARY_PATTERN.finditer(cleaned):
+        punctuation = match.group(1)
+        punctuation_idx = match.start(1)
+        next_char_idx = match.end()
+        prev_char = cleaned[punctuation_idx - 1] if punctuation_idx > 0 else ""
+        next_char = cleaned[next_char_idx] if next_char_idx < len(cleaned) else ""
+
+        if punctuation == "." and prev_char.isdigit() and next_char.isdigit():
+            continue
+
+        return cleaned[: punctuation_idx + 1].strip()
+
+    return cleaned
 
 
 def _format_holding_window_label(value: Any) -> str:
