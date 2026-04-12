@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any, Mapping, Sequence
 
 import pandas as pd
@@ -27,6 +28,7 @@ from app.planner.explanations import (
 
 
 _ALLOCATOR_REASON_KEYS = REASON_KEYS
+_SENTENCE_BOUNDARY_PATTERN = re.compile(r"(?<=[.!?])\s+(?=[A-Z]|$)")
 
 
 def build_portfolio_summary(
@@ -356,10 +358,8 @@ def _first_sentence(text: str) -> str:
     if not cleaned:
         return ""
 
-    sentence = cleaned.split(".")[0].strip()
-    if not sentence:
-        return ""
-    return f"{sentence}."
+    sentence = _SENTENCE_BOUNDARY_PATTERN.split(cleaned, maxsplit=1)[0].strip()
+    return sentence
 
 
 def _format_holding_window_label(value: Any) -> str:
