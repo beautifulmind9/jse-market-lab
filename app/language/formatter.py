@@ -19,6 +19,52 @@ def get_strength_label(tier: Any) -> str:
     return STRENGTH_LABELS.get(token, "Unrated setup")
 
 
+def explain_strength(tier: Any, mode: str = "beginner") -> str:
+    """Translate quality tier labels into plain-language setup meaning."""
+    token = str(tier or "").strip().upper()
+    analyst_mode = str(mode or "beginner").strip().lower() == "analyst"
+
+    if token == "A":
+        if analyst_mode:
+            return "Strong setup (Tier A) — more key conditions are aligned and quality is higher."
+        return "Strong setup — more key conditions are aligned."
+    if token == "B":
+        if analyst_mode:
+            return "Mixed setup (Tier B) — supportive signals are present, but quality is not fully aligned."
+        return "Mixed setup — some conditions are supportive, and some are weaker."
+    if token == "C":
+        if analyst_mode:
+            return "Weak setup (Tier C) — fewer quality conditions are aligned, so risk is higher."
+        return "Weak setup — quality is lower and risk is higher."
+
+    if analyst_mode:
+        return "Unrated setup — tier data is limited for this row."
+    return "Unrated setup — this row has limited setup detail."
+
+
+def explain_confidence(value_or_label: Any, mode: str = "beginner") -> str:
+    """Translate confidence labels into non-predictive reliability language."""
+    token = str(value_or_label or "").strip().lower()
+    analyst_mode = str(mode or "beginner").strip().lower() == "analyst"
+
+    if token in {"high", "strong"}:
+        if analyst_mode:
+            return "High confidence — similar setups have shown more reliable behavior in past observations."
+        return "High confidence — similar setups have behaved more reliably in the past."
+    if token in {"medium", "moderate", "mixed"}:
+        if analyst_mode:
+            return "Medium confidence — historical reliability is mixed across similar setups."
+        return "Medium confidence — history is mixed for similar setups."
+    if token in {"low", "weak", "high risk"}:
+        if analyst_mode:
+            return "Low confidence — similar setups have shown less reliable outcomes in historical samples."
+        return "Low confidence — outcomes have been less reliable in similar setups."
+
+    if analyst_mode:
+        return "Confidence is unclear — the reliability signal is limited in this row."
+    return "Confidence is unclear — this row has limited reliability detail."
+
+
 def format_beginner_explanation(signal_or_row: Mapping[str, Any]) -> str:
     strength = get_strength_label(signal_or_row.get("quality_tier"))
     risk_line = _risk_sentence(signal_or_row)
