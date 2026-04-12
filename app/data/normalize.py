@@ -13,7 +13,7 @@ from .schema import CANONICAL_COLUMNS, FORMAT_LONG, FORMAT_WIDE, LONG_REQUIRED_C
 def detect_format(df: pd.DataFrame) -> str:
     """Detect input format (long vs wide)."""
     lower_columns = {col.lower() for col in df.columns}
-    if LONG_REQUIRED_COLUMNS.issubset(lower_columns):
+    if LONG_REQUIRED_COLUMNS.issubset(lower_columns) or {"date", "ticker"}.issubset(lower_columns):
         return FORMAT_LONG
     if "date" in lower_columns:
         return FORMAT_WIDE
@@ -33,9 +33,11 @@ def _normalize_long(df: pd.DataFrame, source: str, dataset_id: str) -> pd.DataFr
 
     data = pd.DataFrame()
     data["date"] = pd.to_datetime(df[cols["date"]], errors="coerce")
-    data["instrument"] = (
-        df[cols["instrument"]].astype(str).str.strip().str.upper()
-    )
+    instrument_col = "instrument" if "instrument" in cols else "ticker"
+    if instrument_col not in cols:
+        raise ValueError("Missing instrument or ticker column.")
+
+    data["instrument"] = df[cols[instrument_col]].astype(str).str.strip().str.upper()
     data["close"] = pd.to_numeric(df[price_col], errors="coerce")
 
     if "volume" in cols:

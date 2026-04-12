@@ -109,7 +109,7 @@ def main() -> None:
     mode_token = mode.lower()
 
     canonical_df, meta, issues = ingest_dataset("demo")
-    st.caption("Using a sample of historical JSE data for demonstration.")
+    st.caption("Using historical data from the Jamaican stock market.")
 
     if canonical_df.empty:
         st.warning("No rows were loaded from the data layer. Please verify the internal sample data file.")
