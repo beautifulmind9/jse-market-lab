@@ -23,7 +23,7 @@ def _sample_df() -> pd.DataFrame:
 def test_compute_ticker_metrics_returns_required_structure():
     payload = compute_ticker_metrics(_sample_df(), "NCB")
 
-    assert set(payload.keys()) == {"summary", "stats", "behavior"}
+    assert set(payload.keys()) == {"summary", "stats", "behavior", "execution"}
     assert set(payload["stats"].keys()) == {
         "win_rate",
         "median_return",
@@ -36,6 +36,13 @@ def test_compute_ticker_metrics_returns_required_structure():
         "consistency",
         "reliability",
         "tier_profile",
+    }
+    assert set(payload["execution"].keys()) == {
+        "entry_reference",
+        "planned_exit",
+        "typical_outcome",
+        "execution_risk",
+        "summary",
     }
 
 

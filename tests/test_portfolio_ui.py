@@ -76,11 +76,15 @@ def test_render_portfolio_plan_uses_why_column_and_no_primary_rule_column():
 
     assert "Why" in funded_df.columns
     assert "Why" in unfunded_df.columns
+    assert "Execution Framework" in funded_df.columns
+    assert "Execution Framework" in unfunded_df.columns
     assert "Setup Strength" in funded_df.columns
     assert "Strong setup" in funded_df.iloc[0]["Setup Strength"]
     assert "High confidence" in funded_df.iloc[0]["Confidence"]
     assert "Primary Rule/Constraint" not in funded_df.columns
     assert "Primary Rule/Constraint" not in unfunded_df.columns
+    assert "Selected because" in funded_df.iloc[0]["Why"]
+    assert "Entry reference:" in funded_df.iloc[0]["Execution Framework"]
     assert funded_df.iloc[0]["Decision Status"] == "Selected"
     assert unfunded_df.iloc[0]["Decision Status"] == "Not funded (limit reached)"
     assert "funds the strongest eligible setups first" in st.captions[0]

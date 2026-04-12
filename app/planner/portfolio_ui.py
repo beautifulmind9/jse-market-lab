@@ -6,15 +6,13 @@ from typing import Any, Mapping, Sequence
 
 import pandas as pd
 
-from app.language.formatter import (
-    explain_confidence,
-    explain_strength,
-    generate_explanation,
-)
+from app.language.formatter import explain_confidence, explain_strength
 from app.insights.portfolio_snapshot import (
     build_portfolio_snapshot,
     build_reserved_cash_explanation,
 )
+from app.insights.execution import build_execution_summary
+from app.insights.trade_explainer import explain_trade_reason, explain_unfunded_reason
 from app.planner.decision_review import (
     build_behavior_summary,
     compute_discipline_score,
@@ -25,7 +23,6 @@ from app.planner.explanations import (
     REASON_KEYS,
     classify_decision_status,
     explain_funded_trade_why,
-    explain_unfunded_trade_why,
 )
 
 
@@ -82,12 +79,12 @@ def split_trades_by_funding(
 
 def generate_funding_reason(trade: Mapping[str, Any]) -> str:
     """Generate a compact funding explanation using explicit reasons first."""
-    return explain_funded_trade_why(trade)
+    return explain_trade_reason(trade)
 
 
 def resolve_unfunded_reason(trade: Mapping[str, Any]) -> str:
     """Resolve unfunded reason in the shared one-sentence voice."""
-    return explain_unfunded_trade_why(trade)
+    return explain_unfunded_reason(trade)
 
 
 def render_portfolio_plan(
@@ -170,7 +167,8 @@ def render_portfolio_plan(
                         "Allocation Amount": trade.get("allocation_amount", 0.0),
                         **({"Selection Rank": trade.get("selection_rank", "N/A")} if analyst_mode else {}),
                         "Decision Status": classify_decision_status(trade),
-                        "Why": generate_explanation(trade, mode=mode),
+                        "Why": explain_trade_reason(trade, mode=mode),
+                        "Execution Framework": build_execution_summary(trade, mode=mode)["summary"],
                         **({"Rule Note": explain_funded_trade_why(trade)} if analyst_mode else {}),
                     }
                     for trade in funded_trades
@@ -191,6 +189,7 @@ def render_portfolio_plan(
                         **({"Selection Rank": trade.get("selection_rank", "N/A")} if analyst_mode else {}),
                         "Decision Status": classify_decision_status(trade),
                         "Why": resolve_unfunded_reason(trade),
+                        "Execution Framework": build_execution_summary(trade, mode=mode)["summary"],
                     }
                     for trade in unfunded_trades
                 ]

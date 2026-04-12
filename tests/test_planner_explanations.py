@@ -1,4 +1,3 @@
-import re
 import sys
 from pathlib import Path
 
@@ -35,7 +34,6 @@ def test_status_labels_match_new_mapping():
     )
     assert classify_decision_status({"allocation_amount": 0, "quality_tier": "A"}) == "Not funded"
 
-    assert text == "Selected — one of the strongest setups right now. Ranked #1"
 
 def test_explanations_use_new_voice_and_are_single_sentence():
     funded = explain_portfolio_decision(

@@ -7,6 +7,7 @@ from typing import Any
 import pandas as pd
 
 from app.data.processor import canonicalize_symbol
+from app.insights.execution import build_execution_summary
 RETURN_COLUMNS = ["net_return_pct", "net_return", "return_pct", "return"]
 
 
@@ -33,6 +34,7 @@ def _empty_payload() -> dict[str, Any]:
             "reliability": "Reliability cannot be read because there are no completed signals.",
             "tier_profile": "Tier profile cannot be read because tier data is missing.",
         },
+        "execution": build_execution_summary({}, mode="beginner"),
     }
 
 
@@ -178,8 +180,28 @@ def compute_ticker_metrics(df: pd.DataFrame, ticker: str, *, mode: str = "beginn
     }
     metrics["summary"] = build_ticker_summary(metrics, mode=mode)
     metrics["behavior"] = build_ticker_behavior(metrics, mode=mode)
+    execution_input = {
+        "holding_window": _days_from_window_label(metrics["stats"].get("best_window")),
+        "median_return": metrics["stats"].get("median_return"),
+        "avg_return": metrics["stats"].get("avg_return"),
+        "liquidity_pass": True,
+    }
+    metrics["execution"] = build_execution_summary(execution_input, mode=mode)
     return {
         "summary": metrics["summary"],
         "stats": metrics["stats"],
         "behavior": metrics["behavior"],
+        "execution": metrics["execution"],
     }
+
+
+def _days_from_window_label(value: Any) -> int | None:
+    token = str(value or "").strip().upper()
+    if token.endswith("D"):
+        token = token[:-1]
+    if not token:
+        return None
+    try:
+        return int(token)
+    except ValueError:
+        return None
