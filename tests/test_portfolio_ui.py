@@ -4,7 +4,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
-from app.planner.portfolio_ui import _group_mistakes_for_display, render_portfolio_plan
+from app.planner.portfolio_ui import (
+    _compact_execution_summary,
+    _first_sentence,
+    _group_mistakes_for_display,
+    render_portfolio_plan,
+)
 
 
 class DummyStreamlit:
@@ -220,3 +225,33 @@ def test_render_portfolio_plan_places_snapshot_and_reserved_cash_before_tables()
         if "Portfolio Summary" in text
     )
     assert snapshot_idx < summary_idx
+
+
+def test_first_sentence_keeps_decimal_number_intact():
+    text = (
+        "Entry reference: place a limit at 10.50 with staged risk controls. "
+        "Exit after two sessions if momentum fades."
+    )
+
+    assert _first_sentence(text) == "Entry reference: place a limit at 10.50 with staged risk controls."
+
+
+def test_first_sentence_keeps_percentage_intact():
+    text = (
+        "Protective stop sits at 1.00% below entry to cap downside. "
+        "Trim size if spread widens."
+    )
+
+    assert _first_sentence(text) == "Protective stop sits at 1.00% below entry to cap downside."
+
+
+def test_compact_execution_summary_returns_first_sentence_only():
+    summary = (
+        "Entry reference: use VWAP and keep slippage below 0.25%. "
+        "If momentum stalls, reduce size and wait for confirmation."
+    )
+
+    compact = _compact_execution_summary(summary)
+
+    assert compact == "Entry reference: use VWAP and keep slippage below 0.25%."
+    assert "If momentum stalls" not in compact
