@@ -208,7 +208,7 @@ def build_behavior_summary(trades_df: pd.DataFrame, review_df: pd.DataFrame) -> 
     if liquidity_fails > 0:
         insights.append(f"Liquidity checks failed on {liquidity_fails} trade(s).")
     else:
-        insights.append("Liquidity checks stayed clean across reviewed trades.")
+        insights.append("There was enough trading activity across the selected trades.")
 
     return insights[:4]
 

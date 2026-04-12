@@ -42,7 +42,23 @@ def test_compute_ticker_metrics_returns_required_structure():
 def test_compute_ticker_metrics_generates_summary_with_best_window():
     payload = compute_ticker_metrics(_sample_df(), "NCB")
 
-    assert "NCB had more positive closes" in payload["summary"]
+    assert "This setup has worked well in the past." in payload["summary"]
+    assert "closed positive in 62% of signals" in payload["summary"]
+
+
+def test_compute_ticker_metrics_uses_neutral_beginner_wording_for_weak_win_rate():
+    df = pd.DataFrame(
+        {
+            "instrument": ["TEST"] * 6,
+            "holding_window": [5, 5, 5, 20, 20, 20],
+            "net_return_pct": [-0.02, -0.01, 0.01, -0.03, 0.01, -0.01],
+        }
+    )
+
+    payload = compute_ticker_metrics(df, "TEST", mode="beginner")
+
+    assert "This setup has been less consistent." in payload["summary"]
+    assert "closed positive in 33% of signals" in payload["summary"]
 
 
 def test_compute_ticker_metrics_flags_low_sample_size_in_summary():

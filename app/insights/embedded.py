@@ -49,7 +49,7 @@ def generate_embedded_insights(
 
     common_mistakes = _common_mistakes_lines(rows, mode=mode)
     why_this_matters = (
-        "This helps you understand where the plan is strong, where risk is rising, and what to monitor next."
+        "Based on historical data, this helps you understand where the plan is strong, where risk is rising, and what to monitor next. Use it as a decision-support tool, not a guarantee."
     )
 
     return {
