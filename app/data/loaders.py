@@ -26,8 +26,8 @@ def _build_legacy_fallback_dataset() -> pd.DataFrame:
     )
 
 
-def load_internal_dataset() -> tuple[pd.DataFrame, str]:
-    """Load and normalize the bundled internal JSE dataset from disk."""
+def load_internal_dataset_with_source() -> tuple[pd.DataFrame, str]:
+    """Load and normalize the bundled internal JSE dataset from disk with source label."""
     if INTERNAL_DATASET_PATH.exists():
         dataset_path = INTERNAL_DATASET_PATH
         source_label = "internal_jse_dataset"
@@ -46,6 +46,18 @@ def load_internal_dataset() -> tuple[pd.DataFrame, str]:
     # Keep `ticker` from the normalized dataset while exposing a mirrored alias.
     normalized["instrument"] = normalized["ticker"]
     return normalized, source_label
+
+
+def load_internal_dataset() -> pd.DataFrame:
+    """Load and normalize the bundled internal JSE dataset from disk."""
+    dataset, _source_label = load_internal_dataset_with_source()
+    return dataset
+
+
+def get_internal_dataset_source_label() -> str:
+    """Return the current source label for the bundled internal dataset."""
+    _dataset, source_label = load_internal_dataset_with_source()
+    return source_label
 
 
 def load_upload(uploaded_file: Optional[IO]) -> pd.DataFrame:
