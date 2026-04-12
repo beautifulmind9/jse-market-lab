@@ -6,7 +6,15 @@ from typing import Any, Mapping, Sequence
 
 import pandas as pd
 
-from app.language.formatter import generate_explanation
+from app.language.formatter import (
+    explain_confidence,
+    explain_strength,
+    generate_explanation,
+)
+from app.insights.portfolio_snapshot import (
+    build_portfolio_snapshot,
+    build_reserved_cash_explanation,
+)
 from app.planner.decision_review import (
     build_behavior_summary,
     compute_discipline_score,
@@ -116,7 +124,22 @@ def render_portfolio_plan(
     summary = build_portfolio_summary(allocations, total_capital)
     funded_trades, unfunded_trades = split_trades_by_funding(allocations)
 
+    def _render_snapshot_blocks() -> None:
+        snapshot = build_portfolio_snapshot(allocations, total_capital, mode=mode)
+        st_module.markdown("#### Portfolio Snapshot")
+        for line in snapshot["lines"]:
+            st_module.markdown(f"- {line}")
+
+        reserved_cash = build_reserved_cash_explanation(allocations, total_capital, mode=mode)
+        if reserved_cash["reserve_ratio"] > 0:
+            st_module.markdown("#### Why cash is reserved")
+            for line in reserved_cash["lines"]:
+                st_module.markdown(f"- {line}")
+
+
     def _render_plan_section() -> None:
+        _render_snapshot_blocks()
+
         st_module.markdown(
             '<div class="jse-card"><div class="jse-eyebrow">Portfolio Summary</div><p style="margin:0;" class="jse-muted">Funding view of current eligible setups and reserve coverage.</p></div>',
             unsafe_allow_html=True,
@@ -141,8 +164,8 @@ def render_portfolio_plan(
                 [
                     {
                         "Instrument": trade.get("instrument", "Unknown"),
-                        "Setup Strength": trade.get("quality_tier", "N/A"),
-                        "Confidence": trade.get("confidence_label", "N/A"),
+                        "Setup Strength": explain_strength(trade.get("quality_tier"), mode=mode),
+                        "Confidence": explain_confidence(trade.get("confidence_label"), mode=mode),
                         **({"Allocation %": trade.get("allocation_pct", 0.0)} if analyst_mode else {}),
                         "Allocation Amount": trade.get("allocation_amount", 0.0),
                         **({"Selection Rank": trade.get("selection_rank", "N/A")} if analyst_mode else {}),
@@ -163,8 +186,8 @@ def render_portfolio_plan(
                 [
                     {
                         "Instrument": trade.get("instrument", "Unknown"),
-                        "Setup Strength": trade.get("quality_tier", "N/A"),
-                        "Confidence": trade.get("confidence_label", "N/A"),
+                        "Setup Strength": explain_strength(trade.get("quality_tier"), mode=mode),
+                        "Confidence": explain_confidence(trade.get("confidence_label"), mode=mode),
                         **({"Selection Rank": trade.get("selection_rank", "N/A")} if analyst_mode else {}),
                         "Decision Status": classify_decision_status(trade),
                         "Why": resolve_unfunded_reason(trade),

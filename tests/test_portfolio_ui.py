@@ -77,6 +77,8 @@ def test_render_portfolio_plan_uses_why_column_and_no_primary_rule_column():
     assert "Why" in funded_df.columns
     assert "Why" in unfunded_df.columns
     assert "Setup Strength" in funded_df.columns
+    assert "Strong setup" in funded_df.iloc[0]["Setup Strength"]
+    assert "High confidence" in funded_df.iloc[0]["Confidence"]
     assert "Primary Rule/Constraint" not in funded_df.columns
     assert "Primary Rule/Constraint" not in unfunded_df.columns
     assert funded_df.iloc[0]["Decision Status"] == "Selected"
@@ -98,3 +100,41 @@ def test_group_mistakes_for_display_combines_repeated_types():
 
     assert "3 trade(s) missed the setup-quality rule." in grouped
     assert "1 trade(s) failed the liquidity check." in grouped
+
+
+def test_render_portfolio_plan_places_snapshot_and_reserved_cash_before_tables():
+    st = DummyStreamlit()
+    render_portfolio_plan(
+        allocations=[
+            {
+                "instrument": "AAA",
+                "allocation_amount": 2000,
+                "allocation_pct": 0.2,
+                "quality_tier": "A",
+                "confidence_label": "strong",
+                "selection_rank": 1,
+            },
+            {
+                "instrument": "BBB",
+                "allocation_amount": 0,
+                "allocation_pct": 0.0,
+                "quality_tier": "B",
+                "confidence_label": "medium",
+                "selection_rank": 4,
+                "allocation_reason_clear": "Final allocation is 0% because max funded trades reached (3).",
+            },
+        ],
+        total_capital=10_000,
+        st_module=st,
+        section="plan",
+    )
+
+    assert "#### Portfolio Snapshot" in st.markdowns
+    assert "#### Why cash is reserved" in st.markdowns
+    snapshot_idx = st.markdowns.index("#### Portfolio Snapshot")
+    summary_idx = next(
+        idx
+        for idx, text in enumerate(st.markdowns)
+        if "Portfolio Summary" in text
+    )
+    assert snapshot_idx < summary_idx
