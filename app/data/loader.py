@@ -7,12 +7,20 @@ from typing import IO, Optional
 
 import pandas as pd
 
-DEMO_PATH = Path(__file__).resolve().parents[2] / "data" / "demo" / "prices_demo.csv"
+INTERNAL_DATASET_PATH = Path(__file__).resolve().parents[2] / "data" / "internal" / "jse_sample.csv"
+
+
+def load_internal_dataset() -> pd.DataFrame:
+    """Load the bundled JSE sample dataset from disk."""
+    df = pd.read_csv(INTERNAL_DATASET_PATH, parse_dates=["date"])
+    if "ticker" in df.columns and "instrument" not in df.columns:
+        df = df.rename(columns={"ticker": "instrument"})
+    return df
 
 
 def load_demo() -> pd.DataFrame:
-    """Load demo data from the packaged CSV."""
-    return pd.read_csv(DEMO_PATH)
+    """Backward-compatible alias for loading the internal sample dataset."""
+    return load_internal_dataset()
 
 
 def load_upload(uploaded_file: Optional[IO]) -> pd.DataFrame:
