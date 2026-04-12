@@ -121,3 +121,64 @@
 - [ ] remove duplicate insight bullets
 - [ ] normalize XD-style ticker markers into canonical tickers
 - [ ] update tests for ticker normalization and mode-based Ticker Analysis behavior
+
+# Sprint 12 Backlog
+
+## Goal
+Make the dashboard public-ready by improving deployment stability, user understanding, app structure, and trust in the data layer.
+
+---
+
+## Completed
+
+### Deployment / Stability
+- [x] prepare app for hosted deployment
+- [x] harden restricted-filesystem artifact writes
+- [x] remove silent failure risks around artifact generation
+- [x] handle missing legacy event file safely
+- [x] add zero-entry-price guard
+
+### First-run experience
+- [x] add product framing at top of app
+- [x] add “How to read this” section
+- [x] surface final insight early in app flow
+
+### Language / Modes
+- [x] add shared explanation formatting
+- [x] introduce Beginner vs Analyst mode
+- [x] simplify Beginner experience
+- [x] keep Analyst experience richer
+
+### Information architecture
+- [x] remove duplicated/nested rendering
+- [x] move technical/raw content out of Review
+- [x] add Data tab
+- [x] improve tab structure
+
+### Data trust
+- [x] integrate bundled internal JSE dataset
+- [x] surface dataset source in UI
+- [x] make fallback behavior visible
+- [x] improve data status presentation
+
+### Canonical normalization
+- [x] standardize canonical ticker
+- [x] preserve `instrument` as alias
+- [x] normalize XD marker variants
+- [x] preserve raw symbol metadata
+
+### Insights / Ticker Analysis
+- [x] remove duplicate insight bullets
+- [x] redesign Ticker Analysis around interpretation-first structure
+- [x] reduce raw-table overload in Beginner mode
+
+---
+
+## Carry-forward / Not fully addressed
+
+- [ ] strengthen Portfolio Plan interpretation-first layer
+- [ ] explain setup strength clearly in Portfolio
+- [ ] explain confidence clearly in Portfolio
+- [ ] explain reserved cash clearly in Portfolio
+- [ ] continue visual polish
+- [ ] tighten global explanation consistency across sections
