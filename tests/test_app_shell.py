@@ -72,6 +72,38 @@ def test_build_analyst_dataset_handles_empty_ranked_df(monkeypatch):
     assert "quality_tier" not in analyst_df.columns
 
 
+def test_build_analyst_dataset_does_not_filter_to_ranked_subset(monkeypatch):
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": ["AAA", "BBB", "CCC"],
+            "date": pd.to_datetime(["2024-01-01", "2024-01-01", "2024-01-01"]),
+            "close": [10.0, 20.0, 30.0],
+            "volume": [1000, 900, 850],
+        }
+    )
+    ranked_df = pd.DataFrame({"instrument": ["AAA"], "tier": ["A"]})
+    trades_stub = pd.DataFrame(
+        {
+            "instrument": ["AAA", "BBB", "CCC"],
+            "holding_window": [10, 10, 10],
+            "net_return_pct": [0.02, -0.01, 0.01],
+        }
+    )
+
+    monkeypatch.setattr(
+        "app.shell.run_cost_engine",
+        lambda df_prices, df_entries: (trades_stub, pd.DataFrame(), None, None),
+    )
+
+    analyst_df = build_analyst_dataset(canonical_df, ranked_df)
+
+    assert set(analyst_df["instrument"]) == {"AAA", "BBB", "CCC"}
+    assert "quality_tier" in analyst_df.columns
+    assert analyst_df.loc[analyst_df["instrument"] == "AAA", "quality_tier"].iat[0] == "A"
+    assert analyst_df.loc[analyst_df["instrument"] == "BBB", "quality_tier"].isna().all()
+    assert analyst_df.loc[analyst_df["instrument"] == "CCC", "quality_tier"].isna().all()
+
+
 def test_extract_ticker_options_uses_active_dataset_and_is_sorted():
     spec = importlib.util.spec_from_file_location("app_main", ROOT / "app.py")
     app_main = importlib.util.module_from_spec(spec)
