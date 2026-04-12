@@ -154,41 +154,57 @@ def _build_strength_line(
 
 def _build_confidence_line(*, funded_trades: Sequence[Mapping[str, Any]], mode: str) -> str | None:
     analyst_mode = str(mode or "beginner").strip().lower() == "analyst"
-    if not funded_trades:
+    total_funded = len(funded_trades)
+    if total_funded == 0:
         return None
 
     labels = [str(trade.get("confidence_label", "")).strip().lower() for trade in funded_trades]
-    known = [label for label in labels if label]
-    if not known:
-        return "Confidence detail is limited for the currently funded portfolio."
+    high_count = sum(1 for label in labels if label in {"high", "strong"})
+    medium_count = sum(1 for label in labels if label in {"medium", "moderate", "mixed"})
+    low_count = sum(1 for label in labels if label in {"low", "weak", "high risk"})
+    labeled_count = high_count + medium_count + low_count
+    unknown_count = total_funded - labeled_count
 
-    high_count = sum(1 for label in known if label in {"high", "strong"})
-    medium_count = sum(1 for label in known if label in {"medium", "moderate", "mixed"})
-    low_count = sum(1 for label in known if label in {"low", "weak", "high risk"})
+    coverage_ratio = labeled_count / total_funded
+    if coverage_ratio < 0.5:
+        if analyst_mode:
+            coverage_pct = round(coverage_ratio * 100)
+            return (
+                "Confidence detail is limited for this plan "
+                f"(high: {high_count}, medium: {medium_count}, low: {low_count}, unknown: {unknown_count}; "
+                f"coverage ~{coverage_pct}%)."
+            )
+        return "Confidence detail is limited for this plan."
 
-    coverage = len(known)
-    high_ratio = high_count / coverage
-    low_ratio = low_count / coverage
+    high_ratio = high_count / total_funded
+    low_ratio = low_count / total_funded
+    coverage_pct = round(coverage_ratio * 100)
 
     if high_ratio >= 0.6:
         if analyst_mode:
-            return f"Current funded confidence mix is high/reliable in most rows ({high_count}/{coverage} high-confidence labels)."
+            return (
+                "Current funded confidence mix is high/reliable in most rows "
+                f"(high: {high_count}, medium: {medium_count}, low: {low_count}, unknown: {unknown_count}; "
+                f"coverage ~{coverage_pct}%)."
+            )
         return "Current funded confidence is mostly high and historically more reliable."
 
     if low_ratio >= 0.6:
         if analyst_mode:
-            return f"Current funded confidence mix is low in most rows ({low_count}/{coverage} low-confidence labels)."
+            return (
+                "Current funded confidence mix is low in most rows "
+                f"(high: {high_count}, medium: {medium_count}, low: {low_count}, unknown: {unknown_count}; "
+                f"coverage ~{coverage_pct}%)."
+            )
         return "Current funded confidence is mostly low, so reliability is weaker."
 
-    if medium_count > 0 or (high_count > 0 and low_count > 0):
-        if analyst_mode:
-            return (
-                "Current funded confidence mix is medium/mixed "
-                f"({high_count} high, {medium_count} medium, {low_count} low across {coverage} funded labels)."
-            )
-        return "Current funded confidence is mixed across the funded portfolio."
-
-    return "Confidence detail is limited for the currently funded portfolio."
+    if analyst_mode:
+        return (
+            "Current funded confidence mix is medium/mixed "
+            f"(high: {high_count}, medium: {medium_count}, low: {low_count}, unknown: {unknown_count}; "
+            f"coverage ~{coverage_pct}%)."
+        )
+    return "Current funded confidence is mixed across the funded portfolio."
 
 
 def _build_glossary_support_line(*, mode: str) -> str:
