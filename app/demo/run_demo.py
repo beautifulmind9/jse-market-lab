@@ -20,6 +20,13 @@ from app.ranking.engine import rank_instruments
 logger = logging.getLogger(__name__)
 
 
+def _load_demo_events(events_path: Path) -> pd.DataFrame:
+    """Load optional legacy demo earnings events, returning an empty-safe frame when absent."""
+    if events_path.exists():
+        return pd.read_csv(events_path)
+    return pd.DataFrame(columns=["instrument", "earnings_date", "confidence"])
+
+
 def run_demo(
     language_mode: str = "plain",
     *,
@@ -42,7 +49,7 @@ def run_demo(
     ranked = rank_instruments(summary_instrument, meta, "income_stability")
 
     events_path = Path(__file__).resolve().parents[2] / "data" / "demo" / "earnings_events.csv"
-    events_df = pd.read_csv(events_path)
+    events_df = _load_demo_events(events_path)
 
     tagged_trades = tag_earnings_phase(
         trades,

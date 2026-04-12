@@ -37,7 +37,7 @@ def test_demo_pipeline_outputs():
     assert {"tier", "best_window", "score_total"}.issubset(ranked.columns)
 
     events_path = ROOT / "data" / "demo" / "earnings_events.csv"
-    events_df = pd.read_csv(events_path)
+    events_df = run_demo_module._load_demo_events(events_path)
     tagged = tag_earnings_phase(
         trades,
         events_df,
@@ -89,3 +89,28 @@ def test_run_demo_does_not_swallow_unexpected_os_errors(monkeypatch):
 
     with pytest.raises(OSError, match="disk full"):
         run_demo_module.run_demo()
+
+
+def test_run_demo_works_when_legacy_events_file_is_missing(monkeypatch):
+    events_path = (ROOT / "data" / "demo" / "earnings_events.csv").resolve()
+    original_exists = Path.exists
+    original_read_csv = pd.read_csv
+
+    def patched_exists(path_obj):
+        if path_obj.resolve() == events_path:
+            return False
+        return original_exists(path_obj)
+
+    def fail_if_events_read(path, *args, **kwargs):
+        if Path(path).resolve() == events_path:
+            raise AssertionError("run_demo attempted to read missing legacy events file")
+        return original_read_csv(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "exists", patched_exists)
+    monkeypatch.setattr(run_demo_module.pd, "read_csv", fail_if_events_read)
+
+    result = run_demo_module.run_demo()
+
+    assert not result["ranked"].empty
+    assert not result["phase_metrics"].empty
+    assert set(result["phase_metrics"]["earnings_phase"].unique()) == {"non"}
