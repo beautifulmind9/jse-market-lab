@@ -133,10 +133,10 @@ def test_extract_ticker_options_does_not_split_marker_variants():
 
     canonical_df = pd.DataFrame(
         {
-            "instrument": ["CAR", "CAR", "GK", "GK"],
-            "ticker": ["CAR", "CAR", "GK", "GK"],
-            "raw_symbol": ["CAR", "CARXD", "GK", "GKXD"],
-            "display_symbol": ["CAR", "CARXD", "GK", "GKXD"],
+            "instrument": ["CAR", "CARXD", "CAR (XD)", "GK", "GKXD", "GK (XD)"],
+            "ticker": ["CAR", "CAR", "CAR", "GK", "GK", "GK"],
+            "raw_symbol": ["CAR", "CARXD", "CAR (XD)", "GK", "GKXD", "GK (XD)"],
+            "display_symbol": ["CAR", "CARXD", "CAR (XD)", "GK", "GKXD", "GK (XD)"],
         }
     )
 

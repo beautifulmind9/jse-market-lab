@@ -185,10 +185,10 @@ def test_demo_ingestion_preserves_large_ticker_universe_from_internal_dataset():
 def test_jse_symbol_markers_normalize_to_canonical_ticker():
     raw = pd.DataFrame(
         {
-            "date": ["2024-01-01", "2024-01-01", "2024-01-02", "2024-01-02"],
-            "symbol": ["CAR", "CARXD", "GK", "GKXD"],
-            "close_price": [10.0, 10.1, 8.0, 8.2],
-            "volume": [1000, 900, 1100, 950],
+            "date": ["2024-01-01", "2024-01-01", "2024-01-02", "2024-01-02", "2024-01-03", "2024-01-03"],
+            "symbol": ["CAR", "CARXD", "GK", "GKXD", "CAR (XD)", "GK (XD)"],
+            "close_price": [10.0, 10.1, 8.0, 8.2, 10.3, 8.3],
+            "volume": [1000, 900, 1100, 950, 980, 920],
         }
     )
 
@@ -204,13 +204,45 @@ def test_jse_symbol_markers_normalize_to_canonical_ticker():
 def test_demo_ingestion_collapses_marker_variants_to_single_instrument(monkeypatch):
     sample_raw = pd.DataFrame(
         {
-            "date": ["2024-01-01", "2024-01-02", "2024-01-01", "2024-01-02"],
-            "symbol": ["CAR", "CARXD", "GK", "GKXD"],
-            "close_price": [10.0, 10.2, 8.0, 8.1],
-            "volume": [1000, 1200, 900, 950],
+            "date": ["2024-01-01", "2024-01-02", "2024-01-01", "2024-01-02", "2024-01-03", "2024-01-03"],
+            "symbol": ["CAR", "CARXD", "GK", "GKXD", "CAR (XD)", "GK (XD)"],
+            "close_price": [10.0, 10.2, 8.0, 8.1, 10.3, 8.2],
+            "volume": [1000, 1200, 900, 950, 980, 930],
         }
     )
     monkeypatch.setattr("app.data.loaders.pd.read_csv", lambda *_args, **_kwargs: sample_raw)
 
     canonical, _meta, _issues = ingest_dataset("demo")
     assert set(canonical["instrument"]) == {"CAR", "GK"}
+
+
+def test_normalize_data_collapses_marker_variants_to_single_canonical_ticker():
+    raw = pd.DataFrame(
+        {
+            "date": ["2024-01-01", "2024-01-02", "2024-01-01", "2024-01-03"],
+            "instrument": ["CAR", "CARXD", "CAR XD", "CAR (XD)"],
+            "close": [10.0, 10.1, 10.2, 10.4],
+        }
+    )
+
+    canonical, fmt = normalize_data(raw, source="upload", dataset_id="dataset-1")
+
+    assert fmt == "long"
+    assert set(canonical["ticker"]) == {"CAR"}
+    assert set(canonical["instrument"]) == {"CAR"}
+
+
+def test_normalize_data_parenthesized_gk_xd_maps_to_gk():
+    raw = pd.DataFrame(
+        {
+            "date": ["2024-01-01", "2024-01-02"],
+            "instrument": ["GK", "GK (XD)"],
+            "close": [8.0, 8.1],
+        }
+    )
+
+    canonical, fmt = normalize_data(raw, source="upload", dataset_id="dataset-2")
+
+    assert fmt == "long"
+    assert set(canonical["ticker"]) == {"GK"}
+    assert set(canonical["instrument"]) == {"GK"}

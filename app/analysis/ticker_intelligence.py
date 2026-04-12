@@ -6,6 +6,7 @@ from typing import Any
 
 import pandas as pd
 
+from app.data.processor import canonicalize_symbol
 RETURN_COLUMNS = ["net_return_pct", "net_return", "return_pct", "return"]
 
 
@@ -123,7 +124,8 @@ def compute_ticker_metrics(df: pd.DataFrame, ticker: str, *, mode: str = "beginn
     if return_column is None:
         return _empty_payload()
 
-    scoped = df[df["instrument"].astype(str) == str(ticker)].copy()
+    ticker_token = canonicalize_symbol(ticker)
+    scoped = df[df["instrument"].astype(str).map(canonicalize_symbol) == ticker_token].copy()
     scoped = scoped.dropna(subset=[return_column])
     if scoped.empty:
         return _empty_payload()

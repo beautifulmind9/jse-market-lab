@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .schema import CANONICAL_COLUMNS, FORMAT_LONG, FORMAT_WIDE, LONG_REQUIRED_COLUMNS
+from .processor import canonicalize_symbol_parts
 
 
 def detect_format(df: pd.DataFrame) -> str:
@@ -37,7 +38,12 @@ def _normalize_long(df: pd.DataFrame, source: str, dataset_id: str) -> pd.DataFr
     if instrument_col not in cols:
         raise ValueError("Missing instrument or ticker column.")
 
-    data["instrument"] = df[cols[instrument_col]].astype(str).str.strip().str.upper()
+    raw_symbols = df[cols[instrument_col]].astype(str).str.strip().str.upper()
+    symbol_parts = raw_symbols.map(canonicalize_symbol_parts)
+    data["ticker"] = symbol_parts.map(lambda parts: parts[0])
+    data["instrument"] = data["ticker"]
+    data["raw_symbol"] = symbol_parts.map(lambda parts: parts[2])
+    data["symbol_marker"] = symbol_parts.map(lambda parts: parts[1])
     data["close"] = pd.to_numeric(df[price_col], errors="coerce")
 
     if "volume" in cols:
@@ -66,7 +72,12 @@ def _normalize_wide(df: pd.DataFrame, source: str, dataset_id: str) -> pd.DataFr
     prices = df.melt(id_vars=[date_col], var_name="instrument", value_name="close")
     data = pd.DataFrame()
     data["date"] = pd.to_datetime(prices[date_col], errors="coerce")
-    data["instrument"] = prices["instrument"].astype(str).str.strip().str.upper()
+    raw_symbols = prices["instrument"].astype(str).str.strip().str.upper()
+    symbol_parts = raw_symbols.map(canonicalize_symbol_parts)
+    data["ticker"] = symbol_parts.map(lambda parts: parts[0])
+    data["instrument"] = data["ticker"]
+    data["raw_symbol"] = symbol_parts.map(lambda parts: parts[2])
+    data["symbol_marker"] = symbol_parts.map(lambda parts: parts[1])
     data["close"] = pd.to_numeric(prices["close"], errors="coerce")
     data["volume"] = np.nan
     data["market"] = None

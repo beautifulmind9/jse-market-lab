@@ -228,9 +228,10 @@ def _dedupe_lines(lines: Sequence[str]) -> list[str]:
     seen: set[str] = set()
     for line in lines:
         token = str(line).strip()
-        if not token or token in seen:
+        key = " ".join(token.casefold().split())
+        if not token or key in seen:
             continue
-        seen.add(token)
+        seen.add(key)
         deduped.append(token)
     return deduped
 

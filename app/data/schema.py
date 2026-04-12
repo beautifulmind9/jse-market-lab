@@ -2,7 +2,10 @@
 
 CANONICAL_COLUMNS = [
     "date",
+    "ticker",
     "instrument",
+    "raw_symbol",
+    "symbol_marker",
     "close",
     "volume",
     "market",

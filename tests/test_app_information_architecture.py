@@ -513,3 +513,116 @@ def test_main_startup_path_is_not_blocked_by_missing_legacy_events_file(monkeypa
     app_main.main()
 
     assert dummy_st.tabs_requested
+
+
+def test_ticker_analysis_beginner_mode_hides_raw_deep_dive_tables(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Beginner")
+
+    canonical_df = pd.DataFrame({"instrument": ["CAR"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+    analyst_df = pd.DataFrame({"instrument": ["CAR"], "holding_window": [5], "net_return_pct": [0.01]})
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (
+            canonical_df,
+            {"source": "demo", "dataset_id": "demo-v1", "dataset_source_label": "internal_jse_dataset"},
+            {"errors": [], "warnings": []},
+        ),
+    )
+    monkeypatch.setattr(app_main, "run_demo", lambda *_args, **_kwargs: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: analyst_df)
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
+    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        app_main,
+        "compute_ticker_metrics",
+        lambda *_args, **_kwargs: {
+            "summary": "",
+            "stats": {"win_rate": 0.5, "avg_return": 0.01, "median_return": 0.01, "best_window": "5D"},
+            "behavior": {
+                "holding_window": "5D looks stronger than 20D in this dataset.",
+                "consistency": "Average and median returns are close.",
+                "reliability": "Win rate is mixed.",
+                "tier_profile": "Setup mix leans to A.",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        app_main,
+        "build_ticker_drilldown",
+        lambda *_args, **_kwargs: {
+            "pattern_summary": "This stock has mixed results so far.",
+            "signals": [{"holding_window": "5D", "return_pct": 1.0}],
+            "holding_window_stats": {"5D": {"count": 12, "win_rate": 0.5, "avg_return": 1.0}},
+            "tier_performance": {"A": {"count": 10, "win_rate": 0.6, "avg_return": 1.2}},
+            "volatility_performance": {"low": {"count": 10, "win_rate": 0.6, "avg_return": 1.2}},
+            "return_distribution": {"negative": 5, "small_positive": 4, "strong_positive": 3},
+        },
+    )
+
+    app_main.main()
+
+    ticker_markdowns = [text for tab, text in dummy_st.markdowns if tab == "Ticker Analysis"]
+    assert "#### F) Analyst Deep Dive" not in ticker_markdowns
+    assert any("Analyst Deep Dive" in text for text in ticker_markdowns)
+
+
+def test_ticker_analysis_analyst_mode_shows_deep_dive_tables(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Analyst")
+
+    canonical_df = pd.DataFrame({"instrument": ["CAR"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+    analyst_df = pd.DataFrame({"instrument": ["CAR"], "holding_window": [5], "net_return_pct": [0.01]})
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (
+            canonical_df,
+            {"source": "demo", "dataset_id": "demo-v1", "dataset_source_label": "internal_jse_dataset"},
+            {"errors": [], "warnings": []},
+        ),
+    )
+    monkeypatch.setattr(app_main, "run_demo", lambda *_args, **_kwargs: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: analyst_df)
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
+    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        app_main,
+        "compute_ticker_metrics",
+        lambda *_args, **_kwargs: {
+            "summary": "",
+            "stats": {"win_rate": 0.5, "avg_return": 0.01, "median_return": 0.01, "best_window": "5D"},
+            "behavior": {
+                "holding_window": "5D looks stronger than 20D in this dataset.",
+                "consistency": "Average and median returns are close.",
+                "reliability": "Win rate is mixed.",
+                "tier_profile": "Setup mix leans to A.",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        app_main,
+        "build_ticker_drilldown",
+        lambda *_args, **_kwargs: {
+            "pattern_summary": "This stock has mixed results so far.",
+            "signals": [{"holding_window": "5D", "return_pct": 1.0}],
+            "holding_window_stats": {"5D": {"count": 12, "win_rate": 0.5, "avg_return": 1.0}},
+            "tier_performance": {"A": {"count": 10, "win_rate": 0.6, "avg_return": 1.2}},
+            "volatility_performance": {"low": {"count": 10, "win_rate": 0.6, "avg_return": 1.2}},
+            "return_distribution": {"negative": 5, "small_positive": 4, "strong_positive": 3},
+        },
+    )
+
+    app_main.main()
+
+    ticker_markdowns = [text for tab, text in dummy_st.markdowns if tab == "Ticker Analysis"]
+    ticker_dataframes = [df for tab, df in dummy_st.dataframes if tab == "Ticker Analysis"]
+    assert "#### F) Analyst Deep Dive" in ticker_markdowns
+    assert len(ticker_dataframes) >= 5

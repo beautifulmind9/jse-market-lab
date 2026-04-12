@@ -276,6 +276,21 @@ def test_drilldown_outputs_are_schema_consistent_across_return_aliases():
         assert payloads[alias]["pattern_summary"] == baseline["pattern_summary"]
 
 
+def test_scoping_uses_canonical_ticker_and_collapses_marker_variants():
+    df = pd.DataFrame(
+        {
+            "instrument": ["CAR", "CARXD", "CAR XD", "CAR (XD)", "GK"],
+            "holding_window": [5, 20, 5, 20, 5],
+            "net_return_pct": [1.0, 2.0, -1.0, 1.5, 3.0],
+        }
+    )
+
+    payload = build_ticker_drilldown(df, "CAR")
+
+    assert len(payload["signals"]) == 4
+    assert set(payload["holding_window_stats"].keys()) == {"5D", "20D"}
+
+
 def _pattern_window_df(return_column: str, five_day_returns_pct: list[float], twenty_day_returns_pct: list[float]) -> pd.DataFrame:
     all_returns_pct = five_day_returns_pct + twenty_day_returns_pct
     returns = (
