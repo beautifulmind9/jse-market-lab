@@ -107,7 +107,11 @@ def test_sprint12_tab_layout_and_capital_location(monkeypatch):
     ranked_df = pd.DataFrame({"instrument": ["AAA"], "selection_rank": [1], "tier": ["A"]})
 
     monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
-    monkeypatch.setattr(app_main, "ingest_dataset", lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo-v1"}, []))
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo-v1"}, {"errors": [], "warnings": []}),
+    )
     monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": ranked_df})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [{"instrument": "AAA"}])
@@ -136,7 +140,15 @@ def test_review_excludes_data_status_and_data_tab_contains_raw_preview(monkeypat
     )
 
     monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
-    monkeypatch.setattr(app_main, "ingest_dataset", lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "dataset-42"}, ["Missing volume for BBB"]))
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (
+            canonical_df,
+            {"source": "demo", "dataset_id": "dataset-42"},
+            {"errors": [], "warnings": ["Missing volume for BBB"]},
+        ),
+    )
     monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
@@ -168,7 +180,11 @@ def test_analyst_insights_empty_state_when_no_content(monkeypatch):
     )
 
     monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
-    monkeypatch.setattr(app_main, "ingest_dataset", lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo"}, []))
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo"}, {"errors": [], "warnings": []}),
+    )
     monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
@@ -179,3 +195,79 @@ def test_analyst_insights_empty_state_when_no_content(monkeypatch):
 
     insight_messages = [text for tab, text in dummy_st.info_messages if tab == "Analyst Insights"]
     assert "Analyst insights are not available for this dataset yet." in insight_messages
+
+
+def test_data_status_uses_warning_bucket_for_counts_and_details():
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit()
+
+    app_main._render_data_status_summary(
+        dummy_st,
+        source="demo",
+        row_count=12,
+        issues={"errors": [], "warnings": ["Missing volume for BBB"]},
+        dataset_id="dataset-42",
+        analyst_mode=False,
+    )
+
+    markdowns = [text for _, text in dummy_st.markdowns]
+    captions = [text for _, text in dummy_st.captions]
+
+    assert "**Errors:** 0" in markdowns
+    assert "**Warnings:** 1" in markdowns
+    assert "**Warning details**" in markdowns
+    assert "- Missing volume for BBB" in markdowns
+    assert "**Error details**" not in markdowns
+    assert "No ingestion errors were reported for this dataset." in captions
+
+
+def test_data_status_uses_error_bucket_for_counts_and_details():
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit()
+
+    app_main._render_data_status_summary(
+        dummy_st,
+        source="upload",
+        row_count=8,
+        issues={"errors": ["Missing required column: close"], "warnings": []},
+        dataset_id="dataset-100",
+        analyst_mode=False,
+    )
+
+    markdowns = [text for _, text in dummy_st.markdowns]
+    captions = [text for _, text in dummy_st.captions]
+
+    assert "**Errors:** 1" in markdowns
+    assert "**Warnings:** 0" in markdowns
+    assert "**Error details**" in markdowns
+    assert "- Missing required column: close" in markdowns
+    assert "**Warning details**" not in markdowns
+    assert "No ingestion warnings were reported for this dataset." in captions
+
+
+def test_data_status_uses_both_buckets_without_top_level_keys():
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit()
+
+    app_main._render_data_status_summary(
+        dummy_st,
+        source="upload",
+        row_count=5,
+        issues={
+            "errors": ["Price parse failed on row 3"],
+            "warnings": ["Ticker normalized: BRG -> BRG.JM"],
+        },
+        dataset_id="dataset-200",
+        analyst_mode=True,
+    )
+
+    markdowns = [text for _, text in dummy_st.markdowns]
+
+    assert "**Errors:** 1" in markdowns
+    assert "**Warnings:** 1" in markdowns
+    assert "**Warning details**" in markdowns
+    assert "- Ticker normalized: BRG -> BRG.JM" in markdowns
+    assert "**Error details**" in markdowns
+    assert "- Price parse failed on row 3" in markdowns
+    assert "- errors" not in markdowns
+    assert "- warnings" not in markdowns

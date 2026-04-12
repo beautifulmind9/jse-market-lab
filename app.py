@@ -26,28 +26,38 @@ def _render_data_status_summary(
     *,
     source: str | None,
     row_count: int,
-    issues: list[str],
+    issues: dict[str, list[str]] | None,
     dataset_id: str | None,
     analyst_mode: bool,
 ) -> None:
+    issues = issues or {}
+    errors = issues.get("errors", [])
+    warnings = issues.get("warnings", [])
+
     st_module.markdown("#### Data Status")
     status_col, quality_col = st_module.columns(2)
     with status_col:
         st_module.markdown(f"**Source:** {source or 'Unknown'}")
         st_module.markdown(f"**Rows loaded:** {row_count}")
-        st_module.markdown(f"**Errors:** {0 if row_count > 0 else 1}")
+        st_module.markdown(f"**Errors:** {len(errors)}")
     with quality_col:
-        warning_count = len(issues)
-        st_module.markdown(f"**Warnings:** {warning_count}")
+        st_module.markdown(f"**Warnings:** {len(warnings)}")
         if analyst_mode:
             st_module.markdown(f"**Dataset ID:** {dataset_id or 'N/A'}")
 
-    if issues:
+    if warnings:
         st_module.markdown("**Warning details**")
-        for issue in issues:
-            st_module.markdown(f"- {issue}")
-    elif row_count > 0:
+        for warning in warnings:
+            st_module.markdown(f"- {warning}")
+    else:
         st_module.caption("No ingestion warnings were reported for this dataset.")
+
+    if errors:
+        st_module.markdown("**Error details**")
+        for error in errors:
+            st_module.markdown(f"- {error}")
+    else:
+        st_module.caption("No ingestion errors were reported for this dataset.")
 
 
 def main() -> None:
