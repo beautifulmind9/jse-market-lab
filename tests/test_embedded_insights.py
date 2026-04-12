@@ -58,3 +58,31 @@ def test_render_embedded_insights_renders_card_and_sections():
     assert any("Final Insight" in block for block in dummy_st.markdowns)
     assert any("What’s happening now" in block for block in dummy_st.markdowns)
     assert any("Why this matters now" in block for block in dummy_st.markdowns)
+
+
+def test_embedded_insights_dedupes_duplicate_lines_per_section():
+    payload = generate_embedded_insights(
+        [
+            {
+                "quality_tier": "B",
+                "volatility_bucket": "medium",
+                "win_rate": 0.40,
+                "avg_return": 0.05,
+                "median_return": 0.01,
+                "holding_window": 5,
+            },
+            {
+                "quality_tier": "B",
+                "volatility_bucket": "medium",
+                "win_rate": 0.42,
+                "avg_return": 0.04,
+                "median_return": 0.01,
+                "holding_window": 20,
+            },
+        ],
+        [{"allocation_amount": 0, "eligible_for_funding": True}],
+    )
+
+    assert payload["what_is_happening"].count(
+        "Only a few trades made it into the final picks this time."
+    ) == 1

@@ -17,6 +17,7 @@ from app.data.loaders import (
 from app.data.normalize import detect_format, normalize_data
 from app.data.ingest import ingest_dataset
 from app.data.validate import validate_canonical
+from app.data.processor import normalize_jse_dataset
 
 
 def test_detect_format_long_vs_wide():
@@ -179,3 +180,37 @@ def test_demo_ingestion_preserves_large_ticker_universe_from_internal_dataset():
     assert loaded_tickers > 9
     assert canonical_tickers > 9
     assert canonical_tickers >= int(loaded_tickers * 0.8)
+
+
+def test_jse_symbol_markers_normalize_to_canonical_ticker():
+    raw = pd.DataFrame(
+        {
+            "date": ["2024-01-01", "2024-01-01", "2024-01-02", "2024-01-02"],
+            "symbol": ["CAR", "CARXD", "GK", "GKXD"],
+            "close_price": [10.0, 10.1, 8.0, 8.2],
+            "volume": [1000, 900, 1100, 950],
+        }
+    )
+
+    normalized = normalize_jse_dataset(raw)
+
+    car_rows = normalized[normalized["raw_symbol"].str.startswith("CAR")]
+    gk_rows = normalized[normalized["raw_symbol"].str.startswith("GK")]
+    assert set(car_rows["ticker"]) == {"CAR"}
+    assert set(gk_rows["ticker"]) == {"GK"}
+    assert set(normalized["instrument"]) == {"CAR", "GK"}
+
+
+def test_demo_ingestion_collapses_marker_variants_to_single_instrument(monkeypatch):
+    sample_raw = pd.DataFrame(
+        {
+            "date": ["2024-01-01", "2024-01-02", "2024-01-01", "2024-01-02"],
+            "symbol": ["CAR", "CARXD", "GK", "GKXD"],
+            "close_price": [10.0, 10.2, 8.0, 8.1],
+            "volume": [1000, 1200, 900, 950],
+        }
+    )
+    monkeypatch.setattr("app.data.loaders.pd.read_csv", lambda *_args, **_kwargs: sample_raw)
+
+    canonical, _meta, _issues = ingest_dataset("demo")
+    assert set(canonical["instrument"]) == {"CAR", "GK"}

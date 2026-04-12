@@ -43,7 +43,7 @@ def load_internal_dataset_with_source() -> tuple[pd.DataFrame, str]:
     normalized = normalize_jse_dataset(raw)
 
     # Backward compatibility: downstream app paths still expect `instrument`.
-    # Keep `ticker` from the normalized dataset while exposing a mirrored alias.
+    # Keep `instrument` mirrored to the canonical ticker.
     normalized["instrument"] = normalized["ticker"]
     return normalized, source_label
 

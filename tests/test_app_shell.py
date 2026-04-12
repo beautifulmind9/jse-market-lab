@@ -123,3 +123,23 @@ def test_extract_ticker_options_uses_active_dataset_and_is_sorted():
     ticker_options = app_main._extract_ticker_options(canonical_df)
 
     assert ticker_options == ["AAA", "BBB", "CCC"]
+
+
+def test_extract_ticker_options_does_not_split_marker_variants():
+    spec = importlib.util.spec_from_file_location("app_main", ROOT / "app.py")
+    app_main = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(app_main)
+
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": ["CAR", "CAR", "GK", "GK"],
+            "ticker": ["CAR", "CAR", "GK", "GK"],
+            "raw_symbol": ["CAR", "CARXD", "GK", "GKXD"],
+            "display_symbol": ["CAR", "CARXD", "GK", "GKXD"],
+        }
+    )
+
+    ticker_options = app_main._extract_ticker_options(canonical_df)
+
+    assert ticker_options == ["CAR", "GK"]
