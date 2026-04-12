@@ -73,7 +73,11 @@ def build_ticker_behavior(metrics: dict[str, Any], *, mode: str = "beginner") ->
     five_day = by_window.get(5)
     twenty_day = by_window.get(20)
     if five_day and twenty_day:
-        if five_day["avg_return"] > twenty_day["avg_return"]:
+        if five_day["median_return"] > twenty_day["median_return"]:
+            holding_window = "5D looks stronger than 20D in this dataset."
+        elif five_day["median_return"] < twenty_day["median_return"]:
+            holding_window = "20D looks stronger than 5D in this dataset."
+        elif five_day["avg_return"] > twenty_day["avg_return"]:
             holding_window = "5D looks stronger than 20D in this dataset."
         elif five_day["avg_return"] < twenty_day["avg_return"]:
             holding_window = "20D looks stronger than 5D in this dataset."
@@ -85,11 +89,17 @@ def build_ticker_behavior(metrics: dict[str, Any], *, mode: str = "beginner") ->
     avg_return = float(metrics["stats"]["avg_return"])
     median_return = float(metrics["stats"]["median_return"])
     if abs(avg_return - median_return) <= 0.002:
-        consistency = "Average and median returns are close, so results look fairly steady."
+        consistency = "Median and average returns are close, so results look fairly steady."
     elif avg_return > median_return:
-        consistency = "Average return is above typical return, so a few bigger wins are lifting the average."
+        consistency = (
+            "Median return is the primary typical-outcome read, while average return is higher; "
+            "a few bigger wins are likely lifting the average."
+        )
     else:
-        consistency = "Median return sits above average return, so weaker outliers are pulling the average down."
+        consistency = (
+            "Median return is the primary typical-outcome read, while average return is lower; "
+            "weaker outliers are likely pulling the average down."
+        )
 
     win_rate = float(metrics["stats"]["win_rate"])
     if win_rate >= 0.6:
@@ -152,9 +162,9 @@ def compute_ticker_metrics(df: pd.DataFrame, ticker: str, *, mode: str = "beginn
         best_window = max(
             by_window,
             key=lambda w: (
-                by_window[w]["avg_return"],
                 by_window[w]["median_return"],
                 by_window[w]["win_rate"],
+                by_window[w]["avg_return"],
             ),
         )
         best_window_label = f"{best_window}D"

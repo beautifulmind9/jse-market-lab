@@ -95,3 +95,31 @@ def test_embedded_insight_dedupe_is_case_insensitive_with_spacing():
     deduped = _dedupe_lines(lines)
 
     assert deduped == ["Mixed result read", "Different line"]
+
+
+def test_embedded_insights_adds_uneven_note_when_average_and_median_diverge():
+    payload = generate_embedded_insights(
+        [
+            {
+                "quality_tier": "A",
+                "volatility_bucket": "low",
+                "win_rate": 0.40,
+                "avg_return": 0.06,
+                "median_return": 0.01,
+                "holding_window": 5,
+            },
+            {
+                "quality_tier": "B",
+                "volatility_bucket": "medium",
+                "win_rate": 0.42,
+                "avg_return": 0.05,
+                "median_return": 0.01,
+                "holding_window": 20,
+            },
+        ],
+        [{"allocation_amount": 0, "eligible_for_funding": True}],
+    )
+
+    watch_blob = " ".join(payload["what_to_watch"])
+    assert "Median return is the primary typical read" in watch_blob
+    assert "average return is higher" in watch_blob

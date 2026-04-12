@@ -10,12 +10,20 @@ from app.language.formatter import contains_advisory_language, generate_explanat
 
 
 def test_generate_explanation_differs_by_mode():
-    row = {"quality_tier": "A", "volatility_bucket": "high", "win_rate": 0.61, "avg_return": 0.023}
+    row = {
+        "quality_tier": "A",
+        "volatility_bucket": "high",
+        "win_rate": 0.61,
+        "median_return": 0.015,
+        "avg_return": 0.023,
+    }
     beginner = generate_explanation(row, mode="beginner")
     analyst = generate_explanation(row, mode="analyst")
 
     assert "How often this works" not in beginner
     assert "How often this works" in analyst
+    assert "Typical move (median)" in analyst
+    assert "Supporting average move" in analyst
     assert "%" in analyst
 
 
@@ -53,7 +61,7 @@ def test_first_run_helper_renders_without_breaking():
         def __init__(self):
             self.lines = []
 
-        def markdown(self, text):
+        def markdown(self, text, **_kwargs):
             self.lines.append(text)
 
         def caption(self, text):

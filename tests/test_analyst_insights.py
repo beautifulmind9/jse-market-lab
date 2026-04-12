@@ -118,6 +118,9 @@ class DummyStreamlitInsights:
     def markdown(self, text):
         self.calls.append(("markdown", text))
 
+    def caption(self, text):
+        self.calls.append(("caption", text))
+
     def dataframe(self, payload):
         self.calls.append(("dataframe", payload))
 
@@ -172,3 +175,44 @@ def test_build_feature_insights_accepts_pandas_index_feature_columns():
     )
 
     assert list(insights.keys()) == ["vol_bucket"]
+
+
+def test_render_analyst_insights_feature_insights_unavailable_message_is_explicit():
+    from app.insights.analyst import render_analyst_insights
+
+    st = DummyStreamlitInsights()
+    trades = _sample_trades().drop(columns=["fast_slope_up", "vol_bucket"])
+
+    render_analyst_insights(trades, st_module=st, analyst_mode=True)
+
+    assert (
+        "info",
+        "Feature Insights is not available yet for this dataset because feature-tag columns are missing.",
+    ) in st.calls
+
+
+def test_render_analyst_insights_includes_explanatory_captions_for_matrix_and_exit_sections():
+    from app.insights.analyst import render_analyst_insights
+
+    st = DummyStreamlitInsights()
+    render_analyst_insights(_sample_trades(), st_module=st, analyst_mode=True)
+
+    captions = [text for event, text in st.calls if event == "caption"]
+    assert any("Question answered: Which setup tier and holding period" in text for text in captions)
+    assert any("Question answered: How do trades usually end" in text for text in captions)
+
+
+def test_render_analyst_insights_cleans_snake_case_labels_for_display_tables():
+    from app.insights.analyst import render_analyst_insights
+
+    st = DummyStreamlitInsights()
+    render_analyst_insights(_sample_trades(), st_module=st, analyst_mode=True)
+
+    dataframes = [payload for event, payload in st.calls if event == "dataframe"]
+    assert dataframes
+
+    flattened_columns = {column for frame in dataframes for column in frame.columns}
+    assert "quality_tier" not in flattened_columns
+    assert "exit_reason" not in flattened_columns
+    assert "Quality Tier" in flattened_columns
+    assert "Exit Reason" in flattened_columns
