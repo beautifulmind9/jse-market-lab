@@ -108,3 +108,16 @@
 - [ ] improve spacing and section hierarchy
 - [ ] reduce harsh black/white/grey feel
 - [ ] add/update tests for mode-based tab visibility
+
+## Ticker Analysis redesign
+- [ ] redesign Ticker Analysis around decision-first summaries
+- [ ] add Quick Take section
+- [ ] add Best Holding Strategy section
+- [ ] add Risk Profile section
+- [ ] add What Usually Happens section
+- [ ] add What to Watch section
+- [ ] keep Analyst deep-dive tables in Analyst mode only
+- [ ] simplify/hide raw Signal Breakdown for Beginner mode
+- [ ] remove duplicate insight bullets
+- [ ] normalize XD-style ticker markers into canonical tickers
+- [ ] update tests for ticker normalization and mode-based Ticker Analysis behavior
