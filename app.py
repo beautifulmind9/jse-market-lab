@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import inspect
+
 import pandas as pd
 
 from app.analysis.ticker_drilldown import build_ticker_drilldown
@@ -26,6 +28,41 @@ def _has_analyst_insight_content(trades_df: pd.DataFrame, *, analyst_mode: bool)
 
 def _resolve_tabs_for_mode(mode: str) -> list[str]:
     return _ANALYST_TABS if str(mode).lower() == "analyst" else _BEGINNER_TABS
+
+
+def _extract_ticker_options(df: pd.DataFrame) -> list[str]:
+    """Build sorted ticker options from the active canonical dataset."""
+    if df.empty:
+        return []
+
+    ticker_column = None
+    for candidate in ("instrument", "ticker"):
+        if candidate in df.columns:
+            ticker_column = candidate
+            break
+    if ticker_column is None:
+        return []
+
+    tickers = df[ticker_column].dropna().astype(str).str.strip()
+    tickers = tickers[tickers != ""]
+    return sorted(tickers.unique())
+
+
+def _run_demo_with_active_dataset(
+    *,
+    canonical_df: pd.DataFrame,
+    meta: dict,
+    issues: dict,
+) -> dict:
+    """Run demo pipeline while preferring the active app dataset when supported."""
+    run_demo_signature = inspect.signature(run_demo)
+    supports_context_injection = all(
+        param_name in run_demo_signature.parameters
+        for param_name in ("canonical_df", "meta", "issues")
+    )
+    if supports_context_injection:
+        return run_demo(canonical_df=canonical_df, meta=meta, issues=issues)
+    return run_demo()
 
 
 def _render_visual_polish(st_module) -> None:
@@ -108,12 +145,6 @@ def main() -> None:
     mode = st.radio("Mode", options=["Beginner", "Analyst"], horizontal=True, index=0)
     mode_token = mode.lower()
 
-    # TEMPORARY validation support: clear cached data once per browser session
-    # so bundled dataset changes are reflected immediately while validating ingestion.
-    if not st.session_state.get("_temp_dataset_cache_cleared", False):
-        st.cache_data.clear()
-        st.session_state["_temp_dataset_cache_cleared"] = True
-
     canonical_df, meta, issues = ingest_dataset("demo")
     dataset_source_label = str(meta.get("dataset_source_label") or "unknown_dataset")
     st.caption(f"Data source: {dataset_source_label}")
@@ -126,7 +157,11 @@ def main() -> None:
         st.warning("No rows were loaded from the data layer. Please verify the internal sample data file.")
         return
 
-    demo_payload = run_demo()
+    demo_payload = _run_demo_with_active_dataset(
+        canonical_df=canonical_df,
+        meta=meta,
+        issues=issues,
+    )
     ranked_df = demo_payload.get("ranked", pd.DataFrame())
     analyst_df = build_analyst_dataset(canonical_df, ranked_df)
     trade_rows = coerce_trade_rows_from_ranked(ranked_df) if not ranked_df.empty else []
@@ -191,30 +226,36 @@ def main() -> None:
 
     with tab_map["Ticker Analysis"]:
         st.markdown("### Ticker Analysis")
-        if analyst_df.empty or "instrument" not in analyst_df.columns:
+        ticker_options = _extract_ticker_options(canonical_df)
+        if not ticker_options:
             st.info("Ticker Analysis is unavailable because no ticker rows are loaded.")
         else:
-            ticker_options = sorted(analyst_df["instrument"].dropna().astype(str).unique())
-            if not ticker_options:
-                st.info("Ticker Analysis is unavailable because no tickers are available.")
+            selected_ticker = st.selectbox("Select ticker", ticker_options)
+            ticker_payload = build_ticker_drilldown(analyst_df, selected_ticker)
+            ticker_metrics = compute_ticker_metrics(analyst_df, selected_ticker, mode=mode_token)
+
+            st.markdown("#### Ticker Summary")
+            st.write(ticker_metrics["summary"])
+
+            st.markdown("#### Behavior Insights")
+            for line in ticker_metrics["behavior"].values():
+                st.markdown(f"- {line}")
+
+            st.markdown("#### Pattern Summary")
+            st.write(ticker_payload["pattern_summary"])
+
+            signal_df = pd.DataFrame(ticker_payload["signals"])
+            signal_count = int(len(signal_df))
+            if signal_df.empty or "return_pct" not in signal_df.columns:
+                key_stats = {
+                    "Signal Count": signal_count,
+                    "Win Rate": 0.0,
+                    "Median Return": 0.0,
+                    "Average Return": 0.0,
+                }
             else:
-                selected_ticker = st.selectbox("Select ticker", ticker_options)
-                ticker_payload = build_ticker_drilldown(analyst_df, selected_ticker)
-                ticker_metrics = compute_ticker_metrics(analyst_df, selected_ticker, mode=mode_token)
-
-                st.markdown("#### Ticker Summary")
-                st.write(ticker_metrics["summary"])
-
-                st.markdown("#### Behavior Insights")
-                for line in ticker_metrics["behavior"].values():
-                    st.markdown(f"- {line}")
-
-                st.markdown("#### Pattern Summary")
-                st.write(ticker_payload["pattern_summary"])
-
-                signal_df = pd.DataFrame(ticker_payload["signals"])
-                signal_count = int(len(signal_df))
-                if signal_df.empty or "return_pct" not in signal_df.columns:
+                returns = pd.to_numeric(signal_df["return_pct"], errors="coerce").dropna()
+                if returns.empty:
                     key_stats = {
                         "Signal Count": signal_count,
                         "Win Rate": 0.0,
@@ -222,70 +263,61 @@ def main() -> None:
                         "Average Return": 0.0,
                     }
                 else:
-                    returns = pd.to_numeric(signal_df["return_pct"], errors="coerce").dropna()
-                    if returns.empty:
-                        key_stats = {
-                            "Signal Count": signal_count,
-                            "Win Rate": 0.0,
-                            "Median Return": 0.0,
-                            "Average Return": 0.0,
-                        }
-                    else:
-                        key_stats = {
-                            "Signal Count": signal_count,
-                            "Win Rate": float((returns > 0).mean()),
-                            "Median Return": float(returns.median()),
-                            "Average Return": float(returns.mean()),
-                        }
+                    key_stats = {
+                        "Signal Count": signal_count,
+                        "Win Rate": float((returns > 0).mean()),
+                        "Median Return": float(returns.median()),
+                        "Average Return": float(returns.mean()),
+                    }
 
-                st.markdown(
-                    (
-                        '<div class="jse-metric-grid">'
-                        f'<div class="jse-metric"><div class="jse-metric-label">Signal Count</div><div class="jse-metric-value">{key_stats["Signal Count"]}</div></div>'
-                        f'<div class="jse-metric"><div class="jse-metric-label">Win Rate</div><div class="jse-metric-value">{key_stats["Win Rate"]:.1%}</div></div>'
-                        f'<div class="jse-metric"><div class="jse-metric-label">Median Return</div><div class="jse-metric-value">{key_stats["Median Return"]:.2%}</div></div>'
-                        f'<div class="jse-metric"><div class="jse-metric-label">Average Return</div><div class="jse-metric-value">{key_stats["Average Return"]:.2%}</div></div>'
-                        "</div>"
-                    ),
-                    unsafe_allow_html=True,
-                )
+            st.markdown(
+                (
+                    '<div class="jse-metric-grid">'
+                    f'<div class="jse-metric"><div class="jse-metric-label">Signal Count</div><div class="jse-metric-value">{key_stats["Signal Count"]}</div></div>'
+                    f'<div class="jse-metric"><div class="jse-metric-label">Win Rate</div><div class="jse-metric-value">{key_stats["Win Rate"]:.1%}</div></div>'
+                    f'<div class="jse-metric"><div class="jse-metric-label">Median Return</div><div class="jse-metric-value">{key_stats["Median Return"]:.2%}</div></div>'
+                    f'<div class="jse-metric"><div class="jse-metric-label">Average Return</div><div class="jse-metric-value">{key_stats["Average Return"]:.2%}</div></div>'
+                    "</div>"
+                ),
+                unsafe_allow_html=True,
+            )
 
-                if mode_token == "analyst":
-                    st.markdown("#### Key Stats")
-                    st.dataframe(pd.DataFrame([key_stats]), use_container_width=True)
+            if mode_token == "analyst":
+                st.markdown("#### Key Stats")
+                st.dataframe(pd.DataFrame([key_stats]), use_container_width=True)
 
-                st.markdown("#### Holding Window Comparison")
-                holding_window_df = pd.DataFrame.from_dict(
-                    ticker_payload["holding_window_stats"], orient="index"
-                )
-                if holding_window_df.empty:
-                    st.info("No holding window data is ready for this ticker yet.")
-                else:
-                    st.dataframe(holding_window_df.reset_index().rename(columns={"index": "holding_window"}), use_container_width=True)
+            st.markdown("#### Holding Window Comparison")
+            holding_window_df = pd.DataFrame.from_dict(
+                ticker_payload["holding_window_stats"], orient="index"
+            )
+            if holding_window_df.empty:
+                st.info("No holding window data is ready for this ticker yet.")
+            else:
+                st.dataframe(holding_window_df.reset_index().rename(columns={"index": "holding_window"}), use_container_width=True)
 
-                st.markdown("#### Tier Performance")
-                tier_df = pd.DataFrame.from_dict(ticker_payload["tier_performance"], orient="index")
-                if tier_df.empty:
-                    st.info("No tier breakdown is ready for this ticker yet.")
-                else:
-                    st.dataframe(tier_df.reset_index().rename(columns={"index": "quality_tier"}), use_container_width=True)
+            st.markdown("#### Tier Performance")
+            tier_df = pd.DataFrame.from_dict(ticker_payload["tier_performance"], orient="index")
+            if tier_df.empty:
+                st.info("No tier breakdown is ready for this ticker yet.")
+            else:
+                st.dataframe(tier_df.reset_index().rename(columns={"index": "quality_tier"}), use_container_width=True)
 
-                st.markdown("#### Volatility Performance")
-                volatility_df = pd.DataFrame.from_dict(ticker_payload["volatility_performance"], orient="index")
-                if volatility_df.empty:
-                    st.info("No volatility breakdown is ready for this ticker yet.")
-                else:
-                    st.dataframe(volatility_df.reset_index().rename(columns={"index": "volatility_bucket"}), use_container_width=True)
+            st.markdown("#### Volatility Performance")
+            volatility_df = pd.DataFrame.from_dict(ticker_payload["volatility_performance"], orient="index")
+            if volatility_df.empty:
+                st.info("No volatility breakdown is ready for this ticker yet.")
+            else:
+                st.dataframe(volatility_df.reset_index().rename(columns={"index": "volatility_bucket"}), use_container_width=True)
 
-                st.markdown("#### Return Distribution")
-                distribution_df = pd.DataFrame([ticker_payload["return_distribution"]])
-                st.dataframe(distribution_df, use_container_width=True)
+            st.markdown("#### Return Distribution")
+            distribution_df = pd.DataFrame([ticker_payload["return_distribution"]])
+            st.dataframe(distribution_df, use_container_width=True)
 
-                st.markdown("#### Signal Breakdown")
-                if signal_df.empty:
-                    st.info("No signal history is available for this ticker yet.")
-                else:
-                    st.dataframe(signal_df, use_container_width=True)
+            st.markdown("#### Signal Breakdown")
+            if signal_df.empty:
+                st.info("No signal history is available for this ticker yet.")
+            else:
+                st.dataframe(signal_df, use_container_width=True)
 
     if "Analyst Insights" in tab_map:
         with tab_map["Analyst Insights"]:
