@@ -29,6 +29,16 @@ from app.planner.explanations import (
 
 _ALLOCATOR_REASON_KEYS = REASON_KEYS
 _SENTENCE_BOUNDARY_PATTERN = re.compile(r"([.!?])\s+")
+_KNOWN_ABBREVIATIONS = {
+    "e.g.",
+    "i.e.",
+    "mr.",
+    "mrs.",
+    "ms.",
+    "dr.",
+    "prof.",
+}
+_INITIALISM_PATTERN = re.compile(r"(?:[A-Z]\.){2,}$")
 
 
 def build_portfolio_summary(
@@ -368,9 +378,27 @@ def _first_sentence(text: str) -> str:
         if punctuation == "." and prev_char.isdigit() and next_char.isdigit():
             continue
 
+        if punctuation == "." and _is_abbreviation_boundary(cleaned, punctuation_idx):
+            continue
+
         return cleaned[: punctuation_idx + 1].strip()
 
     return cleaned
+
+
+def _is_abbreviation_boundary(text: str, punctuation_idx: int) -> bool:
+    fragment = text[: punctuation_idx + 1]
+    token_match = re.search(r"(\S+)$", fragment)
+    if token_match is None:
+        return False
+
+    token = token_match.group(1).strip()
+    normalized_token = token.strip("\"'”’)]}").lstrip("\"'“‘([{")
+    lowered = normalized_token.lower()
+    if lowered in _KNOWN_ABBREVIATIONS:
+        return True
+
+    return bool(_INITIALISM_PATTERN.fullmatch(normalized_token))
 
 
 def _format_holding_window_label(value: Any) -> str:

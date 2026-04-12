@@ -279,3 +279,39 @@ def test_first_sentence_splits_when_next_sentence_starts_with_quote():
     )
 
     assert _first_sentence(text) == "Execution uses signal-day close."
+
+
+def test_first_sentence_keeps_e_g_abbreviation_in_first_sentence():
+    text = (
+        "Use limit orders, e.g. near VWAP for cleaner fills. "
+        "Avoid chasing late prints."
+    )
+
+    assert _first_sentence(text) == "Use limit orders, e.g. near VWAP for cleaner fills."
+
+
+def test_first_sentence_keeps_i_e_abbreviation_in_first_sentence():
+    text = (
+        "Scale risk, i.e. reduce size when spreads widen. "
+        "Wait for liquidity to improve."
+    )
+
+    assert _first_sentence(text) == "Scale risk, i.e. reduce size when spreads widen."
+
+
+def test_first_sentence_keeps_title_abbreviation_in_first_sentence():
+    text = (
+        "Follow Dr. Lane's execution note before entry. "
+        "Then stage the order across two clips."
+    )
+
+    assert _first_sentence(text) == "Follow Dr. Lane's execution note before entry."
+
+
+def test_first_sentence_keeps_initialism_abbreviation_in_first_sentence():
+    text = (
+        "Focus on U.S. large-cap names when liquidity thins. "
+        "Delay small-cap entries until spread normalizes."
+    )
+
+    assert _first_sentence(text) == "Focus on U.S. large-cap names when liquidity thins."
