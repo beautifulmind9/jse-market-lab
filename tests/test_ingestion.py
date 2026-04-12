@@ -295,6 +295,56 @@ def test_normalize_data_preserves_parenthesized_xd_metadata_with_canonical_ticke
     assert row["display_symbol"] == "CAR (XD)"
 
 
+
+
+def test_normalize_data_nullable_string_raw_symbol_na_falls_back_to_canonical_metadata():
+    raw = pd.DataFrame(
+        {
+            "date": ["2024-01-01"],
+            "instrument": ["CAR (XD)"],
+            "raw_symbol": pd.Series([pd.NA], dtype="string"),
+            "symbol_marker": pd.Series([pd.NA], dtype="string"),
+            "display_symbol": pd.Series([pd.NA], dtype="string"),
+            "close": [10.3],
+        }
+    )
+
+    canonical, fmt = normalize_data(raw, source="demo", dataset_id="dataset-preserve-nullable")
+    row = canonical.iloc[0]
+
+    assert fmt == "long"
+    assert row["ticker"] == "CAR"
+    assert row["instrument"] == "CAR"
+    assert row["raw_symbol"] == "CAR (XD)"
+    assert row["symbol_marker"] == "XD"
+    assert row["display_symbol"] == "CAR (XD)"
+
+
+def test_normalize_data_string_missing_tokens_fall_back_for_optional_symbol_metadata():
+    raw = pd.DataFrame(
+        {
+            "date": [
+                "2024-01-01",
+                "2024-01-02",
+                "2024-01-03",
+                "2024-01-04",
+            ],
+            "instrument": ["CAR (XD)", "CAR (XD)", "CAR (XD)", "CAR (XD)"],
+            "raw_symbol": ["", "nan", "none", "<NA>"],
+            "symbol_marker": ["", "nan", "none", "<NA>"],
+            "display_symbol": ["", "nan", "none", "<NA>"],
+            "close": [10.3, 10.4, 10.5, 10.6],
+        }
+    )
+
+    canonical, _fmt = normalize_data(raw, source="demo", dataset_id="dataset-preserve-missing-tokens")
+
+    assert set(canonical["ticker"]) == {"CAR"}
+    assert set(canonical["instrument"]) == {"CAR"}
+    assert canonical["raw_symbol"].tolist() == ["CAR (XD)", "CAR (XD)", "CAR (XD)", "CAR (XD)"]
+    assert canonical["symbol_marker"].tolist() == ["XD", "XD", "XD", "XD"]
+    assert canonical["display_symbol"].tolist() == ["CAR (XD)", "CAR (XD)", "CAR (XD)", "CAR (XD)"]
+
 def test_normalize_data_keeps_canonical_universe_collapsed_when_raw_metadata_varies():
     raw = pd.DataFrame(
         {
