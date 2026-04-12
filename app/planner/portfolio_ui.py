@@ -121,6 +121,38 @@ def render_portfolio_plan(
     summary = build_portfolio_summary(allocations, total_capital)
     funded_trades, unfunded_trades = split_trades_by_funding(allocations)
 
+    def _portfolio_plan_row(trade: Mapping[str, Any], *, funded: bool) -> dict[str, Any]:
+        execution = build_execution_summary(trade, mode=mode)
+        row: dict[str, Any] = {
+            "Ticker": trade.get("instrument", "Unknown"),
+            "Setup Strength": explain_strength(trade.get("quality_tier"), mode=mode),
+            "Confidence / Reliability": explain_confidence(trade.get("confidence_label"), mode=mode),
+            "Holding Window": _format_holding_window_label(trade.get("holding_window")),
+            "Why this trade": (
+                explain_trade_reason(trade, mode=mode) if funded else resolve_unfunded_reason(trade)
+            ),
+            "Execution Summary": _compact_execution_summary(execution["summary"]),
+        }
+
+        if analyst_mode:
+            row.update(
+                {
+                    "Decision Status": classify_decision_status(trade),
+                    "Allocation %": trade.get("allocation_pct", 0.0),
+                    "Allocation Amount": trade.get("allocation_amount", 0.0),
+                    "Selection Rank": trade.get("selection_rank", "N/A"),
+                    "Rule Note": explain_funded_trade_why(trade) if funded else "Not funded this cycle.",
+                }
+            )
+        else:
+            row.update(
+                {
+                    "Allocation Amount": trade.get("allocation_amount", 0.0),
+                    "Decision Status": classify_decision_status(trade),
+                }
+            )
+        return row
+
     def _render_snapshot_blocks() -> None:
         snapshot = build_portfolio_snapshot(allocations, total_capital, mode=mode)
         st_module.markdown("#### Portfolio Snapshot")
@@ -157,23 +189,7 @@ def render_portfolio_plan(
 
         st_module.markdown("#### Funded Trades")
         if funded_trades:
-            funded_df = pd.DataFrame(
-                [
-                    {
-                        "Instrument": trade.get("instrument", "Unknown"),
-                        "Setup Strength": explain_strength(trade.get("quality_tier"), mode=mode),
-                        "Confidence": explain_confidence(trade.get("confidence_label"), mode=mode),
-                        **({"Allocation %": trade.get("allocation_pct", 0.0)} if analyst_mode else {}),
-                        "Allocation Amount": trade.get("allocation_amount", 0.0),
-                        **({"Selection Rank": trade.get("selection_rank", "N/A")} if analyst_mode else {}),
-                        "Decision Status": classify_decision_status(trade),
-                        "Why": explain_trade_reason(trade, mode=mode),
-                        "Execution Framework": build_execution_summary(trade, mode=mode)["summary"],
-                        **({"Rule Note": explain_funded_trade_why(trade)} if analyst_mode else {}),
-                    }
-                    for trade in funded_trades
-                ]
-            )
+            funded_df = pd.DataFrame([_portfolio_plan_row(trade, funded=True) for trade in funded_trades])
             st_module.dataframe(funded_df, use_container_width=True)
         else:
             st_module.info("No funded trades for the selected inputs.")
@@ -181,18 +197,7 @@ def render_portfolio_plan(
         st_module.markdown("#### Unfunded Trades")
         if unfunded_trades:
             unfunded_df = pd.DataFrame(
-                [
-                    {
-                        "Instrument": trade.get("instrument", "Unknown"),
-                        "Setup Strength": explain_strength(trade.get("quality_tier"), mode=mode),
-                        "Confidence": explain_confidence(trade.get("confidence_label"), mode=mode),
-                        **({"Selection Rank": trade.get("selection_rank", "N/A")} if analyst_mode else {}),
-                        "Decision Status": classify_decision_status(trade),
-                        "Why": resolve_unfunded_reason(trade),
-                        "Execution Framework": build_execution_summary(trade, mode=mode)["summary"],
-                    }
-                    for trade in unfunded_trades
-                ]
+                [_portfolio_plan_row(trade, funded=False) for trade in unfunded_trades]
             )
             st_module.dataframe(unfunded_df, use_container_width=True)
         else:
@@ -355,3 +360,26 @@ def _first_sentence(text: str) -> str:
     if not sentence:
         return ""
     return f"{sentence}."
+
+
+def _format_holding_window_label(value: Any) -> str:
+    window = _int_or_none(value)
+    if window is None:
+        return "Plan-defined window"
+    return f"~{window} trading days"
+
+
+def _compact_execution_summary(summary: str) -> str:
+    first_sentence = _first_sentence(summary)
+    if first_sentence:
+        return first_sentence
+    return "Execution plan uses reference pricing, time-based exits, and risk checks."
+
+
+def _int_or_none(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
