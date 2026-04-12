@@ -1,0 +1,181 @@
+import importlib.util
+import sys
+from pathlib import Path
+
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.append(str(ROOT))
+
+
+class DummyColumn:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+
+class DummyTab:
+    def __init__(self, st_module, name):
+        self._st = st_module
+        self._name = name
+
+    def __enter__(self):
+        self._st.current_tab = self._name
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self._st.current_tab = None
+        return False
+
+
+class DummyStreamlit:
+    def __init__(self):
+        self.session_state = {}
+        self.current_tab = None
+        self.tabs_requested = []
+        self.number_inputs = []
+        self.markdowns = []
+        self.info_messages = []
+        self.dataframes = []
+        self.captions = []
+
+    def set_page_config(self, **_kwargs):
+        return None
+
+    def title(self, _text):
+        return None
+
+    def radio(self, _label, options, **_kwargs):
+        return options[1]
+
+    def markdown(self, text):
+        self.markdowns.append((self.current_tab, text))
+
+    def caption(self, text):
+        self.captions.append((self.current_tab, text))
+
+    def info(self, text):
+        self.info_messages.append((self.current_tab, text))
+
+    def write(self, _payload):
+        return None
+
+    def number_input(self, label, value=0.0, key=None, **_kwargs):
+        self.number_inputs.append((self.current_tab, label, key))
+        if key is not None:
+            self.session_state[key] = value
+        return value
+
+    def tabs(self, names):
+        self.tabs_requested.append(list(names))
+        return [DummyTab(self, name) for name in names]
+
+    def dataframe(self, df, **_kwargs):
+        self.dataframes.append((self.current_tab, df.copy()))
+
+    def selectbox(self, _label, options):
+        return options[0]
+
+    def columns(self, count):
+        return [DummyColumn() for _ in range(count)]
+
+    def subheader(self, _text):
+        return None
+
+
+def _load_app_module():
+    spec = importlib.util.spec_from_file_location("app_main", ROOT / "app.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_sprint12_tab_layout_and_capital_location(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit()
+
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": ["AAA"],
+            "date": pd.to_datetime(["2024-01-01"]),
+            "close": [10.0],
+        }
+    )
+    ranked_df = pd.DataFrame({"instrument": ["AAA"], "selection_rank": [1], "tier": ["A"]})
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(app_main, "ingest_dataset", lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo-v1"}, []))
+    monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": ranked_df})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [{"instrument": "AAA"}])
+    monkeypatch.setattr(app_main, "generate_portfolio_allocation", lambda _rows, _capital: {"allocations": [{"allocation_amount": 5000, "allocation_pct": 0.05}]})
+    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
+    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(app_main, "render_portfolio_plan", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(app_main, "render_analyst_insights", lambda *_args, **_kwargs: None)
+
+    app_main.main()
+
+    assert dummy_st.tabs_requested[0] == ["Portfolio", "Review", "Ticker Analysis", "Analyst Insights", "Data"]
+    assert dummy_st.number_inputs == [("Portfolio", "Total capital", "total_capital")]
+
+
+def test_review_excludes_data_status_and_data_tab_contains_raw_preview(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit()
+
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": ["AAA", "BBB"],
+            "date": pd.to_datetime(["2024-01-01", "2024-01-02"]),
+            "close": [10.0, 11.0],
+        }
+    )
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(app_main, "ingest_dataset", lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "dataset-42"}, ["Missing volume for BBB"]))
+    monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
+    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
+
+    app_main.main()
+
+    review_markdowns = [text for tab, text in dummy_st.markdowns if tab == "Review"]
+    assert "#### Data Status" not in review_markdowns
+    assert "#### Main Dashboard" not in review_markdowns
+
+    data_markdowns = [text for tab, text in dummy_st.markdowns if tab == "Data"]
+    assert "#### Data Status" in data_markdowns
+    assert "#### Main Dashboard" in data_markdowns
+    assert any(tab == "Data" and len(df) == 2 for tab, df in dummy_st.dataframes)
+
+
+def test_analyst_insights_empty_state_when_no_content(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit()
+
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": ["AAA"],
+            "date": pd.to_datetime(["2024-01-01"]),
+            "close": [10.0],
+        }
+    )
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(app_main, "ingest_dataset", lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo"}, []))
+    monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
+    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
+
+    app_main.main()
+
+    insight_messages = [text for tab, text in dummy_st.info_messages if tab == "Analyst Insights"]
+    assert "Analyst insights are not available for this dataset yet." in insight_messages
