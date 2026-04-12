@@ -6,7 +6,7 @@ from typing import IO, Optional, Tuple
 
 import pandas as pd
 
-from .loaders import load_internal_dataset, load_upload
+from .loaders import load_internal_dataset_with_source, load_upload
 from .metadata import build_metadata, generate_dataset_id
 from .normalize import normalize_data
 from .validate import validate_canonical
@@ -20,7 +20,7 @@ def ingest_dataset(
         raise ValueError("mode must be 'demo' or 'upload'.")
 
     if mode == "demo":
-        raw, source_label = load_internal_dataset()
+        raw, source_label = load_internal_dataset_with_source()
         source = "demo"
     else:
         raw = load_upload(uploaded_file)

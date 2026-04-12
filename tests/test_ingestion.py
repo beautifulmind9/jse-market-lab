@@ -8,7 +8,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
 from app.data.metadata import build_metadata
-from app.data.loaders import INTERNAL_DATASET_PATH, load_internal_dataset
+from app.data.loaders import (
+    INTERNAL_DATASET_PATH,
+    get_internal_dataset_source_label,
+    load_internal_dataset,
+    load_internal_dataset_with_source,
+)
 from app.data.normalize import detect_format, normalize_data
 from app.data.ingest import ingest_dataset
 from app.data.validate import validate_canonical
@@ -86,7 +91,8 @@ def test_internal_loader_returns_ticker_and_instrument_columns(monkeypatch):
     )
     monkeypatch.setattr("app.data.loaders.pd.read_csv", lambda *_args, **_kwargs: sample_raw)
 
-    loaded, source_label = load_internal_dataset()
+    loaded = load_internal_dataset()
+    source_label = get_internal_dataset_source_label()
 
     assert "ticker" in loaded.columns
     assert "instrument" in loaded.columns
@@ -96,6 +102,7 @@ def test_internal_loader_returns_ticker_and_instrument_columns(monkeypatch):
         check_names=False,
     )
     assert source_label in {"internal_jse_dataset", "legacy_demo_dataset"}
+    assert isinstance(loaded, pd.DataFrame)
 
 
 def test_demo_ingestion_path_accepts_internal_loader_compatibility_contract(monkeypatch):
@@ -137,7 +144,7 @@ def test_internal_loader_prefers_bundled_jse_dataset(monkeypatch, tmp_path):
     monkeypatch.setattr("app.data.loaders.INTERNAL_DATASET_PATH", bundled_path)
     monkeypatch.setattr("app.data.loaders.LEGACY_INTERNAL_DATASET_PATH", legacy_path)
 
-    _, source_label = load_internal_dataset()
+    _, source_label = load_internal_dataset_with_source()
 
     assert calls == [bundled_path]
     assert source_label == "internal_jse_dataset"
@@ -147,7 +154,15 @@ def test_internal_loader_uses_real_bundled_dataset_when_available():
     assert INTERNAL_DATASET_PATH.as_posix().endswith("data/internal/jse_dataset.csv")
     assert INTERNAL_DATASET_PATH.exists()
 
-    loaded, source_label = load_internal_dataset()
+    loaded = load_internal_dataset()
+    source_label = get_internal_dataset_source_label()
 
     assert source_label == "internal_jse_dataset"
     assert len(loaded) > 1000
+
+
+def test_internal_loader_real_bundled_dataset_has_more_than_legacy_ticker_universe():
+    loaded = load_internal_dataset()
+    ticker_count = int(loaded["instrument"].dropna().astype(str).nunique())
+
+    assert ticker_count > 9

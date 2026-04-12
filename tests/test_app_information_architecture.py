@@ -41,6 +41,7 @@ class DummyStreamlit:
         self.info_messages = []
         self.dataframes = []
         self.captions = []
+        self.selectbox_calls = []
 
     def set_page_config(self, **_kwargs):
         return None
@@ -79,6 +80,7 @@ class DummyStreamlit:
         self.dataframes.append((self.current_tab, df.copy()))
 
     def selectbox(self, _label, options):
+        self.selectbox_calls.append(list(options))
         return options[0]
 
     def columns(self, count):
@@ -322,3 +324,119 @@ def test_data_status_uses_both_buckets_without_top_level_keys():
     assert "- Price parse failed on row 3" in markdowns
     assert "- errors" not in markdowns
     assert "- warnings" not in markdowns
+
+
+def test_app_does_not_depend_on_global_cache_data_clear():
+    app_source = (ROOT / "app.py").read_text()
+    assert "cache_data.clear" not in app_source
+
+
+def test_run_demo_uses_active_dataset_context_when_supported(monkeypatch):
+    app_main = _load_app_module()
+
+    canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+    meta = {"dataset_id": "demo-1", "dataset_source_label": "internal_jse_dataset"}
+    issues = {"errors": [], "warnings": []}
+    calls = {}
+
+    def run_demo_with_context(*, canonical_df, meta, issues):
+        calls["canonical_df"] = canonical_df
+        calls["meta"] = meta
+        calls["issues"] = issues
+        return {"ranked": pd.DataFrame()}
+
+    monkeypatch.setattr(app_main, "run_demo", run_demo_with_context)
+
+    result = app_main._run_demo_with_active_dataset(
+        canonical_df=canonical_df,
+        meta=meta,
+        issues=issues,
+    )
+
+    assert "ranked" in result
+    assert isinstance(result["ranked"], pd.DataFrame)
+    assert calls["canonical_df"] is canonical_df
+    assert calls["meta"] is meta
+    assert calls["issues"] is issues
+
+
+def test_run_demo_falls_back_to_legacy_signature_when_context_not_supported(monkeypatch):
+    app_main = _load_app_module()
+
+    canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+    meta = {"dataset_id": "demo-1"}
+    issues = {"errors": [], "warnings": []}
+    calls = {"count": 0}
+
+    def legacy_run_demo():
+        calls["count"] += 1
+        return {"ranked": pd.DataFrame()}
+
+    monkeypatch.setattr(app_main, "run_demo", legacy_run_demo)
+
+    result = app_main._run_demo_with_active_dataset(
+        canonical_df=canonical_df,
+        meta=meta,
+        issues=issues,
+    )
+
+    assert "ranked" in result
+    assert isinstance(result["ranked"], pd.DataFrame)
+    assert calls["count"] == 1
+
+
+def test_ticker_analysis_selector_uses_canonical_dataset_universe(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit()
+
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": [f"T{i:02d}" for i in range(12)],
+            "date": pd.to_datetime(["2024-01-01"] * 12),
+            "close": [10.0 + i for i in range(12)],
+        }
+    )
+    analyst_subset = pd.DataFrame(
+        {
+            "instrument": ["T00", "T01"],
+            "entry_date": pd.to_datetime(["2024-01-01", "2024-01-01"]),
+            "return_pct": [0.01, -0.01],
+            "holding_window": [5, 5],
+            "quality_tier": ["A", "B"],
+            "volatility_bucket": ["low", "medium"],
+        }
+    )
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (
+            canonical_df,
+            {"source": "demo", "dataset_id": "demo-v1", "dataset_source_label": "internal_jse_dataset"},
+            {"errors": [], "warnings": []},
+        ),
+    )
+    monkeypatch.setattr(app_main, "run_demo", lambda *_args, **_kwargs: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: analyst_subset)
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
+    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(app_main, "compute_ticker_metrics", lambda *_args, **_kwargs: {"summary": "", "behavior": {}})
+    monkeypatch.setattr(
+        app_main,
+        "build_ticker_drilldown",
+        lambda *_args, **_kwargs: {
+            "pattern_summary": "",
+            "signals": [],
+            "holding_window_stats": {},
+            "tier_performance": {},
+            "volatility_performance": {},
+            "return_distribution": {},
+        },
+    )
+
+    app_main.main()
+
+    assert dummy_st.selectbox_calls
+    assert len(dummy_st.selectbox_calls[0]) == 12

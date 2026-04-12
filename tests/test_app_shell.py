@@ -1,4 +1,5 @@
 import sys
+import importlib.util
 from pathlib import Path
 
 import pandas as pd
@@ -69,3 +70,24 @@ def test_build_analyst_dataset_handles_empty_ranked_df(monkeypatch):
 
     assert "net_return_pct" in analyst_df.columns
     assert "quality_tier" not in analyst_df.columns
+
+
+def test_extract_ticker_options_uses_active_dataset_and_is_sorted():
+    spec = importlib.util.spec_from_file_location("app_main", ROOT / "app.py")
+    app_main = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(app_main)
+
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": ["CCC", "AAA", "BBB", "AAA", None, " "],
+            "date": pd.to_datetime(
+                ["2024-01-01", "2024-01-01", "2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"]
+            ),
+            "close": [10.0, 11.0, 12.0, 13.0, 14.0, 15.0],
+        }
+    )
+
+    ticker_options = app_main._extract_ticker_options(canonical_df)
+
+    assert ticker_options == ["AAA", "BBB", "CCC"]

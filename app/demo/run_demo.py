@@ -20,9 +20,18 @@ from app.ranking.engine import rank_instruments
 logger = logging.getLogger(__name__)
 
 
-def run_demo(language_mode: str = "plain") -> dict:
+def run_demo(
+    language_mode: str = "plain",
+    *,
+    canonical_df: pd.DataFrame | None = None,
+    meta: dict | None = None,
+    issues: dict | None = None,
+) -> dict:
     """Run ingestion, cost, ranking, and phase metrics for demo data."""
-    canonical, meta, issues = ingest_dataset("demo")
+    if canonical_df is None or meta is None or issues is None:
+        canonical, meta, issues = ingest_dataset("demo")
+    else:
+        canonical = canonical_df
 
     entries = canonical[["instrument", "date"]].rename(columns={"date": "entry_date"})
 
