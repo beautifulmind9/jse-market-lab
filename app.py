@@ -40,24 +40,27 @@ def main() -> None:
     analyst_df = build_analyst_dataset(canonical_df, ranked_df)
     trade_rows = coerce_trade_rows_from_ranked(ranked_df) if not ranked_df.empty else []
 
+    selected_capital = st.number_input(
+        "Total capital",
+        min_value=0.0,
+        value=100_000.0,
+        step=5_000.0,
+    )
+
+    if ranked_df.empty:
+        enriched_allocations: list[dict] = []
+    else:
+        allocation_payload = generate_portfolio_allocation(trade_rows, selected_capital)
+        base_allocations = allocation_payload.get("allocations", [])
+        enriched_allocations = [{**allocation, **row} for row, allocation in zip(trade_rows, base_allocations)]
+
     if trade_rows:
-        preview_allocation = generate_portfolio_allocation(trade_rows, 100_000.0)
-        preview_allocations = preview_allocation.get("allocations", [])
-        enriched_preview = [{**allocation, **row} for row, allocation in zip(trade_rows, preview_allocations)]
-        insights_payload = generate_embedded_insights(trade_rows, enriched_preview, mode=mode_token)
+        insights_payload = generate_embedded_insights(trade_rows, enriched_allocations, mode=mode_token)
     else:
         insights_payload = generate_embedded_insights([], [], mode=mode_token)
 
     _render_first_run_header(st, mode=mode_token)
     render_embedded_insights(insights_payload, st_module=st)
-
-    if ranked_df.empty:
-        allocations: list[dict] = []
-    else:
-        default_capital = 100_000.0
-        allocation_payload = generate_portfolio_allocation(trade_rows, default_capital)
-        base_allocations = allocation_payload.get("allocations", [])
-        allocations = [{**allocation, **row} for row, allocation in zip(trade_rows, base_allocations)]
 
     portfolio_tab, review_tab, insights_tab, ticker_tab = st.tabs(
         ["Portfolio", "Review", "Analyst Insights", "Ticker Analysis"]
@@ -65,23 +68,12 @@ def main() -> None:
 
     with portfolio_tab:
         st.markdown("### Portfolio Plan")
-        total_capital = st.number_input(
-            "Total capital",
-            min_value=0.0,
-            value=100_000.0,
-            step=5_000.0,
-        )
         if ranked_df.empty:
             st.info("Portfolio Plan unavailable: ranked outputs were not generated.")
         else:
-            allocation_payload = generate_portfolio_allocation(trade_rows, total_capital)
-            refreshed_allocations = allocation_payload.get("allocations", [])
-            enriched_allocations = [
-                {**allocation, **row} for row, allocation in zip(trade_rows, refreshed_allocations)
-            ]
             render_portfolio_plan(
                 enriched_allocations,
-                total_capital=total_capital,
+                total_capital=selected_capital,
                 st_module=st,
                 signals_df=ranked_df,
                 mode=mode_token,
@@ -106,8 +98,8 @@ def main() -> None:
             st.info("Review unavailable: ranked outputs were not generated.")
         else:
             render_portfolio_plan(
-                allocations,
-                total_capital=100_000.0,
+                enriched_allocations,
+                total_capital=selected_capital,
                 st_module=st,
                 signals_df=ranked_df,
                 mode=mode_token,
