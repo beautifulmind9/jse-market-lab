@@ -356,3 +356,26 @@ A simple column toggle is not enough. The product should speak differently depen
 
 ### Outcome
 Beginner Mode prioritizes clarity and meaning, while Analyst Mode keeps precision without losing readability.
+
+## Sprint 13 product decisions
+
+### 1. User stories drive structure
+Sprint 13 is designed around what beginner and analyst users are scanning for, not around internal engine outputs.
+
+### 2. Portfolio is the main decision surface
+The Portfolio tab is treated as the primary “what do I do with this?” screen and must explain why trades are selected, why cash is reserved, and how trades are typically approached.
+
+### 3. Execution framing is part of decision support
+The dashboard should not stop at setup quality and holding periods. It must also explain entry reference, planned exit logic, and execution caveats in a rule-based, non-predictive way.
+
+### 4. Median return is the primary typical-outcome metric
+For this product, median return is treated as the primary “what usually happens” metric. Average return is supporting context only.
+
+### 5. Analyst mode is deeper, not raw
+Analyst mode should preserve richer detail, but still explain what grouped evidence is saying. It is not a license for confusing data dumps.
+
+### 6. Empty or placeholder analytical sections reduce trust
+Feature-level views that are not meaningful yet should be hidden or clearly explained, not left as confusing empty areas.
+
+### 7. UI labels must be product-facing
+Backend-style snake_case fields should not appear directly in the interface. User-facing labels must be readable and intentional.
