@@ -117,7 +117,10 @@ def render_portfolio_plan(
     funded_trades, unfunded_trades = split_trades_by_funding(allocations)
 
     def _render_plan_section() -> None:
-        st_module.markdown("#### Portfolio Summary")
+        st_module.markdown(
+            '<div class="jse-card"><div class="jse-eyebrow">Portfolio Summary</div><p style="margin:0;" class="jse-muted">Funding view of current eligible setups and reserve coverage.</p></div>',
+            unsafe_allow_html=True,
+        )
         summary_df = pd.DataFrame(
             [
                 {
@@ -182,12 +185,9 @@ def render_portfolio_plan(
         )
 
     def _render_review_section() -> None:
-        st_module.markdown("#### Decision Review")
         st_module.markdown(
-            "This section shows how closely the selected trades followed the system rules."
-        )
-        st_module.markdown(
-            "It helps you spot where decisions stayed disciplined and where risk increased."
+            '<div class="jse-card"><div class="jse-eyebrow">Review Summary</div><p style="margin:0;">This section shows how closely selected trades followed system rules and where risk discipline changed.</p></div>',
+            unsafe_allow_html=True,
         )
         trades_df = pd.DataFrame(list(allocations))
         safe_signals_df = signals_df if signals_df is not None else pd.DataFrame()

@@ -14,11 +14,44 @@ from app.planner.allocation import generate_portfolio_allocation
 from app.planner.portfolio_ui import render_portfolio_plan
 from app.shell import build_analyst_dataset, coerce_trade_rows_from_ranked
 
+_BEGINNER_TABS = ["Portfolio", "Review", "Ticker Analysis"]
+_ANALYST_TABS = [*_BEGINNER_TABS, "Analyst Insights", "Data"]
+
 
 def _has_analyst_insight_content(trades_df: pd.DataFrame, *, analyst_mode: bool) -> bool:
     if not analyst_mode or trades_df.empty:
         return False
     return any(column in trades_df.columns for column in ("net_return_pct", "net_return", "return_pct", "return"))
+
+
+def _resolve_tabs_for_mode(mode: str) -> list[str]:
+    return _ANALYST_TABS if str(mode).lower() == "analyst" else _BEGINNER_TABS
+
+
+def _render_visual_polish(st_module) -> None:
+    st_module.markdown(
+        """
+        <style>
+        :root { --jse-accent: #7ea6ff; --jse-panel: #141b2a; --jse-border: #263248; --jse-muted: #aeb8cd; }
+        .jse-card {
+            background: linear-gradient(180deg, rgba(20, 27, 42, 0.92), rgba(17, 23, 36, 0.92));
+            border: 1px solid var(--jse-border);
+            border-radius: 14px;
+            padding: 1rem 1.1rem;
+            margin: 0.35rem 0 0.8rem 0;
+        }
+        .jse-eyebrow { color: var(--jse-accent); font-size: 0.82rem; letter-spacing: 0.03em; text-transform: uppercase; margin-bottom: 0.35rem; }
+        .jse-muted { color: var(--jse-muted); }
+        .jse-metric-grid { display: grid; grid-template-columns: repeat(4, minmax(90px, 1fr)); gap: 0.6rem; margin-top: 0.5rem; }
+        .jse-metric { border: 1px solid var(--jse-border); border-radius: 10px; padding: 0.55rem 0.65rem; background: rgba(24, 32, 49, 0.75); }
+        .jse-metric-label { color: var(--jse-muted); font-size: 0.74rem; }
+        .jse-metric-value { color: #eaf0ff; font-size: 1rem; font-weight: 600; }
+        .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p { font-weight: 600; }
+        .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] { border-bottom-color: var(--jse-accent) !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def _render_data_status_summary(
@@ -69,6 +102,7 @@ def main() -> None:
         page_icon="📈",
         layout="wide",
     )
+    _render_visual_polish(st)
 
     st.title("JSE Market Lab")
     mode = st.radio("Mode", options=["Beginner", "Analyst"], horizontal=True, index=0)
@@ -103,11 +137,10 @@ def main() -> None:
     _render_first_run_header(st, mode=mode_token)
     render_embedded_insights(insights_payload, st_module=st)
 
-    portfolio_tab, review_tab, ticker_tab, insights_tab, data_tab = st.tabs(
-        ["Portfolio", "Review", "Ticker Analysis", "Analyst Insights", "Data"]
-    )
+    tabs = st.tabs(_resolve_tabs_for_mode(mode_token))
+    tab_map = {name: tab for name, tab in zip(_resolve_tabs_for_mode(mode_token), tabs)}
 
-    with portfolio_tab:
+    with tab_map["Portfolio"]:
         st.markdown("### Portfolio Plan")
         selected_capital = st.number_input(
             "Total capital",
@@ -129,7 +162,7 @@ def main() -> None:
                 show_header=False,
             )
 
-    with review_tab:
+    with tab_map["Review"]:
         st.markdown("### Review")
         if ranked_df.empty:
             st.info("Review unavailable: ranked outputs were not generated.")
@@ -144,7 +177,7 @@ def main() -> None:
                 show_header=False,
             )
 
-    with ticker_tab:
+    with tab_map["Ticker Analysis"]:
         st.markdown("### Ticker Analysis")
         if analyst_df.empty or "instrument" not in analyst_df.columns:
             st.info("Ticker Analysis is unavailable because no ticker rows are loaded.")
@@ -193,6 +226,18 @@ def main() -> None:
                             "Average Return": float(returns.mean()),
                         }
 
+                st.markdown(
+                    (
+                        '<div class="jse-metric-grid">'
+                        f'<div class="jse-metric"><div class="jse-metric-label">Signal Count</div><div class="jse-metric-value">{key_stats["Signal Count"]}</div></div>'
+                        f'<div class="jse-metric"><div class="jse-metric-label">Win Rate</div><div class="jse-metric-value">{key_stats["Win Rate"]:.1%}</div></div>'
+                        f'<div class="jse-metric"><div class="jse-metric-label">Median Return</div><div class="jse-metric-value">{key_stats["Median Return"]:.2%}</div></div>'
+                        f'<div class="jse-metric"><div class="jse-metric-label">Average Return</div><div class="jse-metric-value">{key_stats["Average Return"]:.2%}</div></div>'
+                        "</div>"
+                    ),
+                    unsafe_allow_html=True,
+                )
+
                 if mode_token == "analyst":
                     st.markdown("#### Key Stats")
                     st.dataframe(pd.DataFrame([key_stats]), use_container_width=True)
@@ -230,34 +275,42 @@ def main() -> None:
                 else:
                     st.dataframe(signal_df, use_container_width=True)
 
-    with insights_tab:
-        st.markdown("### Analyst Insights")
-        if _has_analyst_insight_content(analyst_df, analyst_mode=mode_token == "analyst"):
-            render_analyst_insights(analyst_df, st_module=st, analyst_mode=True)
-        else:
-            st.info("Analyst insights are not available for this dataset yet.")
+    if "Analyst Insights" in tab_map:
+        with tab_map["Analyst Insights"]:
+            st.markdown("### Analyst Insights")
+            if _has_analyst_insight_content(analyst_df, analyst_mode=mode_token == "analyst"):
+                render_analyst_insights(analyst_df, st_module=st, analyst_mode=True)
+            else:
+                st.info("Analyst insights are not available for this dataset yet.")
 
-    with data_tab:
-        st.markdown("### Data")
-        _render_data_status_summary(
-            st,
-            source=meta.get("source"),
-            row_count=int(len(canonical_df)),
-            issues=issues,
-            dataset_id=meta.get("dataset_id"),
-            analyst_mode=mode_token == "analyst",
-        )
-        st.markdown("#### Main Dashboard")
-        st.dataframe(canonical_df.head(50), use_container_width=True)
+    if "Data" in tab_map:
+        with tab_map["Data"]:
+            st.markdown("### Data")
+            _render_data_status_summary(
+                st,
+                source=meta.get("source"),
+                row_count=int(len(canonical_df)),
+                issues=issues,
+                dataset_id=meta.get("dataset_id"),
+                analyst_mode=mode_token == "analyst",
+            )
+            st.markdown("#### Main Dashboard")
+            st.dataframe(canonical_df.head(50), use_container_width=True)
 
 
 def _render_first_run_header(st_module, *, mode: str) -> None:
-    st_module.markdown("### JSE Market Lab")
+    mode_label = "Analyst" if str(mode).lower() == "analyst" else "Beginner"
     st_module.markdown(
-        "This dashboard helps you review stock opportunities on the Jamaican market using structured rules and risk checks."
-    )
-    st_module.markdown(
-        "It highlights stronger setups, explains the risks, and shows what to watch before making decisions."
+        (
+            '<div class="jse-card">'
+            '<div class="jse-eyebrow">First-Run Orientation</div>'
+            "<h3 style='margin:0 0 0.45rem 0;'>JSE Market Lab</h3>"
+            "<p style='margin:0 0 0.35rem 0;'>This dashboard helps you review stock opportunities on the Jamaican market using structured rules and risk checks.</p>"
+            "<p class='jse-muted' style='margin:0;'>It highlights stronger setups, explains key risks, and keeps your review flow focused for "
+            f"{mode_label} mode.</p>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
     )
     st_module.markdown("**How to read this**")
     st_module.markdown("- The system scans the market and ranks possible trades.")
