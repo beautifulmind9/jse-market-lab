@@ -5,6 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
 from app.insights.embedded import generate_embedded_insights
+from app.insights.embedded import render_embedded_insights
 
 
 def test_embedded_insights_keep_short_sections():
@@ -34,3 +35,26 @@ def test_embedded_insights_keep_short_sections():
     assert len(payload["what_to_watch"]) <= 3
     assert 1 <= len(payload["common_mistakes"]) <= 2
     assert isinstance(payload["why_this_matters"], str)
+
+
+def test_render_embedded_insights_renders_card_and_sections():
+    class DummyStreamlit:
+        def __init__(self):
+            self.markdowns = []
+
+        def markdown(self, text, **_kwargs):
+            self.markdowns.append(text)
+
+    dummy_st = DummyStreamlit()
+    payload = {
+        "what_is_happening": ["Signal quality improved."],
+        "what_to_watch": ["Win rate dispersion widened."],
+        "common_mistakes": ["Ignoring reserve limits."],
+        "why_this_matters": "It frames risk before allocation.",
+    }
+
+    render_embedded_insights(payload, st_module=dummy_st)
+
+    assert any("Final Insight" in block for block in dummy_st.markdowns)
+    assert any("What’s happening now" in block for block in dummy_st.markdowns)
+    assert any("Why this matters now" in block for block in dummy_st.markdowns)

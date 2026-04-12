@@ -61,12 +61,20 @@ def generate_embedded_insights(
 
 
 def render_embedded_insights(insights: Mapping[str, Any], *, st_module=None) -> None:
-    """Render embedded insights as simple bullet lists."""
+    """Render embedded insights as card-style sections with concise bullets."""
     if st_module is None:
         import streamlit as st_module
 
-    st_module.markdown("#### Final Insight")
-    st_module.markdown("**What’s happening**")
+    st_module.markdown(
+        (
+            '<div class="jse-card"><div class="jse-eyebrow">Final Insight</div>'
+            "<h4 style='margin:0;'>Decision Context Snapshot</h4>"
+            "<p class='jse-muted' style='margin:0.3rem 0 0;'>A quick read on what is working, what needs attention, and where discipline matters most.</p></div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+    st_module.markdown("**What’s happening now**")
     for line in insights.get("what_is_happening", []):
         st_module.markdown(f"- {line}")
 
@@ -78,7 +86,7 @@ def render_embedded_insights(insights: Mapping[str, Any], *, st_module=None) -> 
     for line in insights.get("common_mistakes", []):
         st_module.markdown(f"- {line}")
 
-    st_module.markdown("**Why this matters**")
+    st_module.markdown("**Why this matters now**")
     st_module.markdown(str(insights.get("why_this_matters", "")))
 
 

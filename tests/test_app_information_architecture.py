@@ -31,9 +31,10 @@ class DummyTab:
 
 
 class DummyStreamlit:
-    def __init__(self):
+    def __init__(self, *, mode_choice="Analyst"):
         self.session_state = {}
         self.current_tab = None
+        self.mode_choice = mode_choice
         self.tabs_requested = []
         self.number_inputs = []
         self.markdowns = []
@@ -48,9 +49,11 @@ class DummyStreamlit:
         return None
 
     def radio(self, _label, options, **_kwargs):
-        return options[1]
+        if self.mode_choice in options:
+            return self.mode_choice
+        return options[0]
 
-    def markdown(self, text):
+    def markdown(self, text, **_kwargs):
         self.markdowns.append((self.current_tab, text))
 
     def caption(self, text):
@@ -125,6 +128,54 @@ def test_sprint12_tab_layout_and_capital_location(monkeypatch):
 
     assert dummy_st.tabs_requested[0] == ["Portfolio", "Review", "Ticker Analysis", "Analyst Insights", "Data"]
     assert dummy_st.number_inputs == [("Portfolio", "Total capital", "total_capital")]
+
+
+def test_beginner_mode_hides_analyst_and_data_tabs(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Beginner")
+
+    canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo-v1"}, {"errors": [], "warnings": []}),
+    )
+    monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
+    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
+
+    app_main.main()
+
+    assert dummy_st.tabs_requested[0] == ["Portfolio", "Review", "Ticker Analysis"]
+    assert not any(tab == "Data" for tab, _ in dummy_st.dataframes)
+    assert not any(tab == "Analyst Insights" for tab, _ in dummy_st.info_messages)
+
+
+def test_analyst_mode_keeps_all_tabs_visible(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Analyst")
+
+    canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo-v1"}, {"errors": [], "warnings": []}),
+    )
+    monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
+    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
+
+    app_main.main()
+
+    assert dummy_st.tabs_requested[0] == ["Portfolio", "Review", "Ticker Analysis", "Analyst Insights", "Data"]
 
 
 def test_review_excludes_data_status_and_data_tab_contains_raw_preview(monkeypatch):

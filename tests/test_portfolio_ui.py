@@ -29,7 +29,7 @@ class DummyStreamlit:
     def caption(self, text):
         self.captions.append(text)
 
-    def markdown(self, _text):
+    def markdown(self, _text, **_kwargs):
         self.markdowns.append(_text)
         return None
 
@@ -83,7 +83,7 @@ def test_render_portfolio_plan_uses_why_column_and_no_primary_rule_column():
     assert unfunded_df.iloc[0]["Decision Status"] == "Not funded (limit reached)"
     assert "funds the strongest eligible setups first" in st.captions[0]
     assert st.tabs_requested == [["Plan", "Review"]]
-    assert any("followed the system rules" in line for line in st.markdowns)
+    assert any("followed system rules" in line for line in st.markdowns)
 
 
 def test_group_mistakes_for_display_combines_repeated_types():
