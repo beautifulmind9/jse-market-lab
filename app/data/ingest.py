@@ -6,7 +6,7 @@ from typing import IO, Optional, Tuple
 
 import pandas as pd
 
-from .loader import load_internal_dataset, load_upload
+from .loaders import load_internal_dataset, load_upload
 from .metadata import build_metadata, generate_dataset_id
 from .normalize import normalize_data
 from .validate import validate_canonical
