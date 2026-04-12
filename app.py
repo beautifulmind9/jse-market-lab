@@ -48,6 +48,30 @@ def _extract_ticker_options(df: pd.DataFrame) -> list[str]:
     return sorted(tickers.unique())
 
 
+def _extract_unique_ticker_count(df: pd.DataFrame) -> int:
+    """Count unique tickers/instruments from a dataframe."""
+    if df.empty:
+        return 0
+    for candidate in ("instrument", "ticker"):
+        if candidate in df.columns:
+            tickers = df[candidate].dropna().astype(str).str.strip()
+            tickers = tickers[tickers != ""]
+            return int(tickers.nunique())
+    return 0
+
+
+def _extract_ticker_preview(df: pd.DataFrame, *, limit: int = 20) -> list[str]:
+    """Return a small preview of distinct tickers/instruments."""
+    if df.empty:
+        return []
+    for candidate in ("instrument", "ticker"):
+        if candidate in df.columns:
+            tickers = df[candidate].dropna().astype(str).str.strip()
+            tickers = tickers[tickers != ""]
+            return tickers.drop_duplicates().head(limit).tolist()
+    return []
+
+
 def _run_demo_with_active_dataset(
     *,
     canonical_df: pd.DataFrame,
@@ -337,6 +361,21 @@ def main() -> None:
                 issues=issues,
                 dataset_id=meta.get("dataset_id"),
                 analyst_mode=mode_token == "analyst",
+            )
+            st.caption("Dataset diagnostics (temporary)")
+            diagnostics_df = pd.DataFrame(
+                [
+                    {"stage": "canonical", "rows": int(len(canonical_df)), "unique_tickers": _extract_unique_ticker_count(canonical_df)},
+                    {"stage": "ranked", "rows": int(len(ranked_df)), "unique_tickers": _extract_unique_ticker_count(ranked_df)},
+                ]
+            )
+            st.dataframe(diagnostics_df, use_container_width=True, hide_index=True)
+            st.code(
+                (
+                    f"canonical first 20 tickers: {_extract_ticker_preview(canonical_df)}\n"
+                    f"ranked first 20 tickers: {_extract_ticker_preview(ranked_df)}"
+                ),
+                language="text",
             )
             st.markdown("#### Main Dashboard")
             st.dataframe(canonical_df.head(50), use_container_width=True)
