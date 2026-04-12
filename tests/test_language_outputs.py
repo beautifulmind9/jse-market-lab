@@ -62,3 +62,16 @@ def test_first_run_helper_renders_without_breaking():
     st = DummyStreamlit()
     app_main._render_first_run_header(st, mode="beginner")
     assert any("How to read this" in line for line in st.lines)
+    assert any("Based on historical data." in line for line in st.lines)
+    assert any("risk still matters" in line.lower() for line in st.lines)
+
+
+def test_embedded_why_this_matters_includes_trust_layer_without_advisory_terms():
+    payload = generate_embedded_insights(
+        [{"quality_tier": "A", "volatility_bucket": "medium", "win_rate": 0.52, "avg_return": 0.01, "median_return": 0.01}],
+        [{"allocation_amount": 1500, "eligible_for_funding": True}],
+    )
+
+    assert "Based on historical data" in payload["why_this_matters"]
+    assert "decision-support tool, not a guarantee" in payload["why_this_matters"]
+    assert contains_advisory_language(payload["why_this_matters"]) is False

@@ -48,8 +48,14 @@ def build_ticker_summary(metrics: dict[str, Any], *, mode: str = "beginner") -> 
             f"and the strongest read at {best_window}."
         )
     else:
+        if win_rate >= 60:
+            setup_read = "This setup has worked well in the past."
+        elif win_rate >= 50:
+            setup_read = "This setup has worked about half the time."
+        else:
+            setup_read = "This setup has been less consistent."
         base = (
-            f"{metrics['ticker']} had more positive closes than negative ones in {win_rate:.0f}% of signals, "
+            f"{setup_read} {metrics['ticker']} closed positive in {win_rate:.0f}% of signals, "
             f"with a typical return near {median_return:.2f}%."
         )
 

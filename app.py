@@ -187,12 +187,16 @@ def main() -> None:
 def _render_first_run_header(st_module, *, mode: str) -> None:
     st_module.markdown("### JSE Market Lab")
     st_module.markdown(
-        "A tool that helps you review stock opportunities on the Jamaican market using structured rules and risk checks."
+        "This dashboard helps you review stock opportunities on the Jamaican market using structured rules and risk checks."
+    )
+    st_module.markdown(
+        "It highlights stronger setups, explains the risks, and shows what to watch before making decisions."
     )
     st_module.markdown("**How to read this**")
     st_module.markdown("- The system scans the market and ranks possible trades.")
-    st_module.markdown("- Only the strongest setups are funded in the plan below.")
-    st_module.markdown("- Each trade shows why it was selected and what risk is involved.")
+    st_module.markdown("- Only the stronger setups are selected in the plan below.")
+    st_module.markdown("- Each trade explains why it was chosen and what risk is involved.")
+    st_module.caption("Based on historical data. Results can vary, so risk still matters.")
     if mode == "beginner":
         st_module.caption("Beginner mode keeps the view simple: explanation first, fewer metrics.")
     else:

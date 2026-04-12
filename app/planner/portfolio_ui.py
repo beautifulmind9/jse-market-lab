@@ -177,6 +177,12 @@ def render_portfolio_plan(
 
     with review_tab:
         st_module.markdown("#### Decision Review")
+        st_module.markdown(
+            "This section shows how closely the selected trades followed the system rules."
+        )
+        st_module.markdown(
+            "It helps you spot where decisions stayed disciplined and where risk increased."
+        )
         trades_df = pd.DataFrame(list(allocations))
         safe_signals_df = signals_df if signals_df is not None else pd.DataFrame()
         review_df = compute_trade_review(trades_df, safe_signals_df)
@@ -230,12 +236,12 @@ def _build_review_interpretation_paragraphs(review_df: pd.DataFrame, *, mode: st
 
     if str(mode).lower() == "analyst":
         return [
-            f"Rule alignment was {followed}/{total} ({followed / total:.0%}), showing current process consistency.",
+            f"Rule alignment came in at {followed}/{total} ({followed / total:.0%}), based on the current review set.",
             f"Deviation mix: rank {rank_misses}, quality {quality_fails}, liquidity {liquidity_fails}.",
         ]
     return [
-        f"{followed} of {total} reviewed trades followed the full process.",
-        "The misses are mostly from rank order, quality checks, or liquidity checks.",
+        f"{followed} of {total} reviewed trades followed the full process rules.",
+        "Where rules were missed, the gaps came from rank order, quality checks, or liquidity checks.",
     ]
 
 
@@ -250,13 +256,13 @@ def _build_behavior_improvement_points(review_df: pd.DataFrame, *, mode: str = "
     if str(mode).lower() == "analyst":
         bullets = [
             "Keep selection order aligned with the highest-ranked eligible setups.",
-            "Hold quality filtering steady so weaker setups appear less often.",
-            "Apply liquidity checks consistently before entries are finalized.",
+            "Keep quality filtering steady so weaker setups appear less often.",
+            "Apply liquidity checks before entries are finalized.",
         ]
     else:
         bullets = [
             "Keep the strongest eligible setups at the top of selection order.",
-            "Keep quality checks steady so weak setups stay out.",
+            "Keep quality checks steady so weaker setups stay out.",
             "Run liquidity checks before final funding.",
         ]
 

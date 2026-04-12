@@ -143,6 +143,25 @@ def test_build_behavior_summary_generates_observational_bullets():
     assert "followed the selection rules" in summary[0]
 
 
+def test_build_behavior_summary_uses_clear_liquidity_wording_when_clean():
+    trades_df = pd.DataFrame([{"instrument": "AAA"}])
+    review_df = pd.DataFrame(
+        [
+            {
+                "instrument": "AAA",
+                "followed_rules": True,
+                "deviation_type": None,
+                "quality_flag": "pass",
+                "liquidity_flag": "pass",
+            }
+        ]
+    )
+
+    summary = build_behavior_summary(trades_df, review_df)
+
+    assert "There was enough trading activity across the selected trades." in summary
+
+
 def test_compute_discipline_score_uses_adherence_components():
     review_df = pd.DataFrame(
         [
