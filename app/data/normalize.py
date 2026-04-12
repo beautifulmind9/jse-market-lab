@@ -21,6 +21,18 @@ def detect_format(df: pd.DataFrame) -> str:
     raise ValueError("Unable to detect input format.")
 
 
+
+
+def _normalize_optional_symbol_metadata(
+    series: pd.Series, fallback: pd.Series
+) -> pd.Series:
+    """Normalize optional symbol metadata with robust missing-value fallback."""
+    normalized = series.astype("string").str.strip().str.upper()
+    missing_mask = series.isna() | normalized.isin({"", "NAN", "NONE", "<NA>"})
+    preserved = normalized.mask(missing_mask, fallback)
+    return preserved.astype(object).where(pd.notna(preserved), None)
+
+
 def _normalize_long(df: pd.DataFrame, source: str, dataset_id: str) -> pd.DataFrame:
     """Normalize long-format input into canonical schema."""
     cols = {col.lower(): col for col in df.columns}
@@ -45,26 +57,23 @@ def _normalize_long(df: pd.DataFrame, source: str, dataset_id: str) -> pd.DataFr
     fallback_raw_symbol = symbol_parts.map(lambda parts: parts[2])
 
     if "raw_symbol" in cols:
-        preserved_raw_symbol = df[cols["raw_symbol"]].astype(str).str.strip().str.upper()
-        data["raw_symbol"] = preserved_raw_symbol.mask(
-            preserved_raw_symbol.isin({"", "NAN", "NONE"}), fallback_raw_symbol
+        data["raw_symbol"] = _normalize_optional_symbol_metadata(
+            df[cols["raw_symbol"]], fallback_raw_symbol
         )
     else:
         data["raw_symbol"] = fallback_raw_symbol
 
+    fallback_marker = data["raw_symbol"].map(lambda symbol: canonicalize_symbol_parts(symbol)[1])
     if "symbol_marker" in cols:
-        preserved_marker = df[cols["symbol_marker"]].astype(str).str.strip().str.upper()
-        fallback_marker = data["raw_symbol"].map(lambda symbol: canonicalize_symbol_parts(symbol)[1])
-        data["symbol_marker"] = preserved_marker.mask(
-            preserved_marker.isin({"", "NAN", "NONE"}), fallback_marker
+        data["symbol_marker"] = _normalize_optional_symbol_metadata(
+            df[cols["symbol_marker"]], fallback_marker
         )
     else:
-        data["symbol_marker"] = data["raw_symbol"].map(lambda symbol: canonicalize_symbol_parts(symbol)[1])
+        data["symbol_marker"] = fallback_marker
 
     if "display_symbol" in cols:
-        preserved_display_symbol = df[cols["display_symbol"]].astype(str).str.strip().str.upper()
-        data["display_symbol"] = preserved_display_symbol.mask(
-            preserved_display_symbol.isin({"", "NAN", "NONE"}), data["raw_symbol"]
+        data["display_symbol"] = _normalize_optional_symbol_metadata(
+            df[cols["display_symbol"]], data["raw_symbol"]
         )
     else:
         data["display_symbol"] = data["raw_symbol"]
