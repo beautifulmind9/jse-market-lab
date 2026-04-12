@@ -108,8 +108,19 @@ def main() -> None:
     mode = st.radio("Mode", options=["Beginner", "Analyst"], horizontal=True, index=0)
     mode_token = mode.lower()
 
+    # TEMPORARY validation support: clear cached data once per browser session
+    # so bundled dataset changes are reflected immediately while validating ingestion.
+    if not st.session_state.get("_temp_dataset_cache_cleared", False):
+        st.cache_data.clear()
+        st.session_state["_temp_dataset_cache_cleared"] = True
+
     canonical_df, meta, issues = ingest_dataset("demo")
+    dataset_source_label = str(meta.get("dataset_source_label") or "unknown_dataset")
+    st.caption(f"Data source: {dataset_source_label}")
     st.caption("Using historical data from the Jamaican stock market.")
+
+    if dataset_source_label == "legacy_demo_dataset":
+        st.warning("Internal JSE dataset not found. Using fallback dataset.")
 
     if canonical_df.empty:
         st.warning("No rows were loaded from the data layer. Please verify the internal sample data file.")

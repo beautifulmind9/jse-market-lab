@@ -20,14 +20,16 @@ def ingest_dataset(
         raise ValueError("mode must be 'demo' or 'upload'.")
 
     if mode == "demo":
-        raw, _source_label = load_internal_dataset()
+        raw, source_label = load_internal_dataset()
         source = "demo"
     else:
         raw = load_upload(uploaded_file)
         source = "upload"
+        source_label = "uploaded_dataset"
 
     dataset_id = generate_dataset_id()
     canonical, _ = normalize_data(raw, source=source, dataset_id=dataset_id)
     issues = validate_canonical(canonical)
     meta = build_metadata(canonical, source=source, dataset_id=dataset_id)
+    meta["dataset_source_label"] = source_label
     return canonical, meta, issues

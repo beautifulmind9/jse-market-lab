@@ -141,3 +141,13 @@ def test_internal_loader_prefers_bundled_jse_dataset(monkeypatch, tmp_path):
 
     assert calls == [bundled_path]
     assert source_label == "internal_jse_dataset"
+
+
+def test_internal_loader_uses_real_bundled_dataset_when_available():
+    assert INTERNAL_DATASET_PATH.as_posix().endswith("data/internal/jse_dataset.csv")
+    assert INTERNAL_DATASET_PATH.exists()
+
+    loaded, source_label = load_internal_dataset()
+
+    assert source_label == "internal_jse_dataset"
+    assert len(loaded) > 1000
