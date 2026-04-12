@@ -94,3 +94,29 @@ def test_insufficient_future_data_excluded_from_summary():
     assert trades.empty
     assert summary_instrument.empty
     assert summary_overall.empty
+
+
+def test_zero_entry_price_is_skipped_to_avoid_invalid_returns():
+    dates = pd.date_range("2024-01-01", periods=6, freq="D")
+    df_prices = pd.DataFrame(
+        {
+            "date": dates,
+            "instrument": ["AAA"] * 6,
+            "close": [0.0, 101, 102, 103, 104, 110],
+        }
+    )
+    df_entries = pd.DataFrame({"instrument": ["AAA"], "entry_date": [dates[0]]})
+
+    trades, summary_instrument, summary_overall, _ = run_cost_engine(
+        df_prices,
+        df_entries,
+        holding_windows=[5],
+        broker_profile="Default",
+        override_enabled=True,
+        broker_fee=0.0,
+        cess=0.0,
+    )
+
+    assert trades.empty
+    assert summary_instrument.empty
+    assert summary_overall.empty

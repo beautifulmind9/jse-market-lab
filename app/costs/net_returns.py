@@ -34,6 +34,8 @@ def compute_trade_results(
         entry_price = price_index.get((instrument, entry_date))
         if entry_price is None or pd.isna(entry_price):
             continue
+        if float(entry_price) == 0.0:
+            continue
         for window in holding_windows:
             exit_date = compute_exit_date(calendar, instrument, entry_date, window)
             if exit_date is None:

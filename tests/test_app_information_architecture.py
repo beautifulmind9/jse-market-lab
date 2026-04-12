@@ -7,6 +7,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
+from app.demo import run_demo as run_demo_module
+
 
 class DummyColumn:
     def __enter__(self):
@@ -484,3 +486,30 @@ def test_ticker_analysis_selector_uses_canonical_dataset_universe(monkeypatch):
 
     assert dummy_st.selectbox_calls
     assert len(dummy_st.selectbox_calls[0]) == 12
+
+
+def test_main_startup_path_is_not_blocked_by_missing_legacy_events_file(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Beginner")
+    events_path = (ROOT / "data" / "demo" / "earnings_events.csv").resolve()
+    original_exists = Path.exists
+    original_read_csv = pd.read_csv
+
+    def patched_exists(path_obj):
+        if path_obj.resolve() == events_path:
+            return False
+        return original_exists(path_obj)
+
+    def fail_if_events_read(path, *args, **kwargs):
+        if Path(path).resolve() == events_path:
+            raise AssertionError("app startup attempted to read missing legacy events file")
+        return original_read_csv(path, *args, **kwargs)
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(Path, "exists", patched_exists)
+    monkeypatch.setattr(run_demo_module.pd, "read_csv", fail_if_events_read)
+    monkeypatch.setattr(app_main, "run_demo", lambda **kwargs: run_demo_module.run_demo(**kwargs))
+
+    app_main.main()
+
+    assert dummy_st.tabs_requested
