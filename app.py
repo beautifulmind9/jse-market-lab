@@ -118,6 +118,30 @@ def _build_holding_window_table(holding_window_stats: dict[str, dict], *, analys
     return pd.DataFrame(rows)
 
 
+def _build_execution_behavior_lines(
+    *,
+    execution_summary: dict,
+    behavior: dict,
+    stats: dict,
+    analyst_mode: bool,
+) -> list[str]:
+    lines = [
+        f"Entry framing: {execution_summary.get('entry_reference', '')}",
+        f"Exit framing: {execution_summary.get('planned_exit', '')}",
+        f"Typical outcome (median first): {execution_summary.get('typical_outcome', '')}",
+        f"Execution caveats: {execution_summary.get('execution_risk', '')}",
+    ]
+    if analyst_mode:
+        median_return = float(stats.get("median_return", 0.0))
+        avg_return = float(stats.get("avg_return", 0.0))
+        lines.append(
+            "Outcome context: "
+            + behavior.get("consistency", "")
+            + f" (Median: {median_return:.2%}, Average: {avg_return:.2%})."
+        )
+    return lines
+
+
 def _extract_unique_ticker_count(df: pd.DataFrame) -> int:
     """Count unique tickers/instruments from a dataframe."""
     if df.empty:
@@ -365,12 +389,18 @@ def main() -> None:
                 st.markdown("- The average can be lifted by a smaller number of bigger wins.")
 
             execution_summary = ticker_metrics.get("execution", {})
-            st.markdown("#### D) Execution Lens")
-            st.caption("Rule-based execution framing for reference timing, default exit, typical outcome, and practical risks.")
-            st.markdown(f"- Entry reference: {execution_summary.get('entry_reference', '')}")
-            st.markdown(f"- Planned exit: {execution_summary.get('planned_exit', '')}")
-            st.markdown(f"- Typical outcome: {execution_summary.get('typical_outcome', '')}")
-            st.markdown(f"- Execution risk: {execution_summary.get('execution_risk', '')}")
+            st.markdown("#### D) Execution Behavior")
+            if analyst_mode:
+                st.caption("Expanded execution framing with median-first outcome context and practical caveats.")
+            else:
+                st.caption("Short execution framing for entry, exit, typical outcome, and practical caveats.")
+            for line in _build_execution_behavior_lines(
+                execution_summary=execution_summary,
+                behavior=metrics_behavior,
+                stats=metrics_stats,
+                analyst_mode=analyst_mode,
+            ):
+                st.markdown(f"- {line}")
 
             st.markdown("#### E) What Usually Happens")
             st.caption("This section translates recurring behavior seen in the historical sample.")

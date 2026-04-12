@@ -105,3 +105,20 @@ def test_compute_ticker_metrics_scopes_to_canonical_ticker_with_marker_variants(
     payload = compute_ticker_metrics(df, "CAR")
 
     assert payload["stats"]["signal_count"] == 4
+
+
+def test_compute_ticker_metrics_execution_typical_outcome_is_median_first():
+    df = pd.DataFrame(
+        {
+            "instrument": ["TEST"] * 6,
+            "holding_window": [5, 5, 5, 20, 20, 20],
+            "net_return_pct": [0.01, 0.01, 0.01, 0.01, 0.08, -0.01],
+        }
+    )
+
+    payload = compute_ticker_metrics(df, "TEST", mode="analyst")
+    typical_outcome = payload["execution"]["typical_outcome"]
+
+    assert "median return" in typical_outcome
+    assert "Supporting average return" in typical_outcome
+    assert typical_outcome.index("median return") < typical_outcome.index("Supporting average return")

@@ -549,6 +549,13 @@ def test_ticker_analysis_beginner_mode_hides_raw_deep_dive_tables(monkeypatch):
                 "reliability": "Win rate is mixed.",
                 "tier_profile": "Setup mix leans to A.",
             },
+            "execution": {
+                "entry_reference": "Use the signal-day close as the entry reference area.",
+                "planned_exit": "Default exit is around 5 trading days.",
+                "typical_outcome": "Typical result is centered on median return near 1.00%.",
+                "execution_risk": "Spread conditions can affect realized fills.",
+                "summary": "Entry reference and exit framing are rule-based.",
+            },
         },
     )
     monkeypatch.setattr(
@@ -567,7 +574,11 @@ def test_ticker_analysis_beginner_mode_hides_raw_deep_dive_tables(monkeypatch):
     app_main.main()
 
     ticker_markdowns = [text for tab, text in dummy_st.markdowns if tab == "Ticker Analysis"]
-    assert "#### F) Analyst Deep Dive" not in ticker_markdowns
+    ticker_captions = [text for tab, text in dummy_st.captions if tab == "Ticker Analysis"]
+    assert "#### D) Execution Behavior" in ticker_markdowns
+    assert "#### G) Analyst Deep Dive" not in ticker_markdowns
+    assert any("Short execution framing" in text for text in ticker_captions)
+    assert not any("Outcome context:" in text for text in ticker_markdowns)
     assert any("Analyst Deep Dive" in text for text in ticker_markdowns)
 
 
@@ -605,6 +616,13 @@ def test_ticker_analysis_analyst_mode_shows_deep_dive_tables(monkeypatch):
                 "reliability": "Win rate is mixed.",
                 "tier_profile": "Setup mix leans to A.",
             },
+            "execution": {
+                "entry_reference": "Use the signal-day close as the entry reference area.",
+                "planned_exit": "Default exit is around 5 trading days.",
+                "typical_outcome": "Typical result is centered on median return near 1.00%.",
+                "execution_risk": "Spread conditions can affect realized fills.",
+                "summary": "Entry reference and exit framing are rule-based.",
+            },
         },
     )
     monkeypatch.setattr(
@@ -623,6 +641,10 @@ def test_ticker_analysis_analyst_mode_shows_deep_dive_tables(monkeypatch):
     app_main.main()
 
     ticker_markdowns = [text for tab, text in dummy_st.markdowns if tab == "Ticker Analysis"]
+    ticker_captions = [text for tab, text in dummy_st.captions if tab == "Ticker Analysis"]
     ticker_dataframes = [df for tab, df in dummy_st.dataframes if tab == "Ticker Analysis"]
-    assert "#### F) Analyst Deep Dive" in ticker_markdowns
+    assert "#### D) Execution Behavior" in ticker_markdowns
+    assert "#### G) Analyst Deep Dive" in ticker_markdowns
+    assert any("Expanded execution framing" in text for text in ticker_captions)
+    assert any("Outcome context:" in text for text in ticker_markdowns)
     assert len(ticker_dataframes) >= 5

@@ -47,7 +47,7 @@ class DummyStreamlit:
         return [self._DummyTab(), self._DummyTab()]
 
 
-def test_render_portfolio_plan_uses_why_column_and_no_primary_rule_column():
+def test_render_portfolio_plan_uses_cleaned_plan_labels_in_beginner_mode():
     st = DummyStreamlit()
     render_portfolio_plan(
         allocations=[
@@ -74,22 +74,100 @@ def test_render_portfolio_plan_uses_why_column_and_no_primary_rule_column():
     funded_df = st.dataframes[1][0]
     unfunded_df = st.dataframes[2][0]
 
-    assert "Why" in funded_df.columns
-    assert "Why" in unfunded_df.columns
-    assert "Execution Framework" in funded_df.columns
-    assert "Execution Framework" in unfunded_df.columns
+    assert "Ticker" in funded_df.columns
+    assert "Setup Strength" in funded_df.columns
+    assert "Confidence / Reliability" in funded_df.columns
+    assert "Holding Window" in funded_df.columns
+    assert "Why this trade" in funded_df.columns
+    assert "Execution Summary" in funded_df.columns
+    assert "Why this trade" in unfunded_df.columns
+    assert "Execution Summary" in unfunded_df.columns
+    assert "Instrument" not in funded_df.columns
+    assert "Confidence" not in funded_df.columns
+    assert "Execution Framework" not in funded_df.columns
     assert "Setup Strength" in funded_df.columns
     assert "Strong setup" in funded_df.iloc[0]["Setup Strength"]
-    assert "High confidence" in funded_df.iloc[0]["Confidence"]
+    assert "High confidence" in funded_df.iloc[0]["Confidence / Reliability"]
+    assert funded_df.iloc[0]["Holding Window"] == "Plan-defined window"
     assert "Primary Rule/Constraint" not in funded_df.columns
     assert "Primary Rule/Constraint" not in unfunded_df.columns
-    assert "Selected because" in funded_df.iloc[0]["Why"]
-    assert "Entry reference:" in funded_df.iloc[0]["Execution Framework"]
+    assert "Selected because" in funded_df.iloc[0]["Why this trade"]
+    assert funded_df.iloc[0]["Execution Summary"].startswith("Entry reference:")
     assert funded_df.iloc[0]["Decision Status"] == "Selected"
     assert unfunded_df.iloc[0]["Decision Status"] == "Not funded (limit reached)"
     assert "funds the strongest eligible setups first" in st.captions[0]
     assert st.tabs_requested == [["Plan", "Review"]]
     assert any("followed system rules" in line for line in st.markdowns)
+
+
+def test_render_portfolio_plan_beginner_vs_analyst_columns():
+    beginner_st = DummyStreamlit()
+    analyst_st = DummyStreamlit()
+    allocations = [
+        {
+            "instrument": "AAA",
+            "allocation_amount": 1000,
+            "allocation_pct": 0.1,
+            "quality_tier": "A",
+            "confidence_label": "strong",
+            "selection_rank": 1,
+            "holding_window": 10,
+        }
+    ]
+
+    render_portfolio_plan(
+        allocations=allocations,
+        total_capital=10_000,
+        st_module=beginner_st,
+        section="plan",
+        mode="beginner",
+    )
+    render_portfolio_plan(
+        allocations=allocations,
+        total_capital=10_000,
+        st_module=analyst_st,
+        section="plan",
+        mode="analyst",
+    )
+
+    beginner_df = beginner_st.dataframes[1][0]
+    analyst_df = analyst_st.dataframes[1][0]
+
+    assert "Selection Rank" not in beginner_df.columns
+    assert "Allocation %" not in beginner_df.columns
+    assert "Rule Note" not in beginner_df.columns
+
+    assert "Selection Rank" in analyst_df.columns
+    assert "Allocation %" in analyst_df.columns
+    assert "Rule Note" in analyst_df.columns
+    assert analyst_df.iloc[0]["Holding Window"] == "~10 trading days"
+
+
+def test_render_portfolio_plan_keeps_explanations_before_supporting_fields():
+    st = DummyStreamlit()
+    render_portfolio_plan(
+        allocations=[
+            {
+                "instrument": "AAA",
+                "allocation_amount": 2000,
+                "allocation_pct": 0.2,
+                "quality_tier": "A",
+                "confidence_label": "strong",
+                "selection_rank": 1,
+                "holding_window": 5,
+            }
+        ],
+        total_capital=10_000,
+        st_module=st,
+        section="plan",
+        mode="analyst",
+    )
+
+    funded_df = st.dataframes[1][0]
+    ordered_columns = list(funded_df.columns)
+
+    assert ordered_columns.index("Why this trade") < ordered_columns.index("Allocation %")
+    assert ordered_columns.index("Execution Summary") < ordered_columns.index("Selection Rank")
 
 
 def test_group_mistakes_for_display_combines_repeated_types():
