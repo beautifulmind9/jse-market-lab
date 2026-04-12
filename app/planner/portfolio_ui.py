@@ -90,16 +90,24 @@ def render_portfolio_plan(
     signals_df: pd.DataFrame | None = None,
     show_review_table: bool = True,
     mode: str = "beginner",
+    section: str = "both",
+    show_header: bool = True,
 ) -> None:
-    """Render portfolio summary and review details with plan/review subtabs."""
+    """Render portfolio summary/review details in one section or both."""
     if st_module is None:
         import streamlit as st_module
 
-    st_module.subheader("Portfolio Plan")
+    normalized_section = str(section or "both").strip().lower()
+    if normalized_section not in {"plan", "review", "both"}:
+        normalized_section = "both"
+
+    if show_header:
+        st_module.subheader("Portfolio Plan")
     analyst_mode = str(mode or "beginner").lower() == "analyst"
-    st_module.caption(
-        "The plan funds the strongest eligible setups first, while other trades stay out when rules or limits block them."
-    )
+    if show_header and normalized_section in {"plan", "both"}:
+        st_module.caption(
+            "The plan funds the strongest eligible setups first, while other trades stay out when rules or limits block them."
+        )
 
     if not allocations:
         st_module.info("Portfolio Plan unavailable: no allocation outputs were provided.")
@@ -108,9 +116,7 @@ def render_portfolio_plan(
     summary = build_portfolio_summary(allocations, total_capital)
     funded_trades, unfunded_trades = split_trades_by_funding(allocations)
 
-    plan_tab, review_tab = st_module.tabs(["Plan", "Review"])
-
-    with plan_tab:
+    def _render_plan_section() -> None:
         st_module.markdown("#### Portfolio Summary")
         summary_df = pd.DataFrame(
             [
@@ -175,7 +181,7 @@ def render_portfolio_plan(
             "- Tier C and liquidity failures are not funded"
         )
 
-    with review_tab:
+    def _render_review_section() -> None:
         st_module.markdown("#### Decision Review")
         st_module.markdown(
             "This section shows how closely the selected trades followed the system rules."
@@ -222,6 +228,19 @@ def render_portfolio_plan(
                 st_module.info("No review rows available for this run.")
             else:
                 st_module.dataframe(review_df, use_container_width=True)
+
+    if normalized_section == "plan":
+        _render_plan_section()
+        return
+    if normalized_section == "review":
+        _render_review_section()
+        return
+
+    plan_tab, review_tab = st_module.tabs(["Plan", "Review"])
+    with plan_tab:
+        _render_plan_section()
+    with review_tab:
+        _render_review_section()
 
 
 def _build_review_interpretation_paragraphs(review_df: pd.DataFrame, *, mode: str = "beginner") -> list[str]:
