@@ -255,3 +255,27 @@ def test_compact_execution_summary_returns_first_sentence_only():
 
     assert compact == "Entry reference: use VWAP and keep slippage below 0.25%."
     assert "If momentum stalls" not in compact
+
+
+def test_first_sentence_splits_when_next_sentence_starts_lowercase():
+    text = (
+        "Entry reference is around 10.50. if momentum fades, fills may vary."
+    )
+
+    assert _first_sentence(text) == "Entry reference is around 10.50."
+
+
+def test_first_sentence_splits_when_next_sentence_starts_with_digit():
+    text = (
+        "Risk capped at 1%. 2nd entry waits for confirmation."
+    )
+
+    assert _first_sentence(text) == "Risk capped at 1%."
+
+
+def test_first_sentence_splits_when_next_sentence_starts_with_quote():
+    text = (
+        'Execution uses signal-day close. "Second leg" entries are not guaranteed.'
+    )
+
+    assert _first_sentence(text) == "Execution uses signal-day close."
