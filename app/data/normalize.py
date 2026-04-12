@@ -42,8 +42,32 @@ def _normalize_long(df: pd.DataFrame, source: str, dataset_id: str) -> pd.DataFr
     symbol_parts = raw_symbols.map(canonicalize_symbol_parts)
     data["ticker"] = symbol_parts.map(lambda parts: parts[0])
     data["instrument"] = data["ticker"]
-    data["raw_symbol"] = symbol_parts.map(lambda parts: parts[2])
-    data["symbol_marker"] = symbol_parts.map(lambda parts: parts[1])
+    fallback_raw_symbol = symbol_parts.map(lambda parts: parts[2])
+
+    if "raw_symbol" in cols:
+        preserved_raw_symbol = df[cols["raw_symbol"]].astype(str).str.strip().str.upper()
+        data["raw_symbol"] = preserved_raw_symbol.mask(
+            preserved_raw_symbol.isin({"", "NAN", "NONE"}), fallback_raw_symbol
+        )
+    else:
+        data["raw_symbol"] = fallback_raw_symbol
+
+    if "symbol_marker" in cols:
+        preserved_marker = df[cols["symbol_marker"]].astype(str).str.strip().str.upper()
+        fallback_marker = data["raw_symbol"].map(lambda symbol: canonicalize_symbol_parts(symbol)[1])
+        data["symbol_marker"] = preserved_marker.mask(
+            preserved_marker.isin({"", "NAN", "NONE"}), fallback_marker
+        )
+    else:
+        data["symbol_marker"] = data["raw_symbol"].map(lambda symbol: canonicalize_symbol_parts(symbol)[1])
+
+    if "display_symbol" in cols:
+        preserved_display_symbol = df[cols["display_symbol"]].astype(str).str.strip().str.upper()
+        data["display_symbol"] = preserved_display_symbol.mask(
+            preserved_display_symbol.isin({"", "NAN", "NONE"}), data["raw_symbol"]
+        )
+    else:
+        data["display_symbol"] = data["raw_symbol"]
     data["close"] = pd.to_numeric(df[price_col], errors="coerce")
 
     if "volume" in cols:
@@ -78,6 +102,7 @@ def _normalize_wide(df: pd.DataFrame, source: str, dataset_id: str) -> pd.DataFr
     data["instrument"] = data["ticker"]
     data["raw_symbol"] = symbol_parts.map(lambda parts: parts[2])
     data["symbol_marker"] = symbol_parts.map(lambda parts: parts[1])
+    data["display_symbol"] = data["raw_symbol"]
     data["close"] = pd.to_numeric(prices["close"], errors="coerce")
     data["volume"] = np.nan
     data["market"] = None
