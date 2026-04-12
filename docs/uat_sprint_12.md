@@ -104,3 +104,106 @@ Sprint 12 passes when:
 | Jamaican-friendly tone feels natural | Not started | |
 | No advisory language appears | Not started | |
 | Core sections use consistent tone | Not started | |
+
+# Sprint 12 — UAT Checklist
+
+## Objective
+Validate that the dashboard is stable, understandable, and trustworthy enough for public-facing Phase 1 use.
+
+---
+
+## 1. App Startup
+
+- [x] App loads without requiring user upload
+- [x] App starts with bundled internal dataset
+- [x] App does not crash on startup
+- [x] Missing legacy demo event files do not break app startup
+- [x] First-run section renders correctly
+- [x] Mode toggle renders correctly
+
+---
+
+## 2. Data Trust
+
+- [x] Data source label is visible
+- [x] Default dataset uses bundled JSE historical data
+- [x] Fallback warning appears only if fallback dataset is used
+- [x] Data tab shows:
+  - [x] Source
+  - [x] Rows loaded
+  - [x] Errors
+  - [x] Warnings
+  - [x] Dataset ID in Analyst mode
+- [x] No technical JSON/debug dump shown to users in core flow
+
+---
+
+## 3. Canonical Data Integrity
+
+- [x] Canonical ticker is stable
+- [x] `instrument` remains backward-compatible alias
+- [x] Marker variants do not split instruments:
+  - [x] CARXD
+  - [x] CAR XD
+  - [x] CAR-XD
+  - [x] CAR (XD)
+- [x] Raw symbol metadata is preserved:
+  - [x] raw_symbol
+  - [x] symbol_marker
+  - [x] display_symbol
+
+---
+
+## 4. Portfolio / Review
+
+- [x] Portfolio tab loads correctly
+- [x] Review tab loads correctly
+- [x] Total capital control appears in Portfolio only
+- [x] Review tab no longer contains raw data dump
+- [x] Portfolio and Review use same capital context
+- [x] Decision review still renders when legacy events file is absent
+
+---
+
+## 5. Ticker Analysis
+
+- [x] Ticker dropdown loads from canonical ticker universe
+- [x] No duplicate ticker variants appear
+- [x] Metrics change when ticker changes
+- [x] Beginner mode hides deeper raw-table-heavy content
+- [x] Analyst mode preserves deeper analysis
+- [x] Ticker Analysis uses interpretation-first structure
+- [x] No broken sections when no volatility data exists
+- [x] Signal breakdown remains available in Analyst mode
+
+---
+
+## 6. Insights / Language
+
+- [x] Final insight block renders near top of app
+- [x] Duplicate bullet lines are removed
+- [x] Beginner mode is simpler than Analyst mode
+- [x] No advisory language added
+- [x] Explanation-first language is used in high-visibility surfaces
+
+---
+
+## 7. Stability / Safety
+
+- [x] App does not crash when `earnings_events.csv` is missing
+- [x] Legacy demo dependencies degrade gracefully
+- [x] Zero-entry-price guard prevents invalid return calculation crash
+- [x] No silent fallback behavior for trust-critical paths
+
+---
+
+## Verdict
+
+✅ Pass
+
+Sprint 12 meets the Phase 1 public-ready baseline:
+- stable startup
+- real bundled JSE data
+- cleaner public app structure
+- canonical data integrity
+- improved user-facing interpretation
