@@ -14,16 +14,12 @@ def build_portfolio_snapshot(
     mode: str = "beginner",
 ) -> dict[str, Any]:
     """Build concise snapshot copy shown before detailed portfolio tables."""
+    analyst_mode = str(mode or "beginner").strip().lower() == "analyst"
     candidate_count = len(allocations)
-    funded_count = sum(
-        1 for trade in allocations if float(trade.get("allocation_amount", 0.0) or 0.0) > 0
-    )
+    funded_trades = [trade for trade in allocations if float(trade.get("allocation_amount", 0.0) or 0.0) > 0]
+    funded_count = len(funded_trades)
     strong_candidates = sum(1 for trade in allocations if _is_stronger_setup(trade))
-    funded_strong = sum(
-        1
-        for trade in allocations
-        if float(trade.get("allocation_amount", 0.0) or 0.0) > 0 and _is_stronger_setup(trade)
-    )
+    funded_strong = sum(1 for trade in funded_trades if _is_stronger_setup(trade))
 
     safe_capital = float(total_capital or 0.0)
     allocated_amount = round(
@@ -35,16 +31,23 @@ def build_portfolio_snapshot(
     lines = [
         f"The system found {candidate_count} possible trade{'s' if candidate_count != 1 else ''}.",
         f"{funded_count} trade{'s' if funded_count != 1 else ''} were funded from this set.",
-        _build_strength_line(funded_count=funded_count, strong_candidates=strong_candidates, funded_strong=funded_strong),
+        _build_strength_line(
+            funded_count=funded_count,
+            strong_candidates=strong_candidates,
+            funded_strong=funded_strong,
+            mode=mode,
+        ),
     ]
-    lines.append(_build_translation_support_line(mode=mode))
+    confidence_line = _build_confidence_line(funded_trades=funded_trades, mode=mode)
+    if confidence_line:
+        lines.append(confidence_line)
+    lines.append(_build_glossary_support_line(mode=mode))
 
     if reserve_ratio > 0:
         lines.append("Some cash is being held back intentionally when strong opportunities are limited.")
     else:
         lines.append("Most available cash is currently deployed across funded trades.")
 
-    analyst_mode = str(mode or "beginner").strip().lower() == "analyst"
     if analyst_mode:
         lines.append(
             f"Context: funded {funded_count}/{candidate_count}; reserve ratio {reserve_ratio:.0%}."
@@ -114,17 +117,81 @@ def _is_stronger_setup(trade: Mapping[str, Any]) -> bool:
     return tier == "A" or confidence == "strong"
 
 
-def _build_strength_line(*, funded_count: int, strong_candidates: int, funded_strong: int) -> str:
+def _build_strength_line(
+    *,
+    funded_count: int,
+    strong_candidates: int,
+    funded_strong: int,
+    mode: str,
+) -> str:
+    analyst_mode = str(mode or "beginner").strip().lower() == "analyst"
+
     if funded_count <= 0:
-        return "No setups were funded, so stronger-priority filters are blocking this round."
-    if funded_strong == funded_count and funded_count > 0:
-        return "Funded trades are dominated by stronger setups."
+        if analyst_mode:
+            return "No trades were funded in the current portfolio, so no strong setups cleared funding conditions this round."
+        return "No trades were funded right now because no strong setups cleared the funding rules."
+
+    strong_ratio = funded_strong / funded_count
+    if strong_ratio >= 0.6:
+        if analyst_mode:
+            return f"Current funded setup mix is strong: {funded_strong}/{funded_count} funded trades are Tier A or strong-confidence setups."
+        return "Current funded setup mix is strong, with most funded trades in higher-quality setups."
+
+    if strong_ratio >= 0.25:
+        if analyst_mode:
+            return f"Current funded setup mix is constructive but mixed: {funded_strong}/{funded_count} funded trades are stronger-quality and the rest are moderate quality."
+        return "Current funded setup mix is mixed but still constructive."
+
     if strong_candidates > funded_strong:
-        return "Stronger setups are being prioritized, with some lower-strength trades left unfunded."
-    return "Setup strength is mixed across funded trades in this run."
+        if analyst_mode:
+            return "Current funded setup mix is cautious: fewer stronger-quality setups were funded while stronger candidates remained limited."
+        return "Current funded setup mix is weaker and more cautious."
+
+    if analyst_mode:
+        return "Current funded setup mix is weaker overall, with mostly lower-quality funded setups."
+    return "Current funded setup mix is weaker overall, so caution is higher."
 
 
-def _build_translation_support_line(*, mode: str) -> str:
+def _build_confidence_line(*, funded_trades: Sequence[Mapping[str, Any]], mode: str) -> str | None:
+    analyst_mode = str(mode or "beginner").strip().lower() == "analyst"
+    if not funded_trades:
+        return None
+
+    labels = [str(trade.get("confidence_label", "")).strip().lower() for trade in funded_trades]
+    known = [label for label in labels if label]
+    if not known:
+        return "Confidence detail is limited for the currently funded portfolio."
+
+    high_count = sum(1 for label in known if label in {"high", "strong"})
+    medium_count = sum(1 for label in known if label in {"medium", "moderate", "mixed"})
+    low_count = sum(1 for label in known if label in {"low", "weak", "high risk"})
+
+    coverage = len(known)
+    high_ratio = high_count / coverage
+    low_ratio = low_count / coverage
+
+    if high_ratio >= 0.6:
+        if analyst_mode:
+            return f"Current funded confidence mix is high/reliable in most rows ({high_count}/{coverage} high-confidence labels)."
+        return "Current funded confidence is mostly high and historically more reliable."
+
+    if low_ratio >= 0.6:
+        if analyst_mode:
+            return f"Current funded confidence mix is low in most rows ({low_count}/{coverage} low-confidence labels)."
+        return "Current funded confidence is mostly low, so reliability is weaker."
+
+    if medium_count > 0 or (high_count > 0 and low_count > 0):
+        if analyst_mode:
+            return (
+                "Current funded confidence mix is medium/mixed "
+                f"({high_count} high, {medium_count} medium, {low_count} low across {coverage} funded labels)."
+            )
+        return "Current funded confidence is mixed across the funded portfolio."
+
+    return "Confidence detail is limited for the currently funded portfolio."
+
+
+def _build_glossary_support_line(*, mode: str) -> str:
     strength_line = explain_strength("A", mode=mode)
     confidence_line = explain_confidence("high", mode=mode)
-    return f"{strength_line} {confidence_line}"
+    return f"How to read setup strength and confidence: Example glossary only — {strength_line} {confidence_line}"
