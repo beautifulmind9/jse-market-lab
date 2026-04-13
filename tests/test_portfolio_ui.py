@@ -149,7 +149,7 @@ def test_render_portfolio_plan_beginner_vs_analyst_columns():
     assert "Selection Rank" in analyst_df.columns
     assert "Allocation %" in analyst_df.columns
     assert "Rule Note" in analyst_df.columns
-    assert analyst_df.iloc[0]["Holding Window"] == "10 trading days"
+    assert analyst_df.iloc[0]["Holding Window"] == "~10 trading days"
 
 
 def test_render_portfolio_plan_keeps_explanations_before_supporting_fields():
@@ -376,6 +376,34 @@ def test_compact_execution_summary_ignores_deviation_type_without_row_context():
     )
 
     assert "planned exit after 8 trading days" in compact
+
+
+def test_render_portfolio_plan_funded_rank_deviation_row_does_not_crash():
+    st = DummyStreamlit()
+    render_portfolio_plan(
+        allocations=[
+            {
+                "instrument": "AAA",
+                "allocation_amount": 1000,
+                "allocation_pct": 0.1,
+                "quality_tier": "A",
+                "confidence_label": "strong",
+                "selection_rank": 3,
+                "deviation_type": "rank_deviation",
+                "holding_window": 7,
+            }
+        ],
+        total_capital=10_000,
+        st_module=st,
+        section="plan",
+    )
+
+    funded_df = st.dataframes[1][0]
+    summary = funded_df.iloc[0]["Execution Summary"]
+    assert "planned exit after 7 trading days" in summary
+    assert "NameError" not in summary
+
+
 def test_compact_execution_summary_uses_not_specified_exit_fallback():
     compact = _compact_execution_summary(
         {
