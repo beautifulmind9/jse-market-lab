@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import re
+
 import pandas as pd
 
 from app.costs.engine import run_cost_engine
+
+_HOLDING_WINDOW_PATTERN = re.compile(r"([+-]?\d+)")
 
 
 def coerce_trade_rows_from_ranked(ranked_df: pd.DataFrame) -> list[dict]:
@@ -12,6 +16,12 @@ def coerce_trade_rows_from_ranked(ranked_df: pd.DataFrame) -> list[dict]:
     trade_rows: list[dict] = []
     for row in ranked_df.to_dict("records"):
         quality_tier = str(row.get("tier", "B") or "B")
+        holding_window = _coerce_holding_window(
+            row.get("holding_window"),
+            row.get("best_window"),
+            row.get("window"),
+            row.get("holding_period"),
+        )
         trade_rows.append(
             {
                 "instrument": row.get("instrument", "Unknown"),
@@ -20,9 +30,34 @@ def coerce_trade_rows_from_ranked(ranked_df: pd.DataFrame) -> list[dict]:
                 "volatility_bucket": "medium",
                 "earnings_warning_severity": "info",
                 "confidence_label": "strong" if quality_tier.upper() == "A" else "moderate",
+                "holding_window": holding_window,
             }
         )
     return trade_rows
+
+
+def _coerce_holding_window(*values: object) -> int | None:
+    for value in values:
+        if value is None or isinstance(value, bool):
+            continue
+        if isinstance(value, int):
+            return value if value > 0 else None
+        if isinstance(value, float):
+            if pd.isna(value) or not value.is_integer():
+                continue
+            integer_value = int(value)
+            return integer_value if integer_value > 0 else None
+
+        match = _HOLDING_WINDOW_PATTERN.search(str(value).strip())
+        if match is None:
+            continue
+        try:
+            parsed = int(match.group(1))
+        except (TypeError, ValueError):
+            continue
+        if parsed > 0:
+            return parsed
+    return None
 
 
 def build_analyst_dataset(canonical_df: pd.DataFrame, ranked_df: pd.DataFrame) -> pd.DataFrame:
