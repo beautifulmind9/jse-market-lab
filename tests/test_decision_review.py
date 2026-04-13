@@ -12,6 +12,7 @@ from app.planner.decision_review import (
     compute_trade_review,
     detect_decision_mistakes,
 )
+from app.planner.portfolio_ui import _translate_review_row
 
 
 def _signals_df():
@@ -249,3 +250,68 @@ def test_detect_decision_mistakes_keeps_cooldown_check_when_trades_are_allocatio
     mistake_types = {item["type"] for item in mistakes}
 
     assert "cooldown_violation" in mistake_types
+
+
+def test_translate_review_row_rank_deviation_mapping():
+    row = {
+        "deviation_type": "rank_deviation",
+        "selected_rank": 5,
+        "best_available_rank": 2,
+        "followed_rules": False,
+        "quality_flag": "pass",
+        "liquidity_flag": "pass",
+    }
+
+    status, what_happened, why_it_matters = _translate_review_row(row)
+
+    assert status == "Rank order deviation"
+    assert "lower-ranked trade was selected" in what_happened
+    assert "breaks rank discipline" in why_it_matters
+
+
+def test_translate_review_row_no_false_positive_rank_deviation_message():
+    quality_row = {
+        "deviation_type": "quality_deviation",
+        "followed_rules": False,
+        "quality_flag": "fail",
+        "liquidity_flag": "pass",
+    }
+    normal_row = {
+        "deviation_type": None,
+        "followed_rules": True,
+        "quality_flag": "pass",
+        "liquidity_flag": "pass",
+    }
+
+    quality_status, quality_happened, quality_matters = _translate_review_row(quality_row)
+    normal_status, normal_happened, normal_matters = _translate_review_row(normal_row)
+
+    combined_text = " ".join(
+        [
+            quality_status,
+            quality_happened,
+            quality_matters,
+            normal_status,
+            normal_happened,
+            normal_matters,
+        ]
+    ).lower()
+
+    assert "rank order deviation" not in combined_text
+    assert "lower-ranked trade was selected" not in combined_text
+    assert "breaks rank discipline" not in combined_text
+
+
+def test_translate_review_row_does_not_use_inverted_rank_deviation_wording():
+    row = {
+        "deviation_type": "rank_deviation",
+        "followed_rules": False,
+        "quality_flag": "pass",
+        "liquidity_flag": "pass",
+    }
+
+    status, what_happened, why_it_matters = _translate_review_row(row)
+    combined_text = f"{status} {what_happened} {why_it_matters}".lower()
+
+    assert "not funded due to stronger-ranked setups" not in combined_text
+    assert "rank discipline preserved" not in combined_text
