@@ -21,6 +21,15 @@ from app.ui.display_labels import clean_dataframe_labels
 _BEGINNER_TABS = ["Portfolio", "Review", "Ticker Analysis"]
 _ANALYST_TABS = [*_BEGINNER_TABS, "Analyst Insights", "Data"]
 
+_START_HERE_EMBED_HTML = """<div style="position: relative; padding-bottom: 62.7177700348432%; height: 0;"><iframe src="https://www.loom.com/embed/7429a995143a4bf498b640b5371309bc" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>"""
+_HELP_VIDEO_URLS = {
+    "portfolio": "https://www.loom.com/share/3b02f12dc1704595a2a717a0253b901b",
+    "read_trade": "https://www.loom.com/share/58636a4aef5e4592a605efa8bb5c20d2",
+    "ticker_analysis": "https://www.loom.com/share/c963e49ea0874277a5973ffec9d8a8f0",
+    "review": "https://www.loom.com/share/6e2058d50c5d447b98d9031b4e1050cf",
+    "analyst_mode": "https://www.loom.com/share/399c4760e90744c49fd4aadcf172f4a3",
+}
+
 
 def _has_analyst_insight_content(trades_df: pd.DataFrame, *, analyst_mode: bool) -> bool:
     if not analyst_mode or trades_df.empty:
@@ -261,6 +270,16 @@ def _render_data_status_summary(
         st_module.caption("No ingestion errors were reported for this dataset.")
 
 
+def _render_video_link(st_module, *, label: str, url: str) -> None:
+    st_module.markdown(f'<a href="{url}" target="_blank" rel="noopener noreferrer">{label}</a>', unsafe_allow_html=True)
+
+
+def _render_start_here_video(st_module) -> None:
+    st_module.markdown("### New here? Start with this video")
+    st_module.caption("This quick walkthrough shows how to use the dashboard and where to start.")
+    st_module.components.v1.html(_START_HERE_EMBED_HTML, height=460)
+
+
 def main() -> None:
     """Run the Streamlit shell with Analyst Insights and Portfolio Plan sections."""
     import streamlit as st
@@ -345,6 +364,7 @@ def main() -> None:
         insights_payload = generate_embedded_insights([], [], mode=mode_token)
 
     _render_first_run_header(st, mode=mode_token)
+    _render_start_here_video(st)
     render_embedded_insights(insights_payload, st_module=st)
 
     tabs = st.tabs(_resolve_tabs_for_mode(mode_token))
@@ -352,6 +372,8 @@ def main() -> None:
 
     with tab_map["Portfolio"]:
         st.markdown("### Portfolio Plan")
+        _render_video_link(st, label="▶ Watch: Understanding the Portfolio", url=_HELP_VIDEO_URLS["portfolio"])
+        _render_video_link(st, label="▶ Watch: How to Read a Trade", url=_HELP_VIDEO_URLS["read_trade"])
         selected_capital = st.number_input(
             "Total capital",
             min_value=0.0,
@@ -374,6 +396,7 @@ def main() -> None:
 
     with tab_map["Review"]:
         st.markdown("### Review")
+        _render_video_link(st, label="▶ Watch: Understanding Review", url=_HELP_VIDEO_URLS["review"])
         if ranked_df.empty:
             st.info("Review unavailable: ranked outputs were not generated.")
         else:
@@ -389,6 +412,7 @@ def main() -> None:
 
     with tab_map["Ticker Analysis"]:
         st.markdown("### Ticker Analysis")
+        _render_video_link(st, label="▶ Watch: Understanding Ticker Analysis", url=_HELP_VIDEO_URLS["ticker_analysis"])
         ticker_options = _cached_extract_ticker_options(canonical_df)
         if not ticker_options:
             st.info("Ticker Analysis is unavailable because no ticker rows are loaded.")
@@ -500,6 +524,7 @@ def main() -> None:
     if "Analyst Insights" in tab_map:
         with tab_map["Analyst Insights"]:
             st.markdown("### Analyst Insights")
+            _render_video_link(st, label="▶ Watch: How to Use Analyst Mode", url=_HELP_VIDEO_URLS["analyst_mode"])
             if _has_analyst_insight_content(analyst_df, analyst_mode=mode_token == "analyst"):
                 render_analyst_insights(analyst_df, st_module=st, analyst_mode=True)
             else:

@@ -32,6 +32,19 @@ class DummyTab:
         return False
 
 
+class DummyComponentsV1:
+    def __init__(self, st_module):
+        self._st = st_module
+
+    def html(self, html, **kwargs):
+        self._st.html_blocks.append((self._st.current_tab, html, kwargs))
+
+
+class DummyComponents:
+    def __init__(self, st_module):
+        self.v1 = DummyComponentsV1(st_module)
+
+
 class DummyStreamlit:
     def __init__(self, *, mode_choice="Analyst"):
         self.session_state = {}
@@ -44,6 +57,8 @@ class DummyStreamlit:
         self.dataframes = []
         self.captions = []
         self.selectbox_calls = []
+        self.html_blocks = []
+        self.components = DummyComponents(self)
 
     def set_page_config(self, **_kwargs):
         return None
@@ -56,6 +71,12 @@ class DummyStreamlit:
             return self.mode_choice
         return options[0]
 
+    def cache_data(self, **_kwargs):
+        def decorator(func):
+            return func
+
+        return decorator
+
     def markdown(self, text, **_kwargs):
         self.markdowns.append((self.current_tab, text))
 
@@ -63,6 +84,9 @@ class DummyStreamlit:
         self.captions.append((self.current_tab, text))
 
     def info(self, text):
+        self.info_messages.append((self.current_tab, text))
+
+    def warning(self, text):
         self.info_messages.append((self.current_tab, text))
 
     def write(self, _payload):
@@ -184,6 +208,60 @@ def test_analyst_mode_keeps_all_tabs_visible(monkeypatch):
 
     assert dummy_st.tabs_requested[0] == ["Portfolio", "Review", "Ticker Analysis", "Analyst Insights", "Data"]
 
+
+
+
+def test_help_video_labels_and_links_render_in_expected_sections(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Analyst")
+
+    canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo-v1"}, {"errors": [], "warnings": []}),
+    )
+    monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
+    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
+
+    app_main.main()
+
+    all_markdowns = [text for _, text in dummy_st.markdowns]
+    assert "### New here? Start with this video" in all_markdowns
+    assert any("▶ Watch: Understanding the Portfolio" in text for tab, text in dummy_st.markdowns if tab == "Portfolio")
+    assert any("▶ Watch: How to Read a Trade" in text for tab, text in dummy_st.markdowns if tab == "Portfolio")
+    assert any("▶ Watch: Understanding Ticker Analysis" in text for tab, text in dummy_st.markdowns if tab == "Ticker Analysis")
+    assert any("▶ Watch: Understanding Review" in text for tab, text in dummy_st.markdowns if tab == "Review")
+    assert any("▶ Watch: How to Use Analyst Mode" in text for tab, text in dummy_st.markdowns if tab == "Analyst Insights")
+    assert any("loom.com/embed/7429a995143a4bf498b640b5371309bc" in html for _, html, _ in dummy_st.html_blocks)
+
+
+def test_analyst_help_video_hidden_from_beginner_mode(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Beginner")
+
+    canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo-v1"}, {"errors": [], "warnings": []}),
+    )
+    monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
+    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
+
+    app_main.main()
+
+    assert not any("▶ Watch: How to Use Analyst Mode" in text for _, text in dummy_st.markdowns)
 
 def test_review_excludes_data_status_and_data_tab_contains_raw_preview(monkeypatch):
     app_main = _load_app_module()
