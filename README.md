@@ -1,285 +1,57 @@
-# 📈 JSE Decision Support Dashboard
+# JSE Market Lab
 
-> A rule-based decision-support system that translates market signals into structured, risk-aware portfolio decisions on the Jamaican Stock Exchange (JSE).
+A beta-stage decision-support product that helps retail investors evaluate Jamaican Stock Exchange opportunities using structured rules instead of guesswork.
 
----
+## Beta status
+This repository reflects a **public beta** release: stable enough to explore, still evolving through documented iteration.
 
-## 🚀 Overview
+## What problem it solves
+Many retail investors can see market data but still struggle to:
+- compare opportunities consistently,
+- account for costs and liquidity,
+- handle earnings-related uncertainty,
+- turn signals into disciplined portfolio actions.
 
-This project is a **decision-support system**, not just a dashboard.
+## What the product does
+JSE Market Lab converts market inputs into a structured decision workflow:
 
-It helps investors move from:
-❌ reacting to price movements  
-➡️ to  
-✅ making structured, rule-based portfolio decisions  
+`Data -> Signal -> Score -> Risk Flags -> Confidence -> Allocation -> Portfolio Plan`
 
-The system integrates:
-- signal detection  
-- quality evaluation  
-- risk awareness  
-- portfolio allocation  
+## Core features
+- Rule-based signal detection for JSE instruments.
+- Trade quality scoring (Tier A/B/C).
+- Cost-aware outputs (broker fee + CESS assumptions).
+- Earnings phase tagging and warning context.
+- Confidence and prioritization layer.
+- Portfolio allocation planner with cash/exposure constraints.
+- Review layer for post-decision discipline feedback.
 
-> ⚠️ This is **not financial advice**. It is a structured thinking tool.
+## Why it is different
+- Built as a **decision-support system**, not a pick-selling feed.
+- Emphasizes explainability and product clarity over prediction claims.
+- Anchored in Jamaican market context while using globally understandable product design.
 
----
+## Positioning and non-goals
+This project is:
+- a structured decision-support tool,
+- a product portfolio artifact showing end-to-end product thinking.
 
-## 🧠 Problem
+This project is **not**:
+- financial advice,
+- a prediction engine,
+- an auto-trading or signal-selling service.
 
-Retail investors often:
-- react emotionally to price movements  
-- ignore costs and liquidity  
-- lack structured decision frameworks  
-- overestimate returns  
+## Key docs
+- [Product Brief](docs/product_brief.md)
+- [Feature Breakdown](docs/feature_breakdown.md)
+- [Product Decisions](docs/product_decisions.md)
+- [Iteration Log](docs/iteration_log.md)
+- [Portfolio Case Study](docs/portfolio_case_study.md)
+- [User Flow](docs/user_flow.md)
+- [Selected UAT Samples](docs/uat/)
 
----
-
-## 🎯 Solution
-
-A system that:
-
-1. Identifies signals  
-2. Evaluates quality  
-3. Applies real-world constraints  
-4. Translates outputs into **portfolio allocation decisions**
-
----
-
-## ⚙️ Core System Flow
-
-Data → Signal → Score → Filter → Confidence → Allocation → Portfolio Decision
-
----
-
-## 🔑 Key Features
-
-### 1. Signal Engine
-- Median crossover (event-based)
-- Reduces noise vs traditional moving averages
-
----
-
-### 2. Quality Scoring (Tier A / B / C)
-Evaluates:
-- Trend strength  
-- Momentum (spread widening)  
-- Volume confirmation  
-- Volatility  
-
-👉 Tier C = watchlist only (not funded)
-
----
-
-### 3. Confidence System
-Each trade is classified as:
-
-- **Strong**
-- **Moderate**
-- **High Risk / Avoid**
-
----
-
-### 4. Portfolio Allocation Engine 🧠
-
-A deterministic system that:
-
-- Allocates capital based on confidence  
-- Applies risk reductions  
-- Enforces constraints  
-
-#### Key Rules:
-- Max **70% total exposure**
-- Min **30% cash reserve**
-- Max **3 active trades**
-- Tier C → **0 allocation**
-- Liquidity fail → **0 allocation**
-
----
-
-### 5. Earnings Risk Layer
-Trades are tagged:
-
-- pre  
-- reaction  
-- post  
-- non  
-
-The system flags trades overlapping earnings windows.
-
----
-
-### 6. Backtesting & Validation
-Evaluates:
-- win rate  
-- median vs average returns  
-- performance by tier  
-- cost-adjusted outcomes  
-
----
-
-## 🧩 System Components
-
-- Signal engine  
-- Scoring engine  
-- Liquidity filter  
-- Cost model (fees + CESS)  
-- Earnings phase module  
-- Allocation engine  
-- Planner (decision layer)  
-
----
-
-## 🧠 Key Product Decisions
-
-- Median over average (robustness)
-- Tier system (clarity)
-- Liquidity filters (execution realism)
-- Cost inclusion (true profitability)
-- Deterministic allocation (consistency)
-
----
-
-## 🧪 Product Evolution
-
-| Version | Focus |
-|--------|------|
-| V1 | Signal generation |
-| V2 | Scoring + ranking |
-| V3 | Risk realism (fees, liquidity) |
-| V4 | Planner + earnings |
-| V5 | Allocation + decision system |
-
----
-
-## 🚀 Roadmap
-
-### Next:
-- Analyst Insights (feature validation)
-- Ticker-level reports
-- Plan history tracking
-- Explanation engine (“why this trade”)
-
----
-
-## 💼 Skills Demonstrated
-
-- Product thinking  
-- System design  
-- Decision modeling  
-- Risk-aware strategy  
-- Data analysis (Python)  
-- Agile delivery (sprints + UAT)  
-
----
-
-## 🛠️ Tech Stack
-
-- Python (Pandas, NumPy)  
-- Streamlit  
-- GitHub Actions  
-- CSV / JSON pipelines  
-
----
-
-## ▶️ Run Locally
-
+## Run locally
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
-
-👤 Author
-Taneen Lewis
-Product-focused builder creating data-driven decision systems.
-
-
----
-
-# 📄 portfolio_allocation_rules.md
-
-```markdown
-# 🧠 Portfolio Allocation Rules
-
----
-
-## 🎯 Objective
-
-To ensure capital is deployed:
-- consistently  
-- realistically  
-- with controlled risk  
-
----
-
-## 🚫 Hard Stops (No Allocation)
-
-The system assigns **0% allocation** if:
-
-- quality_tier == "C"  
-- liquidity_pass == False  
-
----
-
-## 📊 Base Allocation (by Confidence)
-
-| Confidence | Allocation |
-|-----------|-----------|
-| Strong    | High (≈25–30%) |
-| Moderate  | Medium (≈15–20%) |
-| Avoid     | 0% |
-
----
-
-## ⚠️ Risk Adjustments
-
-Allocation is reduced when:
-
-- Earnings risk present  
-- High volatility  
-- Weak structure signals  
-
----
-
-## 📌 Funding Order
-
-Trades are funded in this order:
-
-1. Strong confidence  
-2. Moderate confidence  
-3. Lower-risk profiles  
-4. Tier A before Tier B  
-
----
-
-## 🧱 Portfolio Constraints
-
-- Max **3 funded trades**  
-- Max **70% total exposure**  
-- Min **30% cash reserve**  
-
----
-
-## 🔄 Allocation Logic
-
-1. Calculate base allocation  
-2. Apply risk reductions  
-3. Sort trades by priority  
-4. Allocate sequentially  
-5. Stop when constraints are reached  
-
----
-
-## 🧠 Output
-
-Each trade includes:
-- allocation_pct  
-- allocation_amount  
-- confidence_label  
-- reasoning  
-
----
-
-## 💡 Design Philosophy
-
-This system prioritizes:
-- discipline over intuition  
-- consistency over prediction  
-- risk control over maximization  
+```
