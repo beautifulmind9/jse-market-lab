@@ -22,6 +22,7 @@ def test_snapshot_contains_required_interpretation_sections():
     assert snapshot["title"] == "Portfolio Snapshot"
     assert "found 2 possible trades" in blob.lower()
     assert "were funded" in blob.lower()
+    assert "capital" in blob.lower()
     assert "current funded setup mix" in blob.lower()
     assert "current funded confidence" in blob.lower()
     assert "example glossary only" in blob.lower()
@@ -212,3 +213,20 @@ def test_snapshot_glossary_text_is_clearly_separated_from_live_interpretation():
     )
 
     assert any(line.startswith("How to read setup strength and confidence:") for line in snapshot["lines"])
+
+
+def test_snapshot_includes_adaptive_funding_language_for_broad_strong_market():
+    snapshot = build_portfolio_snapshot(
+        [
+            {"allocation_amount": 1_000, "quality_tier": "A", "confidence_label": "strong"},
+            {"allocation_amount": 1_000, "quality_tier": "A", "confidence_label": "strong"},
+            {"allocation_amount": 1_000, "quality_tier": "A", "confidence_label": "strong"},
+            {"allocation_amount": 1_000, "quality_tier": "B", "confidence_label": "moderate"},
+        ],
+        10_000,
+        mode="beginner",
+    )
+
+    blob = " ".join(snapshot["lines"])
+    assert "Multiple strong setups were available, so capital was spread across them." in blob
+    assert "Max funded trades: 3" not in blob

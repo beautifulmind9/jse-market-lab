@@ -229,6 +229,73 @@ def test_render_portfolio_plan_places_snapshot_and_reserved_cash_before_tables()
     assert snapshot_idx < summary_idx
 
 
+def test_render_portfolio_plan_reframes_rules_and_analyst_override_copy():
+    st = DummyStreamlit()
+    render_portfolio_plan(
+        allocations=[
+            {
+                "instrument": "AAA",
+                "allocation_amount": 2000,
+                "allocation_pct": 0.2,
+                "quality_tier": "A",
+                "confidence_label": "strong",
+                "selection_rank": 1,
+            }
+        ],
+        total_capital=10_000,
+        st_module=st,
+        section="plan",
+        mode="analyst",
+        analyst_max_funded_trades_override=4,
+    )
+
+    combined = " ".join(st.markdowns)
+    assert "Max funded trades: 3" not in combined
+    assert "Funding approach: prioritize top-ranked, stronger setups" in combined
+    assert "Analyst cap override: up to 4 funded trades" in combined
+    assert "may include lower-ranked setups and reduce reserve discipline" in combined
+
+
+def test_render_review_tab_uses_human_readable_decision_audit_table():
+    st = DummyStreamlit()
+    render_portfolio_plan(
+        allocations=[
+            {
+                "instrument": "AAA",
+                "allocation_amount": 1000,
+                "quality_tier": "A",
+                "liquidity_pass": True,
+                "selection_rank": 1,
+            },
+            {
+                "instrument": "BBB",
+                "allocation_amount": 0,
+                "quality_tier": "C",
+                "liquidity_pass": True,
+                "selection_rank": 3,
+            },
+            {
+                "instrument": "CCC",
+                "allocation_amount": 0,
+                "quality_tier": "B",
+                "liquidity_pass": False,
+                "selection_rank": 4,
+            },
+        ],
+        total_capital=10_000,
+        st_module=st,
+        section="review",
+    )
+
+    review_table = st.dataframes[0][0]
+    assert set(review_table.columns) == {"Ticker", "Status", "What happened", "Why it matters"}
+    assert "instrument" not in review_table.columns
+    assert "followed_rules" not in review_table.columns
+    assert "quality_flag" not in review_table.columns
+    assert "Blocked by quality rule" in set(review_table["Status"])
+    assert "Blocked by liquidity check" in set(review_table["Status"])
+
+
 def test_first_sentence_keeps_decimal_number_intact():
     text = (
         "Entry reference: place a limit at 10.50 with staged risk controls. "

@@ -31,6 +31,11 @@ def build_portfolio_snapshot(
     lines = [
         f"The system found {candidate_count} possible trade{'s' if candidate_count != 1 else ''}.",
         f"{funded_count} trade{'s' if funded_count != 1 else ''} were funded from this set.",
+        _build_adaptive_funding_line(
+            funded_count=funded_count,
+            candidate_count=candidate_count,
+            strong_candidates=strong_candidates,
+        ),
         _build_strength_line(
             funded_count=funded_count,
             strong_candidates=strong_candidates,
@@ -211,3 +216,18 @@ def _build_glossary_support_line(*, mode: str) -> str:
     strength_line = explain_strength("A", mode=mode)
     confidence_line = explain_confidence("high", mode=mode)
     return f"How to read setup strength and confidence: Example glossary only — {strength_line} {confidence_line}"
+
+
+def _build_adaptive_funding_line(
+    *,
+    funded_count: int,
+    candidate_count: int,
+    strong_candidates: int,
+) -> str:
+    if funded_count >= 4 and strong_candidates >= 3:
+        return "Multiple strong setups were available, so capital was spread across them."
+    if funded_count <= 2 and candidate_count > funded_count:
+        return "Only a few higher-quality setups qualified, so capital stayed concentrated."
+    if candidate_count > funded_count:
+        return "Cash was held back because lower-ranked or weaker setups were not forced into the plan."
+    return "Funding stayed adaptive to setup quality, ranking, and portfolio risk guardrails."
