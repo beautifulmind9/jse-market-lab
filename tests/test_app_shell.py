@@ -161,3 +161,23 @@ def test_coerce_trade_rows_from_ranked_preserves_holding_window_values():
     assert rows[1]["holding_window"] == 20
     assert rows[2]["holding_window"] == 30
     assert rows[3]["holding_window"] is None
+
+
+def test_coerce_trade_rows_from_ranked_skips_non_positive_holding_window_for_fallback_fields():
+    ranked_df = pd.DataFrame(
+        {
+            "instrument": ["AAA", "BBB", "CCC", "DDD"],
+            "tier": ["A", "B", "A", "B"],
+            "holding_window": [0, -1, None, 0],
+            "best_window": ["20D", None, None, "0D"],
+            "window": [None, 30, None, None],
+            "holding_period": [None, None, "10 trading days", "0 trading days"],
+        }
+    )
+
+    rows = coerce_trade_rows_from_ranked(ranked_df)
+
+    assert rows[0]["holding_window"] == 20
+    assert rows[1]["holding_window"] == 30
+    assert rows[2]["holding_window"] == 10
+    assert rows[3]["holding_window"] is None

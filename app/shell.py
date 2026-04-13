@@ -41,12 +41,16 @@ def _coerce_holding_window(*values: object) -> int | None:
         if value is None or isinstance(value, bool):
             continue
         if isinstance(value, int):
-            return value if value > 0 else None
+            if value > 0:
+                return value
+            continue
         if isinstance(value, float):
             if pd.isna(value) or not value.is_integer():
                 continue
             integer_value = int(value)
-            return integer_value if integer_value > 0 else None
+            if integer_value > 0:
+                return integer_value
+            continue
 
         match = _HOLDING_WINDOW_PATTERN.search(str(value).strip())
         if match is None:
