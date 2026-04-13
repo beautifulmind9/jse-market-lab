@@ -48,8 +48,11 @@ def _build_entry_reference(row: Mapping[str, Any]) -> str:
 
 def _build_planned_exit(row: Mapping[str, Any]) -> str:
     holding_window = _int_or_none(row.get("holding_window"))
-    if holding_window is None:
-        return "Use the default time-based exit window and review conditions before closing."
+    if holding_window is None or holding_window <= 0:
+        return (
+            "Planned exit timing is not specified, so use the default time-based exit window "
+            "and review conditions before closing."
+        )
     return (
         f"Default exit is after about {holding_window} trading days, "
         "unless conditions are reviewed earlier."

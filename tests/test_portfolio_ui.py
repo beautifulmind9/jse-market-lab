@@ -6,7 +6,9 @@ sys.path.append(str(ROOT))
 
 from app.planner.portfolio_ui import (
     _compact_execution_summary,
+    _extract_holding_days,
     _first_sentence,
+    _format_holding_window_label,
     _group_mistakes_for_display,
     render_portfolio_plan,
 )
@@ -93,7 +95,7 @@ def test_render_portfolio_plan_uses_cleaned_plan_labels_in_beginner_mode():
     assert "Setup Strength" in funded_df.columns
     assert "Strong setup" in funded_df.iloc[0]["Setup Strength"]
     assert "High confidence" in funded_df.iloc[0]["Confidence / Reliability"]
-    assert funded_df.iloc[0]["Holding Window"] == "Plan-defined window"
+    assert funded_df.iloc[0]["Holding Window"] == "Not specified"
     assert "Primary Rule/Constraint" not in funded_df.columns
     assert "Primary Rule/Constraint" not in unfunded_df.columns
     assert "Selected because" in funded_df.iloc[0]["Why this trade"]
@@ -382,3 +384,18 @@ def test_first_sentence_keeps_initialism_abbreviation_in_first_sentence():
     )
 
     assert _first_sentence(text) == "Focus on U.S. large-cap names when liquidity thins."
+
+
+def test_extract_holding_days_accepts_positive_values_only():
+    assert _extract_holding_days(10) == 10
+    assert _extract_holding_days("10 trading days") == 10
+    assert _extract_holding_days("0 trading days") is None
+    assert _extract_holding_days("-5 trading days") is None
+    assert _extract_holding_days("window: 5? maybe") is None
+
+
+def test_format_holding_window_label_falls_back_for_invalid_or_non_positive_values():
+    assert _format_holding_window_label(10) == "~10 trading days"
+    assert _format_holding_window_label("0 trading days") == "Not specified"
+    assert _format_holding_window_label("-5 trading days") == "Not specified"
+    assert _format_holding_window_label("invalid window") == "Not specified"

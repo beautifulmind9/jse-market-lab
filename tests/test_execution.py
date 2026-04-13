@@ -56,3 +56,13 @@ def test_execution_copy_has_no_predictive_or_advisory_language():
     blob = " ".join(payload.values())
     assert contains_advisory_language(blob) is False
     assert "guaranteed fill" in payload["entry_reference"]
+
+
+def test_planned_exit_falls_back_when_holding_window_is_non_positive_or_invalid():
+    zero_payload = build_execution_summary({"holding_window": 0})
+    negative_payload = build_execution_summary({"holding_window": -5})
+    invalid_payload = build_execution_summary({"holding_window": "invalid"})
+
+    assert "Planned exit timing is not specified" in zero_payload["planned_exit"]
+    assert "Planned exit timing is not specified" in negative_payload["planned_exit"]
+    assert "Planned exit timing is not specified" in invalid_payload["planned_exit"]

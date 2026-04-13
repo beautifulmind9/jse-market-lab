@@ -39,6 +39,10 @@ _KNOWN_ABBREVIATIONS = {
     "prof.",
 }
 _INITIALISM_PATTERN = re.compile(r"(?:[A-Z]\.){2,}$")
+_HOLDING_WINDOW_PATTERN = re.compile(
+    r"^\s*([+-]?\d+)\s*(?:trading\s+days?|days?|d)?\s*$",
+    re.IGNORECASE,
+)
 
 
 def build_portfolio_summary(
@@ -135,12 +139,15 @@ def render_portfolio_plan(
     funded_trades, unfunded_trades = split_trades_by_funding(allocations)
 
     def _portfolio_plan_row(trade: Mapping[str, Any], *, funded: bool) -> dict[str, Any]:
-        execution = build_execution_summary(trade, mode=mode)
+        holding_days = _extract_holding_days(trade.get("holding_window"))
+        execution_row = dict(trade)
+        execution_row["holding_window"] = holding_days
+        execution = build_execution_summary(execution_row, mode=mode)
         row: dict[str, Any] = {
             "Ticker": trade.get("instrument", "Unknown"),
             "Setup Strength": explain_strength(trade.get("quality_tier"), mode=mode),
             "Confidence / Reliability": explain_confidence(trade.get("confidence_label"), mode=mode),
-            "Holding Window": _format_holding_window_label(trade.get("holding_window")),
+            "Holding Window": _format_holding_window_label(holding_days),
             "Why this trade": (
                 explain_trade_reason(trade, mode=mode) if funded else resolve_unfunded_reason(trade)
             ),
@@ -414,10 +421,33 @@ def _is_abbreviation_boundary(text: str, punctuation_idx: int) -> bool:
 
 
 def _format_holding_window_label(value: Any) -> str:
-    window = _int_or_none(value)
+    window = _extract_holding_days(value)
     if window is None:
-        return "Plan-defined window"
+        return "Not specified"
     return f"~{window} trading days"
+
+
+def _extract_holding_days(value: Any) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value > 0 else None
+    if isinstance(value, float):
+        if pd.isna(value) or not value.is_integer():
+            return None
+        integer_value = int(value)
+        return integer_value if integer_value > 0 else None
+
+    match = _HOLDING_WINDOW_PATTERN.fullmatch(str(value))
+    if match is None:
+        return None
+
+    days = _int_or_none(match.group(1))
+    if days is None or days <= 0:
+        return None
+    return days
 
 
 def _build_decision_audit_table(review_df: pd.DataFrame) -> pd.DataFrame:
@@ -459,9 +489,9 @@ def _translate_review_row(row: Mapping[str, Any]) -> tuple[str, str, str]:
 
     if str(row.get("deviation_type", "")).lower() == "rank_deviation":
         return (
-            "Not funded due to stronger-ranked setups",
-            "Higher-ranked eligible trades were funded first.",
-            "Rank-order discipline protected capital from drifting into lower-priority setups.",
+            "Rank order deviation",
+            "A lower-ranked trade was selected while a higher-ranked eligible trade was available.",
+            "This breaks rank discipline and may reduce overall portfolio quality.",
         )
 
     return (
