@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
+from app.language.formatter import contains_advisory_language
 from app.planner.portfolio_ui import (
     _compact_execution_summary,
     _first_sentence,
@@ -93,11 +94,12 @@ def test_render_portfolio_plan_uses_cleaned_plan_labels_in_beginner_mode():
     assert "Setup Strength" in funded_df.columns
     assert "Strong setup" in funded_df.iloc[0]["Setup Strength"]
     assert "High confidence" in funded_df.iloc[0]["Confidence / Reliability"]
-    assert funded_df.iloc[0]["Holding Window"] == "Plan-defined window"
+    assert funded_df.iloc[0]["Holding Window"] == "Not specified"
     assert "Primary Rule/Constraint" not in funded_df.columns
     assert "Primary Rule/Constraint" not in unfunded_df.columns
     assert "Selected because" in funded_df.iloc[0]["Why this trade"]
-    assert funded_df.iloc[0]["Execution Summary"].startswith("Entry reference:")
+    assert "planned exit" in funded_df.iloc[0]["Execution Summary"]
+    assert "trading days" not in funded_df.iloc[0]["Execution Summary"]
     assert funded_df.iloc[0]["Decision Status"] == "Selected"
     assert unfunded_df.iloc[0]["Decision Status"] == "Not funded (limit reached)"
     assert "funds the strongest eligible setups first" in st.captions[0]
@@ -145,7 +147,7 @@ def test_render_portfolio_plan_beginner_vs_analyst_columns():
     assert "Selection Rank" in analyst_df.columns
     assert "Allocation %" in analyst_df.columns
     assert "Rule Note" in analyst_df.columns
-    assert analyst_df.iloc[0]["Holding Window"] == "~10 trading days"
+    assert analyst_df.iloc[0]["Holding Window"] == "10 trading days"
 
 
 def test_render_portfolio_plan_keeps_explanations_before_supporting_fields():
@@ -245,16 +247,63 @@ def test_first_sentence_keeps_percentage_intact():
     assert _first_sentence(text) == "Protective stop sits at 1.00% below entry to cap downside."
 
 
-def test_compact_execution_summary_returns_first_sentence_only():
-    summary = (
-        "Entry reference: use VWAP and keep slippage below 0.25%. "
-        "If momentum stalls, reduce size and wait for confirmation."
+def test_compact_execution_summary_includes_entry_and_exit_timing_for_beginner():
+    compact = _compact_execution_summary(
+        {
+            "entry_reference": "Use the signal-day close area as a reference, not an exact guaranteed fill.",
+            "planned_exit": "Default exit is after about 10 trading days, unless conditions are reviewed earlier.",
+        },
+        mode="beginner",
     )
 
-    compact = _compact_execution_summary(summary)
+    assert "signal-day close" in compact
+    assert "planned exit after 10 trading days" in compact
 
-    assert compact == "Entry reference: use VWAP and keep slippage below 0.25%."
-    assert "If momentum stalls" not in compact
+
+def test_compact_execution_summary_includes_entry_and_exit_timing_for_analyst():
+    compact = _compact_execution_summary(
+        {
+            "entry_reference": "Use the signal-day close area (around 12.34) as a reference, not an exact guaranteed fill.",
+            "planned_exit": "Default exit is after about 20 trading days, unless conditions are reviewed earlier.",
+        },
+        mode="analyst",
+    )
+
+    assert "signal-day close" in compact
+    assert "after 20 trading days" in compact
+
+
+
+
+def test_compact_execution_summary_has_no_advisory_language_in_both_modes():
+    beginner = _compact_execution_summary(
+        {
+            "entry_reference": "Use the signal-day close area as a reference, not an exact guaranteed fill.",
+            "planned_exit": "Default exit is after about 5 trading days, unless conditions are reviewed earlier.",
+        },
+        mode="beginner",
+    )
+    analyst = _compact_execution_summary(
+        {
+            "entry_reference": "Use the signal-day close area as a reference, not an exact guaranteed fill.",
+            "planned_exit": "Default exit is after about 30 trading days, unless conditions are reviewed earlier.",
+        },
+        mode="analyst",
+    )
+
+    assert contains_advisory_language(beginner) is False
+    assert contains_advisory_language(analyst) is False
+
+
+def test_compact_execution_summary_uses_not_specified_exit_fallback():
+    compact = _compact_execution_summary(
+        {
+            "entry_reference": "Use the signal-day close area as a reference, not an exact guaranteed fill.",
+            "planned_exit": "Use the default time-based exit window and review conditions before closing.",
+        }
+    )
+
+    assert "planned exit timing is not specified" in compact
 
 
 def test_first_sentence_splits_when_next_sentence_starts_lowercase():

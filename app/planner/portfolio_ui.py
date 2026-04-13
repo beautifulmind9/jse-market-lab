@@ -143,7 +143,7 @@ def render_portfolio_plan(
             "Why this trade": (
                 explain_trade_reason(trade, mode=mode) if funded else resolve_unfunded_reason(trade)
             ),
-            "Execution Summary": _compact_execution_summary(execution["summary"]),
+            "Execution Summary": _compact_execution_summary(execution, mode=mode),
         }
 
         if analyst_mode:
@@ -403,16 +403,36 @@ def _is_abbreviation_boundary(text: str, punctuation_idx: int) -> bool:
 
 def _format_holding_window_label(value: Any) -> str:
     window = _int_or_none(value)
-    if window is None:
-        return "Plan-defined window"
-    return f"~{window} trading days"
+    if window is None or window <= 0:
+        return "Not specified"
+    return f"{window} trading days"
 
 
-def _compact_execution_summary(summary: str) -> str:
-    first_sentence = _first_sentence(summary)
-    if first_sentence:
-        return first_sentence
-    return "Execution plan uses reference pricing, time-based exits, and risk checks."
+def _compact_execution_summary(execution: Mapping[str, Any], *, mode: str = "beginner") -> str:
+    entry_reference = _first_sentence(str(execution.get("entry_reference", "")).strip())
+    entry_phrase = "Entry reference uses the signal-day close area"
+    if entry_reference:
+        entry_phrase = entry_reference
+
+    planned_exit = str(execution.get("planned_exit", "")).strip()
+    holding_days = _extract_holding_days(planned_exit)
+    analyst_mode = str(mode or "beginner").strip().lower() == "analyst"
+
+    if holding_days is None:
+        exit_phrase = "planned exit timing is not specified"
+    elif analyst_mode:
+        exit_phrase = f"planned exit review occurs after {holding_days} trading days"
+    else:
+        exit_phrase = f"planned exit after {holding_days} trading days"
+
+    return f"{entry_phrase}; {exit_phrase}."
+
+
+def _extract_holding_days(planned_exit: str) -> int | None:
+    match = re.search(r"(\d+)\s+trading\s+days", str(planned_exit or ""), flags=re.IGNORECASE)
+    if match is None:
+        return None
+    return _int_or_none(match.group(1))
 
 
 def _int_or_none(value: Any) -> int | None:
