@@ -187,6 +187,15 @@ def _run_demo_with_active_dataset(
     return run_demo()
 
 
+def _freeze_issues(issues: dict | None) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    safe_issues = issues or {}
+    return tuple(sorted((str(key), tuple(str(item) for item in value)) for key, value in safe_issues.items()))
+
+
+def _unfreeze_issues(frozen_issues: tuple[tuple[str, tuple[str, ...]], ...]) -> dict[str, list[str]]:
+    return {key: list(values) for key, values in frozen_issues}
+
+
 def _render_visual_polish(st_module) -> None:
     st_module.markdown(
         """
@@ -267,7 +276,44 @@ def main() -> None:
     mode = st.radio("Mode", options=["Beginner", "Analyst"], horizontal=True, index=0)
     mode_token = mode.lower()
 
-    canonical_df, meta, issues = ingest_dataset("demo")
+    @st.cache_data(show_spinner=False)
+    def _cached_ingest_dataset() -> tuple[pd.DataFrame, dict, tuple[tuple[str, tuple[str, ...]], ...]]:
+        canonical_df_value, meta_value, issues_value = ingest_dataset("demo")
+        return canonical_df_value, meta_value, _freeze_issues(issues_value)
+
+    @st.cache_data(show_spinner=False)
+    def _cached_run_demo_payload(
+        canonical_df_value: pd.DataFrame,
+        meta_value: dict,
+        frozen_issues: tuple[tuple[str, tuple[str, ...]], ...],
+    ) -> pd.DataFrame:
+        payload = _run_demo_with_active_dataset(
+            canonical_df=canonical_df_value,
+            meta=meta_value,
+            issues=_unfreeze_issues(frozen_issues),
+        )
+        return payload.get("ranked", pd.DataFrame())
+
+    @st.cache_data(show_spinner=False)
+    def _cached_build_analyst_dataset(canonical_df_value: pd.DataFrame, ranked_df_value: pd.DataFrame) -> pd.DataFrame:
+        return build_analyst_dataset(canonical_df_value, ranked_df_value)
+
+    @st.cache_data(show_spinner=False)
+    def _cached_extract_ticker_options(canonical_df_value: pd.DataFrame) -> list[str]:
+        return _extract_ticker_options(canonical_df_value)
+
+    @st.cache_data(show_spinner=False)
+    def _cached_ticker_payloads(
+        analyst_df_value: pd.DataFrame,
+        ticker: str,
+        mode_value: str,
+    ) -> tuple[dict, dict]:
+        payload = build_ticker_drilldown(analyst_df_value, ticker)
+        metrics = compute_ticker_metrics(analyst_df_value, ticker, mode=mode_value)
+        return payload, metrics
+
+    canonical_df, meta, frozen_issues = _cached_ingest_dataset()
+    issues = _unfreeze_issues(frozen_issues)
     dataset_source_label = str(meta.get("dataset_source_label") or "unknown_dataset")
     st.caption(f"Data source: {dataset_source_label}")
     st.caption("Using historical data from the Jamaican stock market.")
@@ -279,13 +325,8 @@ def main() -> None:
         st.warning("No rows were loaded from the data layer. Please verify the internal sample data file.")
         return
 
-    demo_payload = _run_demo_with_active_dataset(
-        canonical_df=canonical_df,
-        meta=meta,
-        issues=issues,
-    )
-    ranked_df = demo_payload.get("ranked", pd.DataFrame())
-    analyst_df = build_analyst_dataset(canonical_df, ranked_df)
+    ranked_df = _cached_run_demo_payload(canonical_df, meta, frozen_issues)
+    analyst_df = _cached_build_analyst_dataset(canonical_df, ranked_df)
     trade_rows = coerce_trade_rows_from_ranked(ranked_df) if not ranked_df.empty else []
 
     default_capital = 100_000.0
@@ -348,13 +389,12 @@ def main() -> None:
 
     with tab_map["Ticker Analysis"]:
         st.markdown("### Ticker Analysis")
-        ticker_options = _extract_ticker_options(canonical_df)
+        ticker_options = _cached_extract_ticker_options(canonical_df)
         if not ticker_options:
             st.info("Ticker Analysis is unavailable because no ticker rows are loaded.")
         else:
             selected_ticker = st.selectbox("Select ticker", ticker_options)
-            ticker_payload = build_ticker_drilldown(analyst_df, selected_ticker)
-            ticker_metrics = compute_ticker_metrics(analyst_df, selected_ticker, mode=mode_token)
+            ticker_payload, ticker_metrics = _cached_ticker_payloads(analyst_df, selected_ticker, mode_token)
             analyst_mode = mode_token == "analyst"
             metrics_stats = ticker_metrics.get("stats", {})
             metrics_behavior = ticker_metrics.get("behavior", {})

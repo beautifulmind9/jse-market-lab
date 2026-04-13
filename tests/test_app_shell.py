@@ -181,3 +181,17 @@ def test_coerce_trade_rows_from_ranked_skips_non_positive_holding_window_for_fal
     assert rows[1]["holding_window"] == 30
     assert rows[2]["holding_window"] == 10
     assert rows[3]["holding_window"] is None
+
+
+def test_freeze_and_unfreeze_issues_round_trip():
+    spec = importlib.util.spec_from_file_location("app_main", ROOT / "app.py")
+    app_main = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(app_main)
+
+    issues = {"warnings": ["w1", "w2"], "errors": ["e1"]}
+
+    frozen = app_main._freeze_issues(issues)
+    restored = app_main._unfreeze_issues(frozen)
+
+    assert restored == issues
