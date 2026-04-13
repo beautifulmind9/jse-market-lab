@@ -465,6 +465,56 @@ def _build_decision_audit_table(review_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _translate_review_row(row: Mapping[str, Any]) -> tuple[str, str, str]:
+    deviation_type = str(row.get("deviation_type", "")).strip().lower()
+    quality_flag = str(row.get("quality_flag", "")).strip().lower()
+    liquidity_flag = str(row.get("liquidity_flag", "")).strip().lower()
+    followed_rules = bool(row.get("followed_rules", False))
+
+    if deviation_type == "rank_deviation":
+        selected_rank = _int_or_none(row.get("selected_rank"))
+        best_available_rank = _int_or_none(row.get("best_available_rank"))
+        if selected_rank is not None and best_available_rank is not None:
+            happened = (
+                f"A lower-ranked trade was selected (rank {selected_rank}) while rank "
+                f"{best_available_rank} was available."
+            )
+        else:
+            happened = "A lower-ranked trade was selected while a stronger rank was available."
+        return (
+            "Rank order deviation",
+            happened,
+            "This breaks rank discipline and can weaken expected portfolio quality.",
+        )
+
+    if quality_flag == "fail":
+        return (
+            "Blocked by quality rule",
+            "The setup failed the minimum quality tier required for funding.",
+            "Funding lower-quality setups can reduce signal reliability.",
+        )
+
+    if liquidity_flag == "fail":
+        return (
+            "Blocked by liquidity check",
+            "The trade failed liquidity checks used to control slippage and execution risk.",
+            "Poor liquidity can increase trading friction and downside risk.",
+        )
+
+    if followed_rules:
+        return (
+            "Rule-aligned",
+            "The trade followed portfolio selection and risk rules.",
+            "Consistent rule-following helps keep risk and selection quality stable.",
+        )
+
+    return (
+        "Rule deviation",
+        "The trade showed a portfolio rule deviation.",
+        "Rule deviations can weaken consistency in portfolio outcomes.",
+    )
+
+
 def _compact_execution_summary(execution: Mapping[str, Any], *, mode: str = "beginner") -> str:
     entry_reference = _first_sentence(str(execution.get("entry_reference", "")).strip())
     entry_phrase = "Entry reference uses the signal-day close area"
