@@ -37,7 +37,7 @@ def test_unfunded_trade_explanation_covers_constraint_and_competing_trades():
         mode="beginner",
     )
 
-    assert "Not funded because available capital was reserved for stronger competing trades." in text
+    assert "Not funded because higher-ranked eligible trades were funded first" in text
     assert "ranked #5" in text
 
 

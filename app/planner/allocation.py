@@ -27,7 +27,6 @@ _VOLATILITY_PRIORITY = {"low": 0, "medium": 1, "high": 2}
 _SEVERITY_PRIORITY = {"info": 0, "caution": 1, "high": 2}
 
 
-MAX_FUNDED_TRADES = 3
 MAX_TOTAL_EXPOSURE = 0.70
 MIN_CASH_RESERVE = 0.30
 
@@ -35,8 +34,16 @@ MIN_CASH_RESERVE = 0.30
 def generate_portfolio_allocation(
     trade_rows: Sequence[Mapping[str, Any]],
     total_capital: float,
+    *,
+    mode: str = "beginner",
+    max_funded_trades_override: int | None = None,
 ) -> dict:
     """Generate an explainable allocation plan for planner trade rows."""
+    analyst_mode = _normalize_text(mode) == "analyst"
+    effective_max_funded_trades = _resolve_funded_trade_cap(
+        analyst_mode=analyst_mode,
+        max_funded_trades_override=max_funded_trades_override,
+    )
     rows_with_scoring: list[dict[str, Any]] = []
     for idx, row in enumerate(trade_rows):
         confidence_label = _resolve_confidence_label(row)
@@ -77,8 +84,13 @@ def generate_portfolio_allocation(
 
         if preconstraint_pct <= 0.0:
             constraint_reason = "pre-constraints reduced allocation to zero"
-        elif funded_count >= MAX_FUNDED_TRADES:
-            constraint_reason = f"max funded trades reached ({MAX_FUNDED_TRADES})"
+        elif (
+            effective_max_funded_trades is not None
+            and funded_count >= effective_max_funded_trades
+        ):
+            constraint_reason = (
+                f"analyst max funded trades cap reached ({effective_max_funded_trades})"
+            )
         elif remaining_exposure <= 0.0:
             constraint_reason = (
                 f"max portfolio exposure reached ({MAX_TOTAL_EXPOSURE:.0%})"
@@ -97,7 +109,7 @@ def generate_portfolio_allocation(
             "selection_rank": order_idx,
             "funded_rank": funded_count if allocation_pct > 0 else None,
             "eligible_for_funding": bool(item["hard_stop_reason"] is None and preconstraint_pct > 0),
-            "max_funded_trades": MAX_FUNDED_TRADES,
+            "max_funded_trades": effective_max_funded_trades,
             "allocation_reason_clear": _build_reason_clear(
                 item,
                 allocation_pct,
@@ -137,6 +149,7 @@ def generate_portfolio_allocation(
         "total_allocated_amount": total_allocated_amount,
         "cash_reserve_pct": cash_reserve_pct,
         "cash_reserve_amount": cash_reserve_amount,
+        "max_funded_trades_override_applied": effective_max_funded_trades,
     }
 
 
@@ -249,6 +262,22 @@ def _normalize_text(value: Any, *, fallback: str = "") -> str:
     if value is None:
         return fallback
     return str(value).strip().lower()
+
+
+def _resolve_funded_trade_cap(
+    *,
+    analyst_mode: bool,
+    max_funded_trades_override: int | None,
+) -> int | None:
+    if not analyst_mode:
+        return None
+    if max_funded_trades_override is None:
+        return None
+    try:
+        override = int(max_funded_trades_override)
+    except (TypeError, ValueError):
+        return None
+    return override if override > 0 else None
 
 
 def _display_text(value: Any, *, fallback: str = "") -> str:
