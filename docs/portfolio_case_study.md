@@ -1,19 +1,19 @@
 # Portfolio Case Study — JSE Market Lab
 
 ## Problem
-Retail investors often have prices and headlines but lack a reliable framework for deciding:
-- which opportunities are actionable,
+Retail investors often have access to prices and headlines but lack a reliable process for deciding:
+- which opportunities are truly actionable,
 - how much risk is acceptable,
 - and how to size positions under real constraints.
 
-In the JSE, lower liquidity, uneven coverage, and execution friction make this gap more costly.
+In the Jamaican market, lower liquidity, uneven coverage, and execution friction make weak decision processes materially more expensive.
 
 ## Target users
 - **Primary:** self-directed beginner and intermediate retail investors.
-- **Secondary:** analyst-minded users who want transparent, rule-based evaluation before deploying capital.
+- **Secondary:** analyst-minded users who want transparent, rule-based evaluation before committing capital.
 
 ## Product goal
-Build a decision-support product that turns noisy market information into a consistent portfolio process without claiming to predict outcomes.
+Build a decision-support product that turns noisy market information into a consistent portfolio process, without presenting certainty or pretending to predict outcomes.
 
 ## System overview
 The product flow is intentionally explicit:
@@ -29,39 +29,39 @@ Key layers:
 - post-decision review for discipline and accountability.
 
 ## Key product decisions
-- Positioning stayed firmly in **decision support**, not signal-selling.
-- Tier C setups remain visible but generally unfunded.
-- Hard-stop constraints (for example, quality/liquidity failures) prevent forced allocation.
-- Costs are included so output reflects realistic outcomes.
-- Warnings are informative rather than blocking, preserving user agency.
-- Language and UI are tuned for Jamaican readability while remaining credible to a broader audience.
+- The product remained positioned as **decision support**, not signal-selling.
+- Tier C setups stayed visible but were generally not funded.
+- Hard-stop constraints (for example, quality/liquidity failures) prevented forced allocation.
+- Costs were embedded so outputs reflected realistic outcomes.
+- Warnings were informative rather than blocking, preserving user agency.
+- Language and UI were tuned for Jamaican readability while staying credible to a broader audience.
 
 (See full decision history in [Product Decisions](product_decisions.md).)
 
-## Product evolution across sprints/phases
-- **Phase 1:** established the signal and ranking foundation.
-- **Phase 2:** added realism through costs, liquidity, and event-aware context.
-- **Phase 3:** improved decision clarity with guidance, confidence, and prioritization.
-- **Phase 4:** introduced allocation and planner surfaces for portfolio action.
-- **Phase 5:** added review-and-discipline feedback, then hardened for public beta.
+## Product evolution across phases
+- **Phase 1:** established a credible baseline for signal detection and ranking.
+- **Phase 2:** added market realism through costs, liquidity, and event-aware context.
+- **Phase 3:** shifted from analysis to clearer decision-making with guidance, confidence, and prioritization.
+- **Phase 4:** translated insight into action through allocation and planner surfaces.
+- **Phase 5:** closed the loop with review-and-discipline feedback, then hardened the experience for public beta.
 
 ## UAT and iteration highlights
-Selected UAT checkpoints show how the product matured from concept to beta:
-- early baseline validation to confirm core logic ([Sprint 1 UAT](uat/uat_sprint_1.md)),
-- mid-cycle usability and structure checks to improve decision flow ([Sprint 7 UAT](uat/uat_sprint_7.md)),
-- late-stage readiness checks to verify beta quality and consistency ([Sprint 13 UAT](uat/uat_sprint_13.md)).
+Selected UAT checkpoints show progression from feature validation to product readiness:
+- baseline validation to confirm core logic and identify early trust gaps ([Sprint 1 UAT](uat/uat_sprint_1.md)),
+- mid-cycle usability checks to tighten structure, navigation, and decision flow ([Sprint 7 UAT](uat/uat_sprint_7.md)),
+- pre-beta readiness checks to verify consistency, clarity, and release confidence ([Sprint 13 UAT](uat/uat_sprint_13.md)).
 
-The broader sprint history is retained for traceability and context.
+The broader sprint history remains available for traceability, while these milestones capture how feedback shaped product direction.
 
 ## Beta launch context
-At beta launch, the project is presented as a focused product portfolio:
-- public-facing docs emphasize product logic and decision value,
+At beta launch, the project is framed as a focused product portfolio in a real market context:
+- public-facing docs highlight decision logic and user value,
 - sprint-heavy operational artifacts are archived,
-- core artifacts remain visible for recruiters, collaborators, and beta users.
+- core artifacts remain visible for recruiters, collaborators, and beta users evaluating stage-appropriate maturity.
 
 ## What this demonstrates as a portfolio artifact
 JSE Market Lab demonstrates:
-- end-to-end product ownership,
-- iterative decision-making under constraints,
-- practical translation of analytics into a user-facing decision workflow,
-- documentation discipline from internal build history to public product narrative.
+- end-to-end product ownership from framing the problem to shaping beta scope,
+- product judgment through explicit trade-offs under market and data constraints,
+- iterative refinement that connects analytics to a usable investor decision workflow,
+- disciplined documentation that translates internal build history into a recruiter-readable product narrative.
