@@ -1,4 +1,4 @@
-# Sprint 13 — Decision Layer & Execution Framework
+# Sprint 13 — Decision Layer, Execution Framework, and Adaptive Portfolio Understanding
 
 ## Sprint Goal
 
@@ -8,15 +8,18 @@ Turn the dashboard from a stable public-facing analytics product into a clearer 
 - why certain trades are selected
 - what makes one setup stronger than another
 - why some capital is held back
-- how a trade would typically be executed
+- how a trade would typically be entered and exited
+- how funded-trade count relates to opportunity quality and capital discipline
 - what ticker behavior means without needing analyst-level interpretation
+- whether the plan followed its own intended rules
 
-Sprint 13 is a **user understanding sprint** and an **execution framing sprint**.
+Sprint 13 is a **user understanding sprint**, an **execution framing sprint**, and an **adaptive portfolio explanation sprint**.
 
 It is not:
 - a new data ingestion sprint
 - a new strategy-model sprint
 - a live data sprint
+- a user upload / custom-data sprint
 - a dividend/earnings intelligence sprint
 
 ---
@@ -32,36 +35,38 @@ Sprint 12 proved that the app can:
 
 But live review exposed major decision-layer gaps:
 
-### 1. First-time users still ask:
+### 1. First-time users still asked:
 - “What is a trader supposed to do with this?”
 - “What do these tables mean?”
 - “Why is some cash reserved?”
 - “What makes this a strong setup?”
 
-### 2. Ticker Analysis was too table-heavy
-Even after improvements, users still need clearer interpretation.
+### 2. Ticker Analysis was still too table-heavy
+Users still needed clearer interpretation and stronger execution framing.
 
-### 3. Analyst Insights is under-defined
-Some sections look empty, placeholder-like, or under-explained.
+### 3. Analyst Insights was under-defined
+Some sections looked empty, placeholder-like, or under-explained.
 
-### 4. Execution framing is missing
-The app explains:
-- setup quality
-- holding period behavior
-
-But still does not answer clearly:
-- what price reference is the entry based on
+### 4. Execution framing was missing
+The app needed to answer more clearly:
+- what entry reference is based on
 - what the planned exit logic is
 - how execution should be interpreted in real conditions
 
-### 5. Average return is still too prominent in places
+### 5. Average return was still too prominent in places
 For this product, median return should be the primary “typical outcome” metric.
+
+### 6. Portfolio funding felt too static
+A visible “max funded trades: 3” style experience risked making the plan feel arbitrary rather than adaptive.
+
+### 7. Review still felt too raw
+The review surface needed to become a human-readable decision audit rather than a raw internal table.
 
 ---
 
 ## Product Principle
 
-The app should not make users decode internal system labels or raw grouped tables.
+The app should not make users decode internal system labels or grouped backend tables.
 
 Instead of showing:
 - Tier A
@@ -69,13 +74,15 @@ Instead of showing:
 - Reserved cash
 - Avg Return
 - raw matrices
+- backend-style review fields
 
 the product should explain:
 - why the setup is strong or weak
-- what confidence means
+- what confidence / reliability means
 - why some money is held back
-- what the likely execution framework is
+- how the trade would typically be approached
 - what the data means in plain language
+- whether the plan followed intended discipline
 
 ---
 
@@ -89,11 +96,14 @@ the product should explain:
 - Confidence Translation
 - “Why this trade” explanations
 - Execution Layer
+- adaptive funded-trade explanation
 - Ticker Analysis interpretation refinement
 - Analyst Insights redesign / purpose clarification
+- Review tab redesign into a decision-audit surface
 - global display-label cleanup
 - median-first presentation rule
 - stronger Beginner vs Analyst separation
+- stability fixes required to keep Portfolio live and usable
 
 ### Out of scope
 - live market data
@@ -110,19 +120,22 @@ the product should explain:
 ## Core User Stories
 
 ### Beginner user story
-As a Jamaican retail investor with limited time and limited capital, I want to open the dashboard and quickly understand whether there are worthwhile trades, why they stand out, and how I would realistically approach them, so I can make more disciplined decisions.
+As a Jamaican retail investor with limited time and limited capital, I want to open the dashboard and quickly understand whether there are worthwhile trades, why they stand out, why capital is being handled the way it is, and how I would realistically approach them, so I can make more disciplined decisions.
 
 ### Analyst user story
-As a more advanced user, I want to validate how the system behaves across setup quality, holding periods, execution framing, and trade outcomes, so I can judge whether the strategy logic looks reliable enough to trust.
+As a more advanced user, I want to validate how the system behaves across setup quality, holding periods, execution framing, grouped outcomes, and review discipline, so I can judge whether the strategy logic looks reliable enough to trust.
 
 ### Portfolio user story
-As a user viewing the Portfolio tab, I want to know which trades are strongest, why they were chosen, why some cash is not invested, and how the trade would typically be executed, so I can understand the plan without decoding internal system labels.
+As a user viewing the Portfolio tab, I want to know which trades are strongest, why they were chosen, why some cash is not invested, and how the trade would typically be entered and exited, so I can understand the plan without decoding internal system labels.
 
 ### Ticker Analysis user story
 As a user viewing a ticker, I want to understand how that stock usually behaves, which holding style fits it best, what execution would generally look like, and what risks stand out, so I can interpret the stock’s behavior more clearly.
 
 ### Analyst Insights user story
 As an analyst-mode user, I want grouped historical results to be explained in context, so I can understand what the performance groupings and exit behavior are saying instead of just seeing raw tables.
+
+### Review / decision-audit user story
+As a user reviewing the plan, I want to understand whether the strategy followed its own rules and where rank, quality, or liquidity discipline mattered, so I can trust the system more deeply.
 
 ---
 
@@ -132,13 +145,15 @@ As an analyst-mode user, I want grouped historical results to be explained in co
 - What are the best opportunities right now?
 - Why were these selected?
 - Why is some money not invested?
-- How would this trade usually be executed?
+- How would this trade usually be entered and exited?
+- Why did the plan fund this many trades?
 
 ### Ticker Analysis must answer:
 - What is this stock generally like?
 - Which holding style fits it best?
 - What usually happens after a signal?
 - What should I watch out for?
+- What does execution usually look like?
 
 ### Analyst Insights must answer:
 - Does grouped historical evidence support the strategy?
@@ -146,37 +161,41 @@ As an analyst-mode user, I want grouped historical results to be explained in co
 - How do trades usually exit?
 - Are there meaningful feature-level insights yet?
 
+### Review must answer:
+- Did the plan follow intended rules?
+- Where did discipline matter?
+- What happened when tradeoffs occurred?
+
 ---
 
 ## Sprint Deliverables
 
 ### 1. Portfolio Snapshot block
-A new interpretation-first block at the top of Portfolio explaining:
+Interpretation-first block explaining:
 - how many trades were found
-- how many were selected
+- how many were funded
 - whether strong setups dominate
 - whether cash is being held back intentionally
-
-This should appear before the table.
+- whether capital is being concentrated or spread across stronger setups
 
 ---
 
 ### 2. Reserved Cash explanation
-A dedicated block answering:
+Dedicated block answering:
 **Why is some capital not invested?**
+
+Framed as discipline, not as a system problem.
 
 Examples:
 - not enough strong setups
-- stronger risk controls applied
-- mixed conditions
-- avoiding forced trades
-
-This should frame reserved cash as discipline, not as a system problem.
+- stronger-ranked trades consumed disciplined capital
+- stronger controls prevented forced trades
+- mixed conditions led to reserve behavior
 
 ---
 
 ### 3. Setup Strength translation
-Internal quality tiers must be translated into plain language.
+Internal quality tiers translated into plain language.
 
 Examples:
 - Strong setup — more of the key conditions are aligned
@@ -185,29 +204,28 @@ Examples:
 
 ---
 
-### 4. Confidence translation
-Confidence must be translated into meaning.
+### 4. Confidence / Reliability translation
+Confidence translated into meaning.
 
 Examples:
 - High confidence — similar setups have behaved more reliably in the past
 - Medium confidence — history is mixed
 - Low confidence — outcomes have been less reliable
 
-This must stay non-predictive.
+This remains non-predictive.
 
 ---
 
 ### 5. “Why this trade” explanation layer
-Each trade should clearly explain:
+Each trade should explain:
 - why it was selected
-- why it ranked ahead of others
-- whether volume/trend/quality conditions were supportive
-- why it was held out if not selected
+- how ranking / quality supported it
+- whether it was held out due to stronger-ranked trades, quality rules, or liquidity rules
 
 ---
 
 ### 6. Execution Layer
-A new rule-based execution framing layer.
+Rule-based execution framing layer.
 
 The system should explain:
 - **Entry reference**
@@ -216,16 +234,20 @@ The system should explain:
 - **Execution risk**
 
 #### Entry reference
-Use signal-day close / signal-time reference language, not prediction.
+Use signal-day close / reference-area language, not prediction.
 
-#### Exit framework
-Use the selected holding window / time-based exit logic.
+#### Planned exit
+Use explicit holding-window language such as:
+- 5 trading days
+- 10 trading days
+- 20 trading days
+- 30 trading days
 
 #### Typical outcome
 Use **median return** as the primary typical outcome metric.
 
 #### Execution risk
-Include spread/liquidity cautions where relevant.
+Include spread / liquidity cautions where relevant.
 
 This should appear in:
 - Portfolio
@@ -236,19 +258,10 @@ This should appear in:
 
 ### 7. Median-first metric rule
 The product should use:
-
 - **Median return = primary “typical outcome” metric**
 - **Average return = supporting context only**
 
-If average differs meaningfully from median, explain that:
-- a few large moves are affecting averages
-- most trades cluster closer to the median
-
-This rule should apply especially to:
-- Portfolio summaries
-- Ticker summaries
-- execution framing
-- analyst interpretation copy
+If average differs meaningfully from median, explain that a few large moves are affecting the average.
 
 ---
 
@@ -258,12 +271,26 @@ Portfolio should feel like a plan, not a raw report.
 Needed improvements:
 - cleaner labels
 - explanation-first framing
+- clearer holding-window / exit language
 - less dependence on users decoding internal fields
-- clearer first-screen decision meaning
 
 ---
 
-### 9. Ticker Analysis refinement
+### 9. Adaptive funded-trade behavior
+Portfolio funding should no longer feel permanently fixed at 3 trades.
+
+Funding should now be explained as adaptive to:
+- setup quality
+- rank order
+- capital discipline
+- reserve behavior
+
+Beginner mode keeps disciplined defaults.
+Analyst mode may expose a controlled trade-count cap override without bypassing hard quality rules.
+
+---
+
+### 10. Ticker Analysis refinement
 Ticker Analysis should continue the interpretation-first structure:
 
 1. Quick Take
@@ -278,54 +305,73 @@ Each remaining table must have a short explanation before it.
 
 ---
 
-### 10. Analyst Insights redesign
+### 11. Analyst Insights redesign
 Analyst Insights should stop feeling like a placeholder dump.
 
 #### Feature Insights
-- hide unless real meaningful feature-tag data exists
-- or replace with a clear note that feature-level insight is not available yet
+- hide unless meaningful feature-tag data exists
+- otherwise explain clearly that feature-level insight is not available yet
 
 #### Performance Matrix
 - explain what question it answers
-- explain what grouped setup/holding-period behavior means
+- explain what grouped setup / holding-period behavior means
 
 #### Exit Analysis
 - explain how trades usually end
-- simplify or hide if nearly everything is just a time-based exit
-
-The tab should be deeper, but still interpretable.
+- simplify or clearly explain if time-based exits dominate
 
 ---
 
-### 11. Global display-label cleanup
+### 12. Review redesign into Decision Audit
+Review should stop feeling like a backend table.
+
+Replace raw review output with a decision-audit surface that answers:
+- what happened
+- whether rules were followed
+- why it matters
+
+Preferred audit columns:
+- Ticker
+- Status
+- What happened
+- Why it matters
+
+---
+
+### 13. Global display-label cleanup
 Raw snake_case / backend labels must not leak into the UI.
 
-Examples:
-- holding_window → Holding Window
-- win_rate → Win Rate
-- avg_return → Average Return
-- median_return → Median Return
-- exit_reason → Exit Reason
-- quality_tier → Setup Strength
-
 This should be handled through shared display helpers where possible.
+
+---
+
+### 14. Stability hardening
+Sprint 13 also includes the stability work required to keep the new user-facing surfaces live and usable, including:
+- compact execution-summary crash fixes
+- sentence-splitting hardening
+- holding-window propagation restoration
+- safe fallback behavior for missing planned-exit text
 
 ---
 
 ## UX Structure
 
 ### Portfolio target structure
-
 1. Portfolio Snapshot
 2. Capital Summary
 3. Why some cash is reserved
-4. Trade table / trade cards
-5. Why this trade
-6. Execution Summary
+4. Funded Trades
+5. Unfunded Trades
+6. Funding approach / rules
 7. Optional deeper support in Analyst mode
 
-### Ticker Analysis target structure
+### Review target structure
+1. Summary interpretation
+2. What to improve
+3. Mistakes detected
+4. Decision Audit table
 
+### Ticker Analysis target structure
 1. Quick Take
 2. Best Holding Strategy
 3. Risk Profile
@@ -335,10 +381,9 @@ This should be handled through shared display helpers where possible.
 7. Analyst Deep Dive
 
 ### Analyst Insights target structure
-
-1. Strategy Summary
+1. Strategy-validation framing
 2. Performance Matrix
-3. Exit Behavior
+3. Exit Analysis
 4. Feature Insights (only if meaningful)
 
 ---
@@ -348,34 +393,18 @@ This should be handled through shared display helpers where possible.
 ### Beginner mode
 - explanation-first
 - lighter tables
-- no empty or placeholder analytical sections
+- no empty / placeholder analytical sections
 - no raw-table overload
 - no backend-style labels
 - median-first interpretation
+- no manual funded-trade override
 
 ### Analyst mode
 - keeps richer tables
 - still explains meaning before detail
-- preserves grouped evidence and raw breakdowns where useful
-- can show supporting counts and averages after the interpretation
-
----
-
-## Files Likely Involved
-
-- `app.py`
-- `app/planner/portfolio_ui.py`
-- `app/planner/explanations.py`
-- `app/analysis/ticker_intelligence.py`
-- `app/analysis/ticker_drilldown.py`
-- `app/insights/embedded.py`
-- `app/insights/analyst.py`
-- new helper modules if useful:
-  - `app/insights/portfolio_snapshot.py`
-  - `app/insights/translation.py`
-  - `app/insights/trade_explainer.py`
-  - `app/insights/execution.py`
-  - `app/ui/display_labels.py`
+- preserves grouped evidence and deeper breakdowns
+- can show supporting counts and averages after interpretation
+- may expose a controlled funded-trade cap override
 
 ---
 
@@ -384,9 +413,10 @@ This should be handled through shared display helpers where possible.
 ### Portfolio understanding
 - user understands why trades are selected
 - user understands setup strength
-- user understands confidence
+- user understands confidence / reliability
 - user understands why cash is reserved
-- user understands how a trade is intended to be executed
+- user understands how the trade is intended to be entered and exited
+- user understands that funded-trade count is adaptive, not arbitrary
 
 ### Ticker understanding
 - user understands the stock’s general behavior
@@ -398,7 +428,12 @@ This should be handled through shared display helpers where possible.
 - analyst sections answer clear questions
 - Performance Matrix is interpretable
 - Exit Analysis is interpretable
-- empty / placeholder sections are hidden or explained
+- empty / placeholder sections are hidden or clearly explained
+
+### Review understanding
+- users can understand what happened in the audit
+- users can understand why discipline mattered
+- review wording does not invert or confuse the meaning of rule checks
 
 ### Language / labels
 - wording is simple and Jamaican-friendly
@@ -410,12 +445,15 @@ This should be handled through shared display helpers where possible.
 
 ## Definition of Done
 
-Sprint 13 is complete when a first-time user can open the Portfolio and Ticker Analysis sections and understand:
+Sprint 13 is complete when a first-time user can open the Portfolio, Review, and Ticker Analysis sections and understand:
 
 - why trades are selected
 - what makes a setup stronger or weaker
 - why some money is held back
-- how the trade would typically be executed
+- how the trade would typically be approached
 - what the stock behavior means
+- whether the plan followed intended discipline
 
 without needing prior trading knowledge or analyst-level interpretation.
+
+Sprint 13 closes with the app live and ready for beta testing, with remaining minor issues treated as beta hardening rather than unfinished feature scope.
