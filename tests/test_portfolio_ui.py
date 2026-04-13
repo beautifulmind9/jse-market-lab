@@ -258,6 +258,43 @@ def test_render_portfolio_plan_reframes_rules_and_analyst_override_copy():
     assert "may include lower-ranked setups and reduce reserve discipline" in combined
 
 
+def test_render_portfolio_plan_limits_unfunded_rows_in_beginner_mode():
+    st = DummyStreamlit()
+    allocations = [
+        {
+            "instrument": "AAA",
+            "allocation_amount": 1000,
+            "allocation_pct": 0.1,
+            "quality_tier": "A",
+            "confidence_label": "strong",
+            "selection_rank": 1,
+        }
+    ]
+    allocations.extend(
+        {
+            "instrument": f"U{i:02d}",
+            "allocation_amount": 0,
+            "quality_tier": "B",
+            "confidence_label": "moderate",
+            "selection_rank": i,
+            "allocation_reason_clear": "Final allocation is 0% because max funded trades reached (3).",
+        }
+        for i in range(2, 22)
+    )
+
+    render_portfolio_plan(
+        allocations=allocations,
+        total_capital=10_000,
+        st_module=st,
+        section="plan",
+        mode="beginner",
+    )
+
+    unfunded_df = st.dataframes[2][0]
+    assert len(unfunded_df) == 12
+    assert any("Showing top 12 unfunded trades for speed." in caption for caption in st.captions)
+
+
 def test_render_review_tab_uses_human_readable_decision_audit_table():
     st = DummyStreamlit()
     render_portfolio_plan(

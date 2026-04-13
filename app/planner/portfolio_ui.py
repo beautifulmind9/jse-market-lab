@@ -43,6 +43,7 @@ _HOLDING_WINDOW_PATTERN = re.compile(
     r"^\s*([+-]?\d+)\s*(?:trading\s+days?|days?|d)?\s*$",
     re.IGNORECASE,
 )
+_BEGINNER_UNFUNDED_ROW_LIMIT = 12
 
 
 def build_portfolio_summary(
@@ -216,10 +217,22 @@ def render_portfolio_plan(
 
         st_module.markdown("#### Unfunded Trades")
         if unfunded_trades:
-            unfunded_df = pd.DataFrame(
-                [_portfolio_plan_row(trade, funded=False) for trade in unfunded_trades]
-            )
+            visible_unfunded = unfunded_trades
+            hidden_unfunded_count = 0
+            if not analyst_mode and len(unfunded_trades) > _BEGINNER_UNFUNDED_ROW_LIMIT:
+                visible_unfunded = sorted(
+                    unfunded_trades,
+                    key=lambda trade: float(trade.get("selection_rank", 10_000) or 10_000),
+                )[:_BEGINNER_UNFUNDED_ROW_LIMIT]
+                hidden_unfunded_count = len(unfunded_trades) - len(visible_unfunded)
+
+            unfunded_df = pd.DataFrame([_portfolio_plan_row(trade, funded=False) for trade in visible_unfunded])
             st_module.dataframe(unfunded_df, use_container_width=True)
+            if hidden_unfunded_count > 0:
+                st_module.caption(
+                    f"Showing top {_BEGINNER_UNFUNDED_ROW_LIMIT} unfunded trades for speed. "
+                    f"Switch to Analyst mode to view all {len(unfunded_trades)} rows."
+                )
         else:
             st_module.info("No unfunded trades for the selected inputs.")
 
