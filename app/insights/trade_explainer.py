@@ -68,7 +68,7 @@ def _unfunded_base_line(
     if decision_status == "Not valid":
         return "Not funded because this setup did not pass required quality or liquidity rules."
     if decision_status == "Not funded (limit reached)":
-        return "Not funded because available capital was reserved for stronger competing trades."
+        return "Not funded because higher-ranked eligible trades were funded first and reserve discipline was preserved."
     if decision_status == "Not funded (cut to zero)":
         return "Not funded because risk controls reduced the final allocation to zero."
 

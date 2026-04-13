@@ -109,6 +109,7 @@ def render_portfolio_plan(
     mode: str = "beginner",
     section: str = "both",
     show_header: bool = True,
+    analyst_max_funded_trades_override: int | None = None,
 ) -> None:
     """Render portfolio summary/review details in one section or both."""
     if st_module is None:
@@ -216,12 +217,20 @@ def render_portfolio_plan(
             st_module.info("No unfunded trades for the selected inputs.")
 
         st_module.markdown("#### Portfolio Rules")
-        st_module.markdown(
-            "- Max portfolio exposure: 70%\n"
-            "- Min cash reserve: 30%\n"
-            "- Max funded trades: 3\n"
-            "- Tier C and liquidity failures are not funded"
-        )
+        rules = [
+            "- Max portfolio exposure: 70%",
+            "- Min cash reserve: 30%",
+            "- Funding approach: prioritize top-ranked, stronger setups and expand only when multiple strong opportunities are available.",
+            "- Tier C and liquidity failures are not funded.",
+        ]
+        if analyst_mode and analyst_max_funded_trades_override is not None:
+            rules.append(
+                f"- Analyst cap override: up to {int(analyst_max_funded_trades_override)} funded trades (secondary control)."
+            )
+            rules.append(
+                "- Caution: increasing this cap may include lower-ranked setups and reduce reserve discipline."
+            )
+        st_module.markdown("\n".join(rules))
 
     def _render_review_section() -> None:
         st_module.markdown(
@@ -262,11 +271,14 @@ def render_portfolio_plan(
             st_module.markdown("- No clear decision mistakes were detected.")
 
         if show_review_table:
-            st_module.markdown("**Trade Review Table**")
+            st_module.markdown("**Decision Audit Table**")
             if review_df.empty:
                 st_module.info("No review rows available for this run.")
             else:
-                st_module.dataframe(review_df, use_container_width=True)
+                st_module.dataframe(
+                    _build_decision_audit_table(review_df),
+                    use_container_width=True,
+                )
 
     if normalized_section == "plan":
         _render_plan_section()
@@ -406,6 +418,57 @@ def _format_holding_window_label(value: Any) -> str:
     if window is None:
         return "Plan-defined window"
     return f"~{window} trading days"
+
+
+def _build_decision_audit_table(review_df: pd.DataFrame) -> pd.DataFrame:
+    rows: list[dict[str, str]] = []
+    for _, row in review_df.iterrows():
+        status, happened, matters = _translate_review_row(row)
+        rows.append(
+            {
+                "Ticker": str(row.get("instrument", "Unknown")),
+                "Status": status,
+                "What happened": happened,
+                "Why it matters": matters,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _translate_review_row(row: Mapping[str, Any]) -> tuple[str, str, str]:
+    if bool(row.get("followed_rules")):
+        return (
+            "Followed plan",
+            "Rank order and core checks were preserved.",
+            "Process discipline stayed consistent across selection and funding.",
+        )
+
+    if str(row.get("quality_flag", "")).lower() == "fail":
+        return (
+            "Blocked by quality rule",
+            "This setup did not pass the quality threshold.",
+            "Quality filtering prevented weaker setups from being forced into the plan.",
+        )
+
+    if str(row.get("liquidity_flag", "")).lower() == "fail":
+        return (
+            "Blocked by liquidity check",
+            "Liquidity screening did not clear for this setup.",
+            "Execution risk stayed in check because liquidity screening was applied.",
+        )
+
+    if str(row.get("deviation_type", "")).lower() == "rank_deviation":
+        return (
+            "Not funded due to stronger-ranked setups",
+            "Higher-ranked eligible trades were funded first.",
+            "Rank-order discipline protected capital from drifting into lower-priority setups.",
+        )
+
+    return (
+        "Review flag raised",
+        "A process deviation was detected in this row.",
+        "This row should be reviewed before expanding risk.",
+    )
 
 
 def _compact_execution_summary(summary: str) -> str:

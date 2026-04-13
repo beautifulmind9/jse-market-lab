@@ -110,7 +110,32 @@ def test_total_exposure_never_exceeds_cap():
     assert payload["total_allocated_pct"] <= 0.70
 
 
-def test_funded_trade_count_never_exceeds_three():
+def test_lower_ranked_trades_stay_unfunded_when_exposure_is_consumed():
+    payload = generate_portfolio_allocation(
+        [
+            {
+                "instrument": f"S{i}",
+                "quality_tier": "A",
+                "liquidity_pass": True,
+                "volatility_bucket": "low",
+                "earnings_warning_severity": "info",
+                "confidence_label": "strong",
+            }
+            for i in range(5)
+        ],
+        100_000,
+    )
+
+    funded = [row for row in payload["allocations"] if row["allocation_pct"] > 0]
+    unfunded = [row for row in payload["allocations"] if row["allocation_pct"] == 0]
+    assert len(funded) >= 2
+    assert len(unfunded) >= 1
+    assert min(row["selection_rank"] for row in unfunded) > max(
+        row["selection_rank"] for row in funded
+    )
+
+
+def test_strong_market_can_fund_more_than_three_trades_when_rules_allow():
     payload = generate_portfolio_allocation(
         [
             {
@@ -119,7 +144,7 @@ def test_funded_trade_count_never_exceeds_three():
                 "liquidity_pass": True,
                 "volatility_bucket": "low",
                 "earnings_warning_severity": "info",
-                "confidence_label": "moderate",
+                "confidence_label": "high risk",
             }
             for i in range(6)
         ],
@@ -127,7 +152,7 @@ def test_funded_trade_count_never_exceeds_three():
     )
 
     funded = [row for row in payload["allocations"] if row["allocation_pct"] > 0]
-    assert len(funded) <= 3
+    assert len(funded) > 3
 
 
 def test_cash_reserve_is_at_least_minimum():
@@ -158,6 +183,7 @@ def test_output_structure_is_stable():
         "total_allocated_amount",
         "cash_reserve_pct",
         "cash_reserve_amount",
+        "max_funded_trades_override_applied",
     }
 
     assert set(payload["allocations"][0].keys()) == {
@@ -172,6 +198,7 @@ def test_output_structure_is_stable():
         "allocation_reason_clear",
         "allocation_reason_pro",
     }
+    assert payload["max_funded_trades_override_applied"] is None
 
 
 def test_confidence_derives_when_missing_label():
@@ -280,3 +307,74 @@ def test_allocation_outputs_selection_rank_and_funded_rank_fields():
     assert by_symbol["S1"]["funded_rank"] == 1
     assert by_symbol["S2"]["selection_rank"] == 2
     assert by_symbol["S2"]["eligible_for_funding"] is True
+
+
+def test_analyst_override_caps_funded_trades_without_bypassing_quality_rules():
+    payload = generate_portfolio_allocation(
+        [
+            {
+                "instrument": "A1",
+                "quality_tier": "A",
+                "liquidity_pass": True,
+                "volatility_bucket": "low",
+                "earnings_warning_severity": "info",
+                "confidence_label": "strong",
+            },
+            {
+                "instrument": "A2",
+                "quality_tier": "A",
+                "liquidity_pass": True,
+                "volatility_bucket": "low",
+                "earnings_warning_severity": "info",
+                "confidence_label": "strong",
+            },
+            {
+                "instrument": "A3",
+                "quality_tier": "B",
+                "liquidity_pass": True,
+                "volatility_bucket": "low",
+                "earnings_warning_severity": "info",
+                "confidence_label": "moderate",
+            },
+            {
+                "instrument": "C1",
+                "quality_tier": "C",
+                "liquidity_pass": True,
+                "volatility_bucket": "low",
+                "earnings_warning_severity": "info",
+                "confidence_label": "strong",
+            },
+        ],
+        100_000,
+        mode="analyst",
+        max_funded_trades_override=2,
+    )
+
+    funded = [row for row in payload["allocations"] if row["allocation_pct"] > 0]
+    by_symbol = {row["instrument"]: row for row in payload["allocations"]}
+    assert len(funded) == 2
+    assert by_symbol["C1"]["allocation_pct"] == 0.0
+    assert payload["max_funded_trades_override_applied"] == 2
+
+
+def test_beginner_mode_has_no_override_path():
+    payload = generate_portfolio_allocation(
+        [
+            {
+                "instrument": f"B{i}",
+                "quality_tier": "B",
+                "liquidity_pass": True,
+                "volatility_bucket": "low",
+                "earnings_warning_severity": "info",
+                "confidence_label": "high risk",
+            }
+            for i in range(6)
+        ],
+        100_000,
+        mode="beginner",
+        max_funded_trades_override=1,
+    )
+
+    funded = [row for row in payload["allocations"] if row["allocation_pct"] > 0]
+    assert len(funded) > 1
+    assert payload["max_funded_trades_override_applied"] is None
