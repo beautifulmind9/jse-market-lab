@@ -144,7 +144,7 @@ def render_portfolio_plan(
             "Why this trade": (
                 explain_trade_reason(trade, mode=mode) if funded else resolve_unfunded_reason(trade)
             ),
-            "Execution Summary": _compact_execution_summary(execution["summary"]),
+            "Execution Summary": _compact_execution_summary(execution, mode=mode),
         }
 
         if analyst_mode:
@@ -415,67 +415,36 @@ def _is_abbreviation_boundary(text: str, punctuation_idx: int) -> bool:
 
 def _format_holding_window_label(value: Any) -> str:
     window = _int_or_none(value)
-    if window is None:
-        return "Plan-defined window"
-    return f"~{window} trading days"
+    if window is None or window <= 0:
+        return "Not specified"
+    return f"{window} trading days"
 
 
-def _build_decision_audit_table(review_df: pd.DataFrame) -> pd.DataFrame:
-    rows: list[dict[str, str]] = []
-    for _, row in review_df.iterrows():
-        status, happened, matters = _translate_review_row(row)
-        rows.append(
-            {
-                "Ticker": str(row.get("instrument", "Unknown")),
-                "Status": status,
-                "What happened": happened,
-                "Why it matters": matters,
-            }
-        )
-    return pd.DataFrame(rows)
+def _compact_execution_summary(execution: Mapping[str, Any], *, mode: str = "beginner") -> str:
+    entry_reference = _first_sentence(str(execution.get("entry_reference", "")).strip())
+    entry_phrase = "Entry reference uses the signal-day close area"
+    if entry_reference:
+        entry_phrase = entry_reference
+
+    planned_exit = str(execution.get("planned_exit", "")).strip()
+    holding_days = _extract_holding_days(planned_exit)
+    analyst_mode = str(mode or "beginner").strip().lower() == "analyst"
+
+    if holding_days is None:
+        exit_phrase = "planned exit timing is not specified"
+    elif analyst_mode:
+        exit_phrase = f"planned exit review occurs after {holding_days} trading days"
+    else:
+        exit_phrase = f"planned exit after {holding_days} trading days"
+
+    return f"{entry_phrase}; {exit_phrase}."
 
 
-def _translate_review_row(row: Mapping[str, Any]) -> tuple[str, str, str]:
-    if bool(row.get("followed_rules")):
-        return (
-            "Followed plan",
-            "Rank order and core checks were preserved.",
-            "Process discipline stayed consistent across selection and funding.",
-        )
-
-    if str(row.get("quality_flag", "")).lower() == "fail":
-        return (
-            "Blocked by quality rule",
-            "This setup did not pass the quality threshold.",
-            "Quality filtering prevented weaker setups from being forced into the plan.",
-        )
-
-    if str(row.get("liquidity_flag", "")).lower() == "fail":
-        return (
-            "Blocked by liquidity check",
-            "Liquidity screening did not clear for this setup.",
-            "Execution risk stayed in check because liquidity screening was applied.",
-        )
-
-    if str(row.get("deviation_type", "")).lower() == "rank_deviation":
-        return (
-            "Not funded due to stronger-ranked setups",
-            "Higher-ranked eligible trades were funded first.",
-            "Rank-order discipline protected capital from drifting into lower-priority setups.",
-        )
-
-    return (
-        "Review flag raised",
-        "A process deviation was detected in this row.",
-        "This row should be reviewed before expanding risk.",
-    )
-
-
-def _compact_execution_summary(summary: str) -> str:
-    first_sentence = _first_sentence(summary)
-    if first_sentence:
-        return first_sentence
-    return "Execution plan uses reference pricing, time-based exits, and risk checks."
+def _extract_holding_days(planned_exit: str) -> int | None:
+    match = re.search(r"(\d+)\s+trading\s+days", str(planned_exit or ""), flags=re.IGNORECASE)
+    if match is None:
+        return None
+    return _int_or_none(match.group(1))
 
 
 def _int_or_none(value: Any) -> int | None:
