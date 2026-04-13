@@ -1,40 +1,40 @@
 # JSE Market Lab
 
-A beta-stage decision-support product that helps retail investors evaluate Jamaican Stock Exchange opportunities using structured rules instead of guesswork.
+JSE Market Lab is a public-beta decision-support product that helps retail investors evaluate Jamaican Stock Exchange opportunities with explicit rules, constraints, and trade-offs.
 
 ## Beta status
-This repository reflects a **public beta** release: stable enough to explore, still evolving through documented iteration.
+This repository is a **public beta**: stable enough for evaluation, still evolving through documented iteration and user feedback.
 
 ## What problem it solves
-Many retail investors can see market data but still struggle to:
+Many retail investors can access market data but still struggle to:
 - compare opportunities consistently,
 - account for costs and liquidity,
 - handle earnings-related uncertainty,
-- turn signals into disciplined portfolio actions.
+- convert signals into disciplined portfolio actions.
 
 ## What the product does
-JSE Market Lab converts market inputs into a structured decision workflow:
+JSE Market Lab converts price action, earnings context, liquidity signals, and trading costs into a repeatable decision workflow:
 
 `Data -> Signal -> Score -> Risk Flags -> Confidence -> Allocation -> Portfolio Plan`
 
 ## Core features
-- Rule-based signal detection for JSE instruments.
-- Trade quality scoring (Tier A/B/C).
-- Cost-aware outputs (broker fee + CESS assumptions).
-- Earnings phase tagging and warning context.
-- Confidence and prioritization layer.
-- Portfolio allocation planner with cash/exposure constraints.
-- Review layer for post-decision discipline feedback.
+- Detects rule-based signals for JSE instruments.
+- Scores each setup using a Tier A/B/C quality model.
+- Applies broker-fee and CESS assumptions to frame net outcomes.
+- Tags earnings phases and surfaces relevant risk warnings.
+- Ranks candidates with confidence and prioritization signals.
+- Plans allocations with cash and exposure constraints.
+- Supports post-decision review to reinforce discipline.
 
 ## Why it is different
 - Built as a **decision-support system**, not a pick-selling feed.
-- Emphasizes explainability and product clarity over prediction claims.
-- Anchored in Jamaican market context while using globally understandable product design.
+- Shows how each output is derived, so users can audit the logic.
+- Models Jamaican market frictions directly (costs, liquidity, and event risk).
 
 ## Positioning and non-goals
 This project is:
 - a structured decision-support tool,
-- a product portfolio artifact showing end-to-end product thinking.
+- a product portfolio artifact that shows end-to-end product thinking from framing to iteration.
 
 This project is **not**:
 - financial advice,
@@ -42,13 +42,13 @@ This project is **not**:
 - an auto-trading or signal-selling service.
 
 ## Key docs
-- [Product Brief](docs/product_brief.md)
-- [Feature Breakdown](docs/feature_breakdown.md)
-- [Product Decisions](docs/product_decisions.md)
-- [Iteration Log](docs/iteration_log.md)
-- [Portfolio Case Study](docs/portfolio_case_study.md)
-- [User Flow](docs/user_flow.md)
-- [Selected UAT Samples](docs/uat/)
+- [Product Brief](./docs/product_brief.md)
+- [Feature Breakdown](./docs/feature_breakdown.md)
+- [Product Decisions](./docs/product_decisions.md)
+- [Iteration Log](./docs/iteration_log.md)
+- [Portfolio Case Study](./docs/portfolio_case_study.md)
+- [User Flow](./docs/user_flow.md)
+- [Selected UAT Samples](./docs/uat/)
 
 ## Run locally
 ```bash
