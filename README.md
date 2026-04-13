@@ -55,7 +55,7 @@ This project is **not**:
 - [Iteration Log](docs/iteration_log.md)
 - [Portfolio Case Study](docs/portfolio_case_study.md)
 - [User Flow](docs/user_flow.md)
-- [UAT](docs/uat/)
+- [UAT](docs/uat/README.md)
 
 ## Run locally
 ```bash
