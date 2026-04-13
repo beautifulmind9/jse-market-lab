@@ -469,23 +469,23 @@ def _compact_execution_summary(execution: Mapping[str, Any], *, mode: str = "beg
     entry_reference = _first_sentence(str(execution.get("entry_reference", "")).strip())
     entry_phrase = "Entry reference uses the signal-day close area"
     if entry_reference:
-        entry_phrase = entry_reference
+        entry_phrase = entry_reference.rstrip(".")
 
     planned_exit = str(execution.get("planned_exit", "")).strip()
-    holding_days = _extract_holding_days(planned_exit)
+    holding_days = _extract_planned_exit_days(planned_exit)
     analyst_mode = str(mode or "beginner").strip().lower() == "analyst"
 
-    if str(row.get("deviation_type", "")).lower() == "rank_deviation":
-        return (
-            "Rank order deviation",
-            "A lower-ranked trade was selected while a higher-ranked eligible trade was available.",
-            "This breaks rank discipline and may reduce overall portfolio quality.",
-        )
+    if holding_days is None:
+        exit_phrase = "planned exit timing is not specified"
+    elif analyst_mode:
+        exit_phrase = f"planned exit after {holding_days} trading days"
+    else:
+        exit_phrase = f"planned exit after {holding_days} trading days"
 
     return f"{entry_phrase}; {exit_phrase}."
 
 
-def _extract_holding_days(planned_exit: str) -> int | None:
+def _extract_planned_exit_days(planned_exit: str) -> int | None:
     match = re.search(r"(\d+)\s+trading\s+days", str(planned_exit or ""), flags=re.IGNORECASE)
     if match is None:
         return None

@@ -364,6 +364,18 @@ def test_compact_execution_summary_has_no_advisory_language_in_both_modes():
     assert contains_advisory_language(analyst) is False
 
 
+
+
+def test_compact_execution_summary_ignores_deviation_type_without_row_context():
+    compact = _compact_execution_summary(
+        {
+            "entry_reference": "Use the signal-day close area as a reference, not an exact guaranteed fill.",
+            "planned_exit": "Default exit is after about 8 trading days, unless conditions are reviewed earlier.",
+            "deviation_type": "rank_deviation",
+        }
+    )
+
+    assert "planned exit after 8 trading days" in compact
 def test_compact_execution_summary_uses_not_specified_exit_fallback():
     compact = _compact_execution_summary(
         {
