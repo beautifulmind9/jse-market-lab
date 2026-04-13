@@ -1,61 +1,57 @@
 # JSE Market Lab
 
-JSE Market Lab is a **public-beta decision-support product** for retail investors in the Jamaican Stock Exchange. It helps users make clearer portfolio decisions by turning market signals, costs, and risk context into a transparent workflow they can review and challenge.
+JSE Market Lab is a **public-beta decision-support product** for self-directed investors in the Jamaican Stock Exchange (JSE). It turns market signals, cost assumptions, and risk context into a transparent workflow users can review, challenge, and use in their own decision process.
 
 ## Beta status
-This repository is a **public beta**: stable enough for evaluation, still evolving through documented iteration and user feedback.
+This repository is in **public beta**: stable enough for evaluation, still improving through documented iteration and UAT feedback.
 
-## What problem it solves
-Many retail investors can access market data but still struggle to:
+## Problem it addresses
+Many retail investors can access prices and market commentary, but still struggle to:
 - compare opportunities consistently,
 - account for costs and liquidity,
 - handle earnings-related uncertainty,
-- convert signals into disciplined portfolio actions.
+- convert analysis into disciplined portfolio actions.
 
 ## What the product does
-For each instrument, JSE Market Lab:
+For each JSE instrument, JSE Market Lab:
 - ingests price behavior, earnings context, liquidity conditions, and fee assumptions,
 - applies explicit rules to detect and score setups,
 - surfaces risk flags and confidence levels,
-- translates output into allocation guidance and portfolio plan options.
+- translates outputs into allocation guidance and a portfolio plan.
 
 Workflow:
 
 `Data -> Signal -> Score -> Risk Flags -> Confidence -> Allocation -> Portfolio Plan`
 
-## Core features
-- Identifies rule-based setups for listed JSE instruments.
-- Scores opportunities with a transparent Tier A/B/C quality model.
-- Estimates net outcomes using Jamaican broker-fee and CESS assumptions.
-- Flags earnings phases and event-related risk conditions.
-- Prioritizes candidates by confidence and decision relevance.
-- Generates allocation plans within cash and exposure constraints.
-- Supports post-decision review for consistency and discipline.
+## Product scope
+### In scope
+- Rule-based setup detection for listed JSE instruments.
+- Tier A/B/C quality scoring with transparent logic.
+- Cost-aware framing using Jamaican broker-fee and CESS assumptions.
+- Earnings-phase and event-risk warning context.
+- Allocation planning under cash and exposure constraints.
+- Decision review outputs to support consistency and discipline.
 
-## Why it is different
-- Prioritizes **explainability**: outputs are tied to explicit logic, not black-box predictions.
-- Prioritizes **clarity**: signals, scores, and risk flags are structured for fast interpretation.
-- Prioritizes **user judgment**: the product supports decisions; it does not replace investor discretion.
-- Reflects Jamaican market realities, including trading frictions, liquidity, and event risk.
-
-## Positioning and non-goals
-This project is:
-- a structured decision-support tool,
-- a product portfolio artifact that shows end-to-end product thinking from framing to iteration.
-
-This project is **not**:
+### Non-goals
+JSE Market Lab is **not**:
 - financial advice,
 - a prediction engine,
 - an auto-trading or signal-selling service.
 
+## Why this product is useful
+- **Explainable:** outputs map to explicit rules rather than black-box predictions.
+- **Decision-oriented:** the product supports judgment; it does not replace investor discretion.
+- **Jamaican-market aware:** framing reflects local trading frictions, liquidity realities, and event risk.
+- **Portfolio-ready artifact:** documentation shows end-to-end product thinking from problem framing through beta hardening.
+
 ## Key docs
-- [Product Brief](docs/product_brief.md)
-- [Feature Breakdown](docs/feature_breakdown.md)
-- [Product Decisions](docs/product_decisions.md)
-- [Iteration Log](docs/iteration_log.md)
-- [Portfolio Case Study](docs/portfolio_case_study.md)
-- [User Flow](docs/user_flow.md)
-- [UAT](docs/uat/README.md)
+- [Product brief](./docs/product_brief.md)
+- [Feature breakdown](./docs/feature_breakdown.md)
+- [Product decisions](./docs/product_decisions.md)
+- [Iteration log](./docs/iteration_log.md)
+- [Portfolio case study](./docs/portfolio_case_study.md)
+- [User flow](./docs/user_flow.md)
+- [UAT summary and links](./docs/uat/README.md)
 
 ## Run locally
 ```bash
