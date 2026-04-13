@@ -149,7 +149,7 @@ def test_render_portfolio_plan_beginner_vs_analyst_columns():
     assert "Selection Rank" in analyst_df.columns
     assert "Allocation %" in analyst_df.columns
     assert "Rule Note" in analyst_df.columns
-    assert analyst_df.iloc[0]["Holding Window"] == "~10 trading days"
+    assert analyst_df.iloc[0]["Holding Window"] == "10 trading days"
 
 
 def test_render_portfolio_plan_keeps_explanations_before_supporting_fields():
@@ -484,7 +484,55 @@ def test_extract_holding_days_accepts_positive_values_only():
 
 
 def test_format_holding_window_label_falls_back_for_invalid_or_non_positive_values():
-    assert _format_holding_window_label(10) == "~10 trading days"
+    assert _format_holding_window_label(10) == "10 trading days"
     assert _format_holding_window_label("0 trading days") == "Not specified"
     assert _format_holding_window_label("-5 trading days") == "Not specified"
     assert _format_holding_window_label("invalid window") == "Not specified"
+
+
+def test_render_portfolio_plan_shows_explicit_holding_window_for_funded_and_unfunded_rows():
+    st = DummyStreamlit()
+    render_portfolio_plan(
+        allocations=[
+            {
+                "instrument": "AAA",
+                "allocation_amount": 1000,
+                "allocation_pct": 0.1,
+                "quality_tier": "A",
+                "confidence_label": "strong",
+                "selection_rank": 1,
+                "holding_window": 10,
+            },
+            {
+                "instrument": "BBB",
+                "allocation_amount": 0,
+                "allocation_pct": 0.0,
+                "quality_tier": "B",
+                "confidence_label": "moderate",
+                "selection_rank": 4,
+                "holding_window": 20,
+                "allocation_reason_clear": "Final allocation is 0% because max funded trades reached (3).",
+            },
+        ],
+        total_capital=10_000,
+        st_module=st,
+        section="plan",
+        mode="beginner",
+    )
+
+    funded_df = st.dataframes[1][0]
+    unfunded_df = st.dataframes[2][0]
+
+    assert funded_df.iloc[0]["Holding Window"] == "10 trading days"
+    assert unfunded_df.iloc[0]["Holding Window"] == "20 trading days"
+
+
+def test_compact_execution_summary_uses_holding_window_when_planned_exit_missing():
+    compact = _compact_execution_summary(
+        {
+            "entry_reference": "Use the signal-day close area as a reference, not an exact guaranteed fill.",
+            "holding_window": 30,
+        }
+    )
+
+    assert "planned exit after 30 trading days" in compact

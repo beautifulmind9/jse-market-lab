@@ -7,7 +7,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
-from app.shell import build_analyst_dataset
+from app.shell import build_analyst_dataset, coerce_trade_rows_from_ranked
 
 
 def test_build_analyst_dataset_returns_return_bearing_trades_with_quality_tier(monkeypatch):
@@ -143,3 +143,21 @@ def test_extract_ticker_options_does_not_split_marker_variants():
     ticker_options = app_main._extract_ticker_options(canonical_df)
 
     assert ticker_options == ["CAR", "GK"]
+
+
+def test_coerce_trade_rows_from_ranked_preserves_holding_window_values():
+    ranked_df = pd.DataFrame(
+        {
+            "instrument": ["AAA", "BBB", "CCC", "DDD"],
+            "tier": ["A", "B", "A", "B"],
+            "holding_window": [10, None, None, -5],
+            "best_window": [None, "20D", "30 trading days", None],
+        }
+    )
+
+    rows = coerce_trade_rows_from_ranked(ranked_df)
+
+    assert rows[0]["holding_window"] == 10
+    assert rows[1]["holding_window"] == 20
+    assert rows[2]["holding_window"] == 30
+    assert rows[3]["holding_window"] is None

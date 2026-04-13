@@ -424,7 +424,7 @@ def _format_holding_window_label(value: Any) -> str:
     window = _extract_holding_days(value)
     if window is None:
         return "Not specified"
-    return f"~{window} trading days"
+    return f"{window} trading days"
 
 
 def _extract_holding_days(value: Any) -> int | None:
@@ -523,6 +523,8 @@ def _compact_execution_summary(execution: Mapping[str, Any], *, mode: str = "beg
 
     planned_exit = str(execution.get("planned_exit", "")).strip()
     holding_days = _extract_planned_exit_days(planned_exit)
+    if holding_days is None:
+        holding_days = _extract_holding_days(execution.get("holding_window"))
     analyst_mode = str(mode or "beginner").strip().lower() == "analyst"
 
     if holding_days is None:
