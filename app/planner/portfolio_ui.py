@@ -171,14 +171,16 @@ def render_portfolio_plan(
         metric_cols = st_module.columns(4)
         metric_cols[0].metric("Trades Found", len(allocations))
         metric_cols[1].metric("Funded Trades", summary["funded_trade_count"])
-        metric_cols[2].metric("Cash Reserved %", f"{summary['cash_reserve_pct']:.0%}")
-        metric_cols[3].metric("Allocated %", f"{summary['total_allocated_pct']:.0%}")
+        metric_cols[2].metric("Allocated %", f"{summary['total_allocated_pct']:.0%}")
+        metric_cols[3].metric("Cash Reserved %", f"{summary['cash_reserve_pct']:.0%}")
         if analyst_mode:
             st_module.info(
                 "Funding stayed concentrated on stronger ranked setups while maintaining reserve coverage."
             )
         else:
-            st_module.info("This snapshot shows how much is funded now and how much stays reserved.")
+            st_module.info(
+                "The current set is concentrated in a few stronger setups, with some capital held back for selectivity."
+            )
 
         with st_module.expander("How to read setup strength and confidence"):
             for line in snapshot["lines"]:
@@ -186,12 +188,25 @@ def render_portfolio_plan(
 
         reserved_cash = build_reserved_cash_explanation(allocations, total_capital, mode=mode)
         if reserved_cash["reserve_ratio"] > 0:
-            st_module.markdown("#### Why cash is reserved")
-            st_module.info(reserved_cash["lines"][0] if reserved_cash["lines"] else "Cash reserve supports discipline.")
-            if analyst_mode and len(reserved_cash["lines"]) > 1:
-                with st_module.expander("Reserve detail"):
+            with st_module.expander("Why cash is reserved", expanded=False):
+                st_module.info(
+                    reserved_cash["lines"][0] if reserved_cash["lines"] else "Cash reserve supports discipline."
+                )
+                if analyst_mode and len(reserved_cash["lines"]) > 1:
                     for line in reserved_cash["lines"][1:]:
                         st_module.markdown(f"- {line}")
+
+    def _render_trade_cards(trades: Sequence[Mapping[str, Any]], *, funded: bool) -> None:
+        for trade in trades:
+            plan_row = _portfolio_plan_row(trade, funded=funded)
+            st_module.markdown(
+                f"**{plan_row['Ticker']}** · {plan_row['Setup Strength']} · {plan_row['Confidence / Reliability']}"
+            )
+            st_module.caption(f"Holding window: {plan_row['Holding Window']}")
+            st_module.markdown(f"**Why this trade:** {plan_row['Why this trade']}")
+            if funded:
+                st_module.markdown(f"**Execution Summary:** {plan_row['Execution Summary']}")
+            st_module.markdown("---")
 
 
     def _render_plan_section() -> None:
@@ -199,8 +214,11 @@ def render_portfolio_plan(
 
         st_module.markdown("#### Funded Trades")
         if funded_trades:
-            funded_df = pd.DataFrame([_portfolio_plan_row(trade, funded=True) for trade in funded_trades])
-            st_module.dataframe(funded_df, use_container_width=True)
+            if analyst_mode:
+                funded_df = pd.DataFrame([_portfolio_plan_row(trade, funded=True) for trade in funded_trades])
+                st_module.dataframe(funded_df, use_container_width=True)
+            else:
+                _render_trade_cards(funded_trades, funded=True)
         else:
             st_module.info("No funded trades for the selected inputs.")
 
@@ -215,8 +233,11 @@ def render_portfolio_plan(
                 )[:_BEGINNER_UNFUNDED_ROW_LIMIT]
                 hidden_unfunded_count = len(unfunded_trades) - len(visible_unfunded)
 
-            unfunded_df = pd.DataFrame([_portfolio_plan_row(trade, funded=False) for trade in visible_unfunded])
-            st_module.dataframe(unfunded_df, use_container_width=True)
+            if analyst_mode:
+                unfunded_df = pd.DataFrame([_portfolio_plan_row(trade, funded=False) for trade in visible_unfunded])
+                st_module.dataframe(unfunded_df, use_container_width=True)
+            else:
+                _render_trade_cards(visible_unfunded, funded=False)
             if hidden_unfunded_count > 0:
                 st_module.caption(
                     f"Showing top {_BEGINNER_UNFUNDED_ROW_LIMIT} unfunded trades for speed. "

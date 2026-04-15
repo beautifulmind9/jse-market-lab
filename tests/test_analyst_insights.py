@@ -190,7 +190,7 @@ def test_render_analyst_insights_feature_insights_unavailable_message_is_explici
 
     assert (
         "info",
-        "Feature Insights activates when feature-tag columns are included in this dataset.",
+        "This section becomes available when the dataset includes feature-tag columns.",
     ) in st.calls
 
 
@@ -201,8 +201,8 @@ def test_render_analyst_insights_includes_explanatory_captions_for_matrix_and_ex
     render_analyst_insights(_sample_trades(), st_module=st, analyst_mode=True)
 
     captions = [text for event, text in st.calls if event == "caption"]
-    assert any("Performance Matrix — grouped setup quality and holding periods." in text for text in captions)
-    assert any("Exit Analysis — how trades usually end and what that says about discipline." in text for text in captions)
+    assert any("compare grouped setup quality" in text for text in captions)
+    assert any("behaved across exit windows" in text for text in captions)
 
 
 def test_render_analyst_insights_cleans_snake_case_labels_for_display_tables():

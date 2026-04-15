@@ -195,3 +195,20 @@ def test_freeze_and_unfreeze_issues_round_trip():
     restored = app_main._unfreeze_issues(frozen)
 
     assert restored == issues
+
+
+def test_dataset_period_description_uses_date_range_when_available():
+    spec = importlib.util.spec_from_file_location("app_main", ROOT / "app.py")
+    app_main = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(app_main)
+
+    df = pd.DataFrame({"date": pd.to_datetime(["2020-01-01", "2024-12-31", None])})
+    assert app_main._resolve_dataset_period_description(df) == (
+        "Using historical JSE data from 2020 to 2024 in the current dataset."
+    )
+
+
+def test_app_no_long_hard_coded_data_period_copy():
+    source = (ROOT / "app.py").read_text()
+    assert "since 2018 where available" not in source

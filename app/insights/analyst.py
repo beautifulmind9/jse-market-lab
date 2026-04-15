@@ -166,11 +166,13 @@ def render_analyst_insights(
 
     with insights_tab:
         st_module.subheader("Feature Insights")
-        st_module.caption("Feature Insights — setup tags connected to stronger or weaker outcomes.")
+        st_module.caption(
+            "This section shows whether detailed setup tags are linked to stronger or weaker outcomes."
+        )
         insights = build_feature_insights(trades_df, return_column=return_column)
         if not insights:
             st_module.info(
-                "Feature Insights activates when feature-tag columns are included in this dataset."
+                "This section becomes available when the dataset includes feature-tag columns."
             )
         for feature, summary in insights.items():
             st_module.markdown(f"#### {display_label(feature)}")
@@ -179,7 +181,9 @@ def render_analyst_insights(
 
     with matrix_tab:
         st_module.subheader("Performance Matrix")
-        st_module.caption("Performance Matrix — grouped setup quality and holding periods.")
+        st_module.caption(
+            "Use this section to compare grouped setup quality, holding period behavior, and historical consistency."
+        )
         try:
             matrix_payload = build_performance_matrix(
                 trades_df,
@@ -201,7 +205,9 @@ def render_analyst_insights(
 
     with exit_tab:
         st_module.subheader("Exit Analysis")
-        st_module.caption("Exit Analysis — how trades usually end and what that says about discipline.")
+        st_module.caption(
+            "Use this section to compare how trades behaved across exit windows, and where outcomes strengthened, weakened, or leveled off."
+        )
         required_cols = {"exit_reason", "quality_tier"}
         if required_cols.issubset(trades_df.columns):
             st_module.markdown("Interpretation: frequent stop exits can signal risk controls or weak setup quality.")
