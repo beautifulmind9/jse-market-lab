@@ -205,7 +205,7 @@ def test_dataset_period_description_uses_date_range_when_available():
 
     df = pd.DataFrame({"date": pd.to_datetime(["2020-01-01", "2024-12-31", None])})
     assert app_main._resolve_dataset_period_description(df) == (
-        "Using historical JSE data from 2020 to 2024 in the current dataset."
+        "Using historical JSE data from 2020-01-01 to 2024-12-31 in the current dataset."
     )
 
 

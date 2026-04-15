@@ -202,7 +202,7 @@ def test_render_analyst_insights_includes_explanatory_captions_for_matrix_and_ex
 
     captions = [text for event, text in st.calls if event == "caption"]
     assert any("compare grouped setup quality" in text for text in captions)
-    assert any("behaved across exit windows" in text for text in captions)
+    assert any("exit timing helped, hurt, or flattened outcomes" in text for text in captions)
 
 
 def test_render_analyst_insights_cleans_snake_case_labels_for_display_tables():

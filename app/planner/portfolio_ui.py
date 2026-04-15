@@ -173,14 +173,12 @@ def render_portfolio_plan(
         metric_cols[1].metric("Funded Trades", summary["funded_trade_count"])
         metric_cols[2].metric("Allocated %", f"{summary['total_allocated_pct']:.0%}")
         metric_cols[3].metric("Cash Reserved %", f"{summary['cash_reserve_pct']:.0%}")
-        if analyst_mode:
-            st_module.info(
-                "Funding stayed concentrated on stronger ranked setups while maintaining reserve coverage."
-            )
-        else:
-            st_module.info(
-                "The current set is concentrated in a few stronger setups, with some capital held back for selectivity."
-            )
+        interpretation = (
+            "Funding remained concentrated in stronger ranked setups while preserving cash for selectivity."
+            if analyst_mode
+            else "This plan funds the stronger setups first while preserving a cash buffer for discipline."
+        )
+        st_module.caption(interpretation)
 
         with st_module.expander("How to read setup strength and confidence"):
             for line in snapshot["lines"]:
@@ -189,7 +187,7 @@ def render_portfolio_plan(
         reserved_cash = build_reserved_cash_explanation(allocations, total_capital, mode=mode)
         if reserved_cash["reserve_ratio"] > 0:
             with st_module.expander("Why cash is reserved", expanded=False):
-                st_module.info(
+                st_module.caption(
                     reserved_cash["lines"][0] if reserved_cash["lines"] else "Cash reserve supports discipline."
                 )
                 if analyst_mode and len(reserved_cash["lines"]) > 1:
@@ -199,13 +197,14 @@ def render_portfolio_plan(
     def _render_trade_cards(trades: Sequence[Mapping[str, Any]], *, funded: bool) -> None:
         for trade in trades:
             plan_row = _portfolio_plan_row(trade, funded=funded)
-            st_module.markdown(
-                f"**{plan_row['Ticker']}** · {plan_row['Setup Strength']} · {plan_row['Confidence / Reliability']}"
-            )
-            st_module.caption(f"Holding window: {plan_row['Holding Window']}")
+            st_module.markdown(f"#### {plan_row['Ticker']}")
+            st_module.markdown(f"**Setup Strength:** {plan_row['Setup Strength']}")
+            st_module.markdown(f"**Confidence / Reliability:** {plan_row['Confidence / Reliability']}")
+            st_module.markdown(f"**Holding Window:** {plan_row['Holding Window']}")
             st_module.markdown(f"**Why this trade:** {plan_row['Why this trade']}")
-            if funded:
-                st_module.markdown(f"**Execution Summary:** {plan_row['Execution Summary']}")
+            st_module.markdown(
+                f"**Execution Summary:** {plan_row['Execution Summary'] if funded else 'Not funded in this cycle.'}"
+            )
             st_module.markdown("---")
 
 
