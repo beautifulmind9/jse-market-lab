@@ -16,7 +16,7 @@ def build_execution_summary(row: Mapping[str, Any], mode: str = "beginner") -> d
 
     status_prefix = ""
     if float(row.get("allocation_amount", 0.0) or 0.0) <= 0:
-        status_prefix = "Execution plan is inactive unless this trade is funded. "
+        status_prefix = "Execution plan activates when this trade receives funding. "
 
     summary = (
         f"{status_prefix}Entry reference: {entry_reference} "
@@ -65,8 +65,8 @@ def _build_typical_outcome(row: Mapping[str, Any], *, analyst_mode: bool) -> str
 
     if median_return is None:
         if avg_return is None:
-            return "Median outcome data is limited for this setup."
-        return f"Median outcome is unavailable; supporting average return is about {avg_return:.2%}."
+            return "Median outcome read will strengthen as completed trade outcomes increase."
+        return f"Median read is building; supporting average return is currently about {avg_return:.2%}."
 
     typical = f"Typical result is centered on median return near {median_return:.2%}."
     if avg_return is None:

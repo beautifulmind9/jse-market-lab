@@ -125,15 +125,13 @@ def render_portfolio_plan(
         normalized_section = "both"
 
     if show_header:
-        st_module.subheader("Portfolio Plan")
+        st_module.subheader("Portfolio")
     analyst_mode = str(mode or "beginner").lower() == "analyst"
     if show_header and normalized_section in {"plan", "both"}:
-        st_module.caption(
-            "The plan funds the strongest eligible setups first, while other trades stay out when rules or limits block them."
-        )
+        st_module.caption("The plan funds stronger eligible setups first and keeps reserve discipline in view.")
 
     if not allocations:
-        st_module.info("Portfolio Plan unavailable: no allocation outputs were provided.")
+        st_module.info("Portfolio Plan will populate once allocation outputs are available.")
         return
 
     summary = build_portfolio_summary(allocations, total_capital)
@@ -165,48 +163,39 @@ def render_portfolio_plan(
                     "Rule Note": explain_funded_trade_why(trade) if funded else "Not funded this cycle.",
                 }
             )
-        else:
-            row.update(
-                {
-                    "Allocation Amount": trade.get("allocation_amount", 0.0),
-                    "Decision Status": classify_decision_status(trade),
-                }
-            )
         return row
 
     def _render_snapshot_blocks() -> None:
         snapshot = build_portfolio_snapshot(allocations, total_capital, mode=mode)
         st_module.markdown("#### Portfolio Snapshot")
-        for line in snapshot["lines"]:
-            st_module.markdown(f"- {line}")
+        metric_cols = st_module.columns(4)
+        metric_cols[0].metric("Trades Found", len(allocations))
+        metric_cols[1].metric("Funded Trades", summary["funded_trade_count"])
+        metric_cols[2].metric("Cash Reserved %", f"{summary['cash_reserve_pct']:.0%}")
+        metric_cols[3].metric("Allocated %", f"{summary['total_allocated_pct']:.0%}")
+        if analyst_mode:
+            st_module.info(
+                "Funding stayed concentrated on stronger ranked setups while maintaining reserve coverage."
+            )
+        else:
+            st_module.info("This snapshot shows how much is funded now and how much stays reserved.")
+
+        with st_module.expander("How to read setup strength and confidence"):
+            for line in snapshot["lines"]:
+                st_module.markdown(f"- {line}")
 
         reserved_cash = build_reserved_cash_explanation(allocations, total_capital, mode=mode)
         if reserved_cash["reserve_ratio"] > 0:
             st_module.markdown("#### Why cash is reserved")
-            for line in reserved_cash["lines"]:
-                st_module.markdown(f"- {line}")
+            st_module.info(reserved_cash["lines"][0] if reserved_cash["lines"] else "Cash reserve supports discipline.")
+            if analyst_mode and len(reserved_cash["lines"]) > 1:
+                with st_module.expander("Reserve detail"):
+                    for line in reserved_cash["lines"][1:]:
+                        st_module.markdown(f"- {line}")
 
 
     def _render_plan_section() -> None:
         _render_snapshot_blocks()
-
-        st_module.markdown(
-            '<div class="jse-card"><div class="jse-eyebrow">Portfolio Summary</div><p style="margin:0;" class="jse-muted">Funding view of current eligible setups and reserve coverage.</p></div>',
-            unsafe_allow_html=True,
-        )
-        summary_df = pd.DataFrame(
-            [
-                {
-                    "Total Capital": float(total_capital or 0.0),
-                    "Allocated Amount": summary["total_allocated_amount"],
-                    **({"Allocated %": summary["total_allocated_pct"]} if analyst_mode else {}),
-                    "Cash Reserve Amount": summary["cash_reserve_amount"],
-                    **({"Cash Reserve %": summary["cash_reserve_pct"]} if analyst_mode else {}),
-                    "Funded Trades": summary["funded_trade_count"],
-                }
-            ]
-        )
-        st_module.dataframe(summary_df, use_container_width=True)
 
         st_module.markdown("#### Funded Trades")
         if funded_trades:
@@ -231,8 +220,12 @@ def render_portfolio_plan(
             if hidden_unfunded_count > 0:
                 st_module.caption(
                     f"Showing top {_BEGINNER_UNFUNDED_ROW_LIMIT} unfunded trades for speed. "
-                    f"Switch to Analyst mode to view all {len(unfunded_trades)} rows."
+                    f"Switch to Advanced View to view all {len(unfunded_trades)} rows."
                 )
+                with st_module.expander("See why more trades were not funded"):
+                    st_module.markdown(
+                        "Lower-ranked setups remain unfunded first when limits and reserve rules are active."
+                    )
         else:
             st_module.info("No unfunded trades for the selected inputs.")
 
@@ -250,12 +243,16 @@ def render_portfolio_plan(
             rules.append(
                 "- Caution: increasing this cap may include lower-ranked setups and reduce reserve discipline."
             )
-        st_module.markdown("\n".join(rules))
+        if analyst_mode:
+            st_module.markdown("\n".join(rules))
+        else:
+            with st_module.expander("Portfolio rules and funding approach"):
+                st_module.markdown("\n".join(rules))
 
     def _render_review_section() -> None:
-        st_module.markdown(
-            '<div class="jse-card"><div class="jse-eyebrow">Review Summary</div><p style="margin:0;">This section shows how closely selected trades followed system rules and where risk discipline changed.</p></div>',
-            unsafe_allow_html=True,
+        st_module.markdown("#### Review")
+        st_module.info(
+            "Review checks whether the plan followed its intended rules and where discipline mattered."
         )
         trades_df = pd.DataFrame(list(allocations))
         safe_signals_df = signals_df if signals_df is not None else pd.DataFrame()
@@ -267,31 +264,44 @@ def render_portfolio_plan(
         )
         discipline_score = compute_discipline_score(review_df)
 
-        st_module.write({"Discipline Score": discipline_score})
+        st_module.metric("Discipline Score", discipline_score)
 
         behavior_summary = build_behavior_summary(trades_df, review_df)
-        st_module.markdown("**Behavior Summary**")
-        for item in behavior_summary:
+        st_module.markdown("**Summary**")
+        for item in behavior_summary[: (3 if not analyst_mode else len(behavior_summary))]:
             st_module.markdown(f"- {item}")
+        if not analyst_mode and len(behavior_summary) > 3:
+            with st_module.expander("More summary detail"):
+                for item in behavior_summary[3:]:
+                    st_module.markdown(f"- {item}")
 
-        st_module.markdown("**What this means**")
+        st_module.markdown("**Interpretation**")
         for paragraph in _build_review_interpretation_paragraphs(review_df, mode=mode):
             st_module.markdown(paragraph)
 
         st_module.markdown("**What to improve**")
-        for bullet in _build_behavior_improvement_points(review_df, mode=mode):
+        improvements = _build_behavior_improvement_points(review_df, mode=mode)
+        for bullet in improvements[: (2 if not analyst_mode else len(improvements))]:
             st_module.markdown(f"- {bullet}")
+        if not analyst_mode and len(improvements) > 2:
+            with st_module.expander("More improvement points"):
+                for bullet in improvements[2:]:
+                    st_module.markdown(f"- {bullet}")
 
         st_module.markdown("**Mistakes Detected**")
         grouped_mistakes = _group_mistakes_for_display(mistake_list, mode=mode)
         if grouped_mistakes:
-            for line in grouped_mistakes:
+            for line in grouped_mistakes[: (2 if not analyst_mode else len(grouped_mistakes))]:
                 st_module.markdown(f"- {line}")
+            if not analyst_mode and len(grouped_mistakes) > 2:
+                with st_module.expander("More detected mistakes"):
+                    for line in grouped_mistakes[2:]:
+                        st_module.markdown(f"- {line}")
         else:
             st_module.markdown("- No clear decision mistakes were detected.")
 
         if show_review_table:
-            st_module.markdown("**Decision Audit Table**")
+            st_module.markdown("**Decision Audit**")
             if review_df.empty:
                 st_module.info("No review rows available for this run.")
             else:
@@ -316,7 +326,7 @@ def render_portfolio_plan(
 
 def _build_review_interpretation_paragraphs(review_df: pd.DataFrame, *, mode: str = "beginner") -> list[str]:
     if review_df is None or review_df.empty:
-        return ["There is not enough decision activity yet to read a clear behavior pattern."]
+        return ["Behavior read becomes sharper as more reviewed decisions accumulate."]
 
     total = max(int(len(review_df)), 1)
     followed = int(review_df["followed_rules"].fillna(False).astype(bool).sum())
