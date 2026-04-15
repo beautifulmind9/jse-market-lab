@@ -255,6 +255,28 @@ def _render_onboarding(st_module) -> None:
         st_module.markdown("- Historical outcomes like win rate and median return.")
 
 
+def _render_first_run_header(st_module, mode: str = "beginner", **_kwargs) -> None:
+    """Backward-compatible wrapper around the onboarding entry experience.
+
+    Older callers/tests still import and invoke ``_render_first_run_header``.
+    Keep this function as a thin compatibility layer while the app now uses
+    ``_render_onboarding`` as the primary startup path.
+    """
+    del mode  # preserved for compatibility with older call sites
+
+    supports_full_onboarding = all(
+        hasattr(st_module, attr) for attr in ("columns", "expander", "components")
+    )
+    if supports_full_onboarding:
+        _render_onboarding(st_module)
+        return
+
+    # Minimal fallback for lightweight streamlit stubs used in tests/callers.
+    st_module.markdown("### How to read this dashboard")
+    st_module.caption("Based on historical data.")
+    st_module.markdown("Use it as decision support—risk still matters in every setup.")
+
+
 def _render_data_status_summary(
     st_module,
     *,
