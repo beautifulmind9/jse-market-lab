@@ -264,12 +264,29 @@ def _render_first_run_header(st_module, mode: str = "beginner", **_kwargs) -> No
     """
     del mode  # preserved for compatibility with older call sites
 
+    components = getattr(st_module, "components", None)
+    components_v1 = getattr(components, "v1", None) if components is not None else None
     supports_full_onboarding = all(
-        hasattr(st_module, attr) for attr in ("columns", "expander", "components")
+        (
+            hasattr(st_module, "markdown"),
+            hasattr(st_module, "caption"),
+            hasattr(st_module, "columns"),
+            hasattr(st_module, "info"),
+            hasattr(st_module, "expander"),
+            hasattr(st_module, "components"),
+            components is not None,
+            hasattr(components, "v1"),
+            components_v1 is not None,
+            hasattr(components_v1, "html"),
+        )
     )
     if supports_full_onboarding:
-        _render_onboarding(st_module)
-        return
+        try:
+            _render_onboarding(st_module)
+            return
+        except AttributeError:
+            # Compatibility fallback for partial streamlit-like stubs.
+            pass
 
     # Minimal fallback for lightweight streamlit stubs used in tests/callers.
     st_module.markdown("### How to read this dashboard")

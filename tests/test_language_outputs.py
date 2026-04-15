@@ -74,6 +74,98 @@ def test_first_run_helper_renders_without_breaking():
     assert any("risk still matters" in line.lower() for line in st.lines)
 
 
+def test_first_run_helper_falls_back_when_info_missing():
+    module_path = ROOT / "app.py"
+    spec = importlib.util.spec_from_file_location("app_main", module_path)
+    assert spec and spec.loader
+    app_main = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(app_main)
+
+    class DummyComponentsV1:
+        def html(self, *_args, **_kwargs):
+            return None
+
+    class DummyComponents:
+        v1 = DummyComponentsV1()
+
+    class DummyExpander:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    class DummyStreamlitMissingInfo:
+        components = DummyComponents()
+
+        def __init__(self):
+            self.lines = []
+
+        def markdown(self, text, **_kwargs):
+            self.lines.append(text)
+
+        def caption(self, text):
+            self.lines.append(text)
+
+        def columns(self, n):
+            return [object() for _ in range(n)]
+
+        def expander(self, *_args, **_kwargs):
+            return DummyExpander()
+
+    st = DummyStreamlitMissingInfo()
+    app_main._render_first_run_header(st, mode="beginner")
+    assert any("How to read this" in line for line in st.lines)
+    assert any("Based on historical data." in line for line in st.lines)
+
+
+def test_first_run_helper_falls_back_when_components_html_missing():
+    module_path = ROOT / "app.py"
+    spec = importlib.util.spec_from_file_location("app_main", module_path)
+    assert spec and spec.loader
+    app_main = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(app_main)
+
+    class DummyComponentsV1:
+        pass
+
+    class DummyComponents:
+        v1 = DummyComponentsV1()
+
+    class DummyExpander:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    class DummyStreamlitMissingHtml:
+        components = DummyComponents()
+
+        def __init__(self):
+            self.lines = []
+
+        def markdown(self, text, **_kwargs):
+            self.lines.append(text)
+
+        def caption(self, text):
+            self.lines.append(text)
+
+        def columns(self, n):
+            return [object() for _ in range(n)]
+
+        def info(self, text):
+            self.lines.append(text)
+
+        def expander(self, *_args, **_kwargs):
+            return DummyExpander()
+
+    st = DummyStreamlitMissingHtml()
+    app_main._render_first_run_header(st, mode="beginner")
+    assert any("How to read this" in line for line in st.lines)
+    assert any("Based on historical data." in line for line in st.lines)
+
+
 def test_embedded_why_this_matters_includes_trust_layer_without_advisory_terms():
     payload = generate_embedded_insights(
         [{"quality_tier": "A", "volatility_bucket": "medium", "win_rate": 0.52, "avg_return": 0.01, "median_return": 0.01}],
