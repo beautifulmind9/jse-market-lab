@@ -223,9 +223,9 @@ def _resolve_dataset_period_description(df: pd.DataFrame) -> str:
     if date_values.empty:
         return "Using historical JSE data available in the current dataset."
 
-    min_year = int(date_values.min().year)
-    max_year = int(date_values.max().year)
-    return f"Using historical JSE data from {min_year} to {max_year} in the current dataset."
+    min_date = date_values.min().date().isoformat()
+    max_date = date_values.max().date().isoformat()
+    return f"Using historical JSE data from {min_date} to {max_date} in the current dataset."
 
 
 def _render_start_here_video(st_module) -> None:
@@ -247,6 +247,11 @@ def _render_onboarding(st_module, *, dataset_period_description: str) -> None:
         st_module.info("**Review**\n\nCheck whether the plan followed its rules.")
 
     with st_module.expander("Learn how this works", expanded=False):
+        st_module.markdown("#### Methodology")
+        st_module.markdown(
+            "This is a decision-support dashboard for selecting, sizing, and reviewing JSE trade setups."
+        )
+
         st_module.markdown("#### What this dashboard does")
         st_module.markdown("- Highlights stronger and weaker setups.")
         st_module.markdown("- Helps compare trades more clearly.")
@@ -350,7 +355,6 @@ def main() -> None:
     _render_visual_polish(st)
 
     st.title("JSE Market Lab")
-    st.caption("Decision support for selecting, sizing, and reviewing JSE trade setups.")
     mode_label = st.radio("View", options=list(_MODE_OPTIONS.keys()), horizontal=True, index=0)
     mode_token = _MODE_OPTIONS[mode_label]
     st.caption("Guided View: simpler explanations and lighter detail")

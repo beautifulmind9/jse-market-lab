@@ -314,7 +314,9 @@ def test_render_portfolio_plan_limits_unfunded_rows_in_beginner_mode():
         mode="beginner",
     )
 
-    unfunded_headers = [line for line in st.markdowns if line.startswith("**U")]
+    unfunded_headers = [
+        line for line in st.markdowns if line.startswith("#### U") and len(line) > 6 and line[6].isdigit()
+    ]
     assert len(unfunded_headers) == 12
     assert any("Showing top 12 unfunded trades for speed." in caption for caption in st.captions)
 
@@ -582,9 +584,9 @@ def test_render_portfolio_plan_shows_explicit_holding_window_for_funded_and_unfu
         mode="beginner",
     )
 
-    holding_captions = [line for line in st.captions if line.startswith("Holding window:")]
-    assert "Holding window: 10 trading days" in holding_captions
-    assert "Holding window: 20 trading days" in holding_captions
+    holding_lines = [line for line in st.markdowns if line.startswith("**Holding Window:**")]
+    assert "**Holding Window:** 10 trading days" in holding_lines
+    assert "**Holding Window:** 20 trading days" in holding_lines
 
 
 def test_compact_execution_summary_uses_holding_window_when_planned_exit_missing():
