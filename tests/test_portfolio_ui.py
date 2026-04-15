@@ -31,6 +31,20 @@ class DummyStreamlit:
         def __exit__(self, exc_type, exc, tb):
             return False
 
+    class _DummyColumn:
+        def metric(self, *_args, **_kwargs):
+            return None
+
+    class _DummyExpander:
+        def __init__(self, st_module):
+            self._st = st_module
+
+        def __enter__(self):
+            return self._st
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
     def subheader(self, _text):
         return None
 
@@ -49,6 +63,15 @@ class DummyStreamlit:
 
     def write(self, payload):
         self.writes.append(payload)
+
+    def metric(self, *_args, **_kwargs):
+        return None
+
+    def columns(self, count):
+        return [self._DummyColumn() for _ in range(count)]
+
+    def expander(self, _label, **_kwargs):
+        return self._DummyExpander(self)
 
     def tabs(self, names):
         self.tabs_requested.append(list(names))
@@ -79,8 +102,8 @@ def test_render_portfolio_plan_uses_cleaned_plan_labels_in_beginner_mode():
         st_module=st,
     )
 
-    funded_df = st.dataframes[1][0]
-    unfunded_df = st.dataframes[2][0]
+    funded_df = st.dataframes[0][0]
+    unfunded_df = st.dataframes[1][0]
 
     assert "Ticker" in funded_df.columns
     assert "Setup Strength" in funded_df.columns
@@ -102,11 +125,11 @@ def test_render_portfolio_plan_uses_cleaned_plan_labels_in_beginner_mode():
     assert "Selected because" in funded_df.iloc[0]["Why this trade"]
     assert "planned exit" in funded_df.iloc[0]["Execution Summary"]
     assert "trading days" not in funded_df.iloc[0]["Execution Summary"]
-    assert funded_df.iloc[0]["Decision Status"] == "Selected"
-    assert unfunded_df.iloc[0]["Decision Status"] == "Not funded (limit reached)"
-    assert "funds the strongest eligible setups first" in st.captions[0]
+    assert "Decision Status" not in funded_df.columns
+    assert "Decision Status" not in unfunded_df.columns
+    assert "funds stronger eligible setups first" in st.captions[0]
     assert st.tabs_requested == [["Plan", "Review"]]
-    assert any("followed system rules" in line for line in st.markdowns)
+    assert any("Decision Audit" in line for line in st.markdowns)
 
 
 def test_render_portfolio_plan_beginner_vs_analyst_columns():
@@ -139,8 +162,8 @@ def test_render_portfolio_plan_beginner_vs_analyst_columns():
         mode="analyst",
     )
 
-    beginner_df = beginner_st.dataframes[1][0]
-    analyst_df = analyst_st.dataframes[1][0]
+    beginner_df = beginner_st.dataframes[0][0]
+    analyst_df = analyst_st.dataframes[0][0]
 
     assert "Selection Rank" not in beginner_df.columns
     assert "Allocation %" not in beginner_df.columns
@@ -172,7 +195,7 @@ def test_render_portfolio_plan_keeps_explanations_before_supporting_fields():
         mode="analyst",
     )
 
-    funded_df = st.dataframes[1][0]
+    funded_df = st.dataframes[0][0]
     ordered_columns = list(funded_df.columns)
 
     assert ordered_columns.index("Why this trade") < ordered_columns.index("Allocation %")
@@ -223,12 +246,8 @@ def test_render_portfolio_plan_places_snapshot_and_reserved_cash_before_tables()
     assert "#### Portfolio Snapshot" in st.markdowns
     assert "#### Why cash is reserved" in st.markdowns
     snapshot_idx = st.markdowns.index("#### Portfolio Snapshot")
-    summary_idx = next(
-        idx
-        for idx, text in enumerate(st.markdowns)
-        if "Portfolio Summary" in text
-    )
-    assert snapshot_idx < summary_idx
+    funded_idx = st.markdowns.index("#### Funded Trades")
+    assert snapshot_idx < funded_idx
 
 
 def test_render_portfolio_plan_reframes_rules_and_analyst_override_copy():
@@ -290,7 +309,7 @@ def test_render_portfolio_plan_limits_unfunded_rows_in_beginner_mode():
         mode="beginner",
     )
 
-    unfunded_df = st.dataframes[2][0]
+    unfunded_df = st.dataframes[1][0]
     assert len(unfunded_df) == 12
     assert any("Showing top 12 unfunded trades for speed." in caption for caption in st.captions)
 
@@ -435,7 +454,7 @@ def test_render_portfolio_plan_funded_rank_deviation_row_does_not_crash():
         section="plan",
     )
 
-    funded_df = st.dataframes[1][0]
+    funded_df = st.dataframes[0][0]
     summary = funded_df.iloc[0]["Execution Summary"]
     assert "planned exit after 7 trading days" in summary
     assert "NameError" not in summary
@@ -557,8 +576,8 @@ def test_render_portfolio_plan_shows_explicit_holding_window_for_funded_and_unfu
         mode="beginner",
     )
 
-    funded_df = st.dataframes[1][0]
-    unfunded_df = st.dataframes[2][0]
+    funded_df = st.dataframes[0][0]
+    unfunded_df = st.dataframes[1][0]
 
     assert funded_df.iloc[0]["Holding Window"] == "10 trading days"
     assert unfunded_df.iloc[0]["Holding Window"] == "20 trading days"

@@ -155,8 +155,8 @@ def render_analyst_insights(
     return_column = resolve_return_column(trades_df)
     if return_column is None:
         st_module.info(
-            "Analyst Insights unavailable: no return column found. "
-            f"Expected one of {PREFERRED_RETURN_COLUMNS}."
+            "Analyst Insights is ready once a return column is present. "
+            f"Accepted columns: {PREFERRED_RETURN_COLUMNS}."
         )
         return
 
@@ -166,50 +166,45 @@ def render_analyst_insights(
 
     with insights_tab:
         st_module.subheader("Feature Insights")
-        st_module.caption(
-            "Question answered: Which setup tags are associated with stronger or weaker outcomes? "
-            "This view is only shown when feature-tag columns are present in the dataset."
-        )
+        st_module.caption("Feature Insights — setup tags connected to stronger or weaker outcomes.")
         insights = build_feature_insights(trades_df, return_column=return_column)
         if not insights:
             st_module.info(
-                "Feature Insights is not available yet for this dataset because feature-tag columns are missing."
+                "Feature Insights activates when feature-tag columns are included in this dataset."
             )
         for feature, summary in insights.items():
             st_module.markdown(f"#### {display_label(feature)}")
+            st_module.markdown("One-line read: review this tag's win rate and median return before ranking confidence.")
             st_module.dataframe(clean_dataframe_labels(summary, value_columns=[feature]))
 
     with matrix_tab:
         st_module.subheader("Performance Matrix")
-        st_module.caption(
-            "Question answered: Which setup tier and holding period combinations have historically behaved best? "
-            "Grouping by both matters because setup quality can perform differently at short vs. longer holds."
-        )
+        st_module.caption("Performance Matrix — grouped setup quality and holding periods.")
         try:
             matrix_payload = build_performance_matrix(
                 trades_df,
                 return_column=return_column,
             )
         except ValueError as error:
-            st_module.info(f"Performance Matrix unavailable: {error}")
+            st_module.info(f"Performance Matrix is ready once required columns are present: {error}")
         else:
+            st_module.markdown("Median-first interpretation: compare grouped cells by median return first, then win rate.")
             st_module.markdown("#### Grouped Summary")
             st_module.dataframe(clean_dataframe_labels(matrix_payload["summary"]))
-            st_module.markdown("#### Win-Rate Matrix")
-            st_module.dataframe(clean_dataframe_labels(matrix_payload["win_rate_matrix"].reset_index()))
-            st_module.markdown("#### Median-Return Matrix")
-            st_module.dataframe(clean_dataframe_labels(matrix_payload["median_return_matrix"].reset_index()))
-            st_module.markdown("#### Best Setups")
-            st_module.dataframe(clean_dataframe_labels(matrix_payload["best_setups"].head(10)))
+            with st_module.expander("Matrix views"):
+                st_module.markdown("#### Win-Rate Matrix")
+                st_module.dataframe(clean_dataframe_labels(matrix_payload["win_rate_matrix"].reset_index()))
+                st_module.markdown("#### Median-Return Matrix")
+                st_module.dataframe(clean_dataframe_labels(matrix_payload["median_return_matrix"].reset_index()))
+            with st_module.expander("Best Setups"):
+                st_module.dataframe(clean_dataframe_labels(matrix_payload["best_setups"].head(10)))
 
     with exit_tab:
         st_module.subheader("Exit Analysis")
-        st_module.caption(
-            "Question answered: How do trades usually end, and does that exit pattern reveal useful behavior? "
-            "If one exit reason dominates, that can indicate whether winners or risk controls are driving outcomes."
-        )
+        st_module.caption("Exit Analysis — how trades usually end and what that says about discipline.")
         required_cols = {"exit_reason", "quality_tier"}
         if required_cols.issubset(trades_df.columns):
+            st_module.markdown("Interpretation: frequent stop exits can signal risk controls or weak setup quality.")
             st_module.dataframe(
                 clean_dataframe_labels(
                     build_exit_analysis(trades_df, return_column=return_column),
@@ -219,6 +214,6 @@ def render_analyst_insights(
         else:
             missing = required_cols - set(trades_df.columns)
             st_module.info(
-                "Exit Analysis unavailable — missing required columns: "
+                "Exit Analysis is ready once these columns are available: "
                 + ", ".join(sorted(missing))
             )

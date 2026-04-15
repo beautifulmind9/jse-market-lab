@@ -11,8 +11,31 @@ from app.demo import run_demo as run_demo_module
 
 
 class DummyColumn:
+    def __init__(self, st_module):
+        self._st = st_module
+
     def __enter__(self):
         return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+    def metric(self, label, value, *_args, **_kwargs):
+        self._st.metrics.append((self._st.current_tab, label, value))
+
+    def markdown(self, *_args, **_kwargs):
+        return None
+
+    def info(self, *_args, **_kwargs):
+        return None
+
+
+class DummyExpander:
+    def __init__(self, st_module):
+        self._st = st_module
+
+    def __enter__(self):
+        return self._st
 
     def __exit__(self, exc_type, exc, tb):
         return False
@@ -46,7 +69,7 @@ class DummyComponents:
 
 
 class DummyStreamlit:
-    def __init__(self, *, mode_choice="Analyst"):
+    def __init__(self, *, mode_choice="Advanced View"):
         self.session_state = {}
         self.current_tab = None
         self.mode_choice = mode_choice
@@ -59,6 +82,7 @@ class DummyStreamlit:
         self.selectbox_calls = []
         self.html_blocks = []
         self.components = DummyComponents(self)
+        self.metrics = []
 
     def set_page_config(self, **_kwargs):
         return None
@@ -92,6 +116,9 @@ class DummyStreamlit:
     def write(self, _payload):
         return None
 
+    def metric(self, label, value, *_args, **_kwargs):
+        self.metrics.append((self.current_tab, label, value))
+
     def number_input(self, label, value=0.0, key=None, **_kwargs):
         self.number_inputs.append((self.current_tab, label, key))
         if key is not None:
@@ -110,13 +137,16 @@ class DummyStreamlit:
         return options[0]
 
     def columns(self, count):
-        return [DummyColumn() for _ in range(count)]
+        return [DummyColumn(self) for _ in range(count)]
 
     def subheader(self, _text):
         return None
 
     def code(self, _text, **_kwargs):
         return None
+
+    def expander(self, _label, **_kwargs):
+        return DummyExpander(self)
 
 
 def _load_app_module():
@@ -150,8 +180,6 @@ def test_sprint12_tab_layout_and_capital_location(monkeypatch):
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [{"instrument": "AAA"}])
     monkeypatch.setattr(app_main, "generate_portfolio_allocation", lambda _rows, _capital: {"allocations": [{"allocation_amount": 5000, "allocation_pct": 0.05}]})
-    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
-    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(app_main, "render_portfolio_plan", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(app_main, "render_analyst_insights", lambda *_args, **_kwargs: None)
 
@@ -161,9 +189,9 @@ def test_sprint12_tab_layout_and_capital_location(monkeypatch):
     assert dummy_st.number_inputs == [("Portfolio", "Total capital", "total_capital")]
 
 
-def test_beginner_mode_hides_analyst_and_data_tabs(monkeypatch):
+def test_guided_view_hides_analyst_insights_tab(monkeypatch):
     app_main = _load_app_module()
-    dummy_st = DummyStreamlit(mode_choice="Beginner")
+    dummy_st = DummyStreamlit(mode_choice="Guided View")
 
     canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
 
@@ -176,19 +204,16 @@ def test_beginner_mode_hides_analyst_and_data_tabs(monkeypatch):
     monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
-    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
-    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
 
     app_main.main()
 
-    assert dummy_st.tabs_requested[0] == ["Portfolio", "Review", "Ticker Analysis"]
-    assert not any(tab == "Data" for tab, _ in dummy_st.dataframes)
+    assert dummy_st.tabs_requested[0] == ["Portfolio", "Review", "Ticker Analysis", "Data"]
     assert not any(tab == "Analyst Insights" for tab, _ in dummy_st.info_messages)
 
 
 def test_analyst_mode_keeps_all_tabs_visible(monkeypatch):
     app_main = _load_app_module()
-    dummy_st = DummyStreamlit(mode_choice="Analyst")
+    dummy_st = DummyStreamlit(mode_choice="Advanced View")
 
     canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
 
@@ -201,8 +226,6 @@ def test_analyst_mode_keeps_all_tabs_visible(monkeypatch):
     monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
-    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
-    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
 
     app_main.main()
 
@@ -213,7 +236,7 @@ def test_analyst_mode_keeps_all_tabs_visible(monkeypatch):
 
 def test_help_video_labels_and_links_render_in_expected_sections(monkeypatch):
     app_main = _load_app_module()
-    dummy_st = DummyStreamlit(mode_choice="Analyst")
+    dummy_st = DummyStreamlit(mode_choice="Advanced View")
 
     canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
 
@@ -226,8 +249,6 @@ def test_help_video_labels_and_links_render_in_expected_sections(monkeypatch):
     monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
-    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
-    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
 
     app_main.main()
 
@@ -243,7 +264,7 @@ def test_help_video_labels_and_links_render_in_expected_sections(monkeypatch):
 
 def test_analyst_help_video_hidden_from_beginner_mode(monkeypatch):
     app_main = _load_app_module()
-    dummy_st = DummyStreamlit(mode_choice="Beginner")
+    dummy_st = DummyStreamlit(mode_choice="Guided View")
 
     canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
 
@@ -256,8 +277,6 @@ def test_analyst_help_video_hidden_from_beginner_mode(monkeypatch):
     monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
-    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
-    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
 
     app_main.main()
 
@@ -288,8 +307,6 @@ def test_review_excludes_data_status_and_data_tab_contains_raw_preview(monkeypat
     monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
-    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
-    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
 
     app_main.main()
 
@@ -299,7 +316,6 @@ def test_review_excludes_data_status_and_data_tab_contains_raw_preview(monkeypat
 
     data_markdowns = [text for tab, text in dummy_st.markdowns if tab == "Data"]
     assert "#### Data Status" in data_markdowns
-    assert "#### Main Dashboard" in data_markdowns
     assert any(tab == "Data" and len(df) == 2 for tab, df in dummy_st.dataframes)
 
 
@@ -324,8 +340,6 @@ def test_analyst_insights_empty_state_when_no_content(monkeypatch):
     monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
-    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
-    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
 
     app_main.main()
 
@@ -335,7 +349,7 @@ def test_analyst_insights_empty_state_when_no_content(monkeypatch):
 
 def test_ticker_analysis_options_come_from_canonical_dataset_not_ranked_subset(monkeypatch):
     app_main = _load_app_module()
-    dummy_st = DummyStreamlit(mode_choice="Analyst")
+    dummy_st = DummyStreamlit(mode_choice="Advanced View")
 
     large_ticker_universe = [f"T{i:03d}" for i in range(1, 21)]
     canonical_df = pd.DataFrame(
@@ -364,8 +378,6 @@ def test_ticker_analysis_options_come_from_canonical_dataset_not_ranked_subset(m
     )
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
-    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
-    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
 
     app_main.main()
 
@@ -390,12 +402,11 @@ def test_data_status_uses_warning_bucket_for_counts_and_details():
     markdowns = [text for _, text in dummy_st.markdowns]
     captions = [text for _, text in dummy_st.captions]
 
-    assert "**Errors:** 0" in markdowns
-    assert "**Warnings:** 1" in markdowns
-    assert "**Warning details**" in markdowns
+    assert ("Rows loaded", 12) in [(label, value) for _, label, value in dummy_st.metrics]
+    assert ("Warnings", 1) in [(label, value) for _, label, value in dummy_st.metrics]
+    assert ("Errors", 0) in [(label, value) for _, label, value in dummy_st.metrics]
     assert "- Missing volume for BBB" in markdowns
-    assert "**Error details**" not in markdowns
-    assert "No ingestion errors were reported for this dataset." in captions
+    assert "Source: demo" in captions
 
 
 def test_data_status_uses_error_bucket_for_counts_and_details():
@@ -414,12 +425,10 @@ def test_data_status_uses_error_bucket_for_counts_and_details():
     markdowns = [text for _, text in dummy_st.markdowns]
     captions = [text for _, text in dummy_st.captions]
 
-    assert "**Errors:** 1" in markdowns
-    assert "**Warnings:** 0" in markdowns
-    assert "**Error details**" in markdowns
+    assert ("Warnings", 0) in [(label, value) for _, label, value in dummy_st.metrics]
+    assert ("Errors", 1) in [(label, value) for _, label, value in dummy_st.metrics]
     assert "- Missing required column: close" in markdowns
-    assert "**Warning details**" not in markdowns
-    assert "No ingestion warnings were reported for this dataset." in captions
+    assert "Source: upload" in captions
 
 
 def test_data_status_uses_both_buckets_without_top_level_keys():
@@ -440,11 +449,9 @@ def test_data_status_uses_both_buckets_without_top_level_keys():
 
     markdowns = [text for _, text in dummy_st.markdowns]
 
-    assert "**Errors:** 1" in markdowns
-    assert "**Warnings:** 1" in markdowns
-    assert "**Warning details**" in markdowns
+    assert ("Warnings", 1) in [(label, value) for _, label, value in dummy_st.metrics]
+    assert ("Errors", 1) in [(label, value) for _, label, value in dummy_st.metrics]
     assert "- Ticker normalized: BRG -> BRG.JM" in markdowns
-    assert "**Error details**" in markdowns
     assert "- Price parse failed on row 3" in markdowns
     assert "- errors" not in markdowns
     assert "- warnings" not in markdowns
@@ -544,8 +551,6 @@ def test_ticker_analysis_selector_uses_canonical_dataset_universe(monkeypatch):
     monkeypatch.setattr(app_main, "run_demo", lambda *_args, **_kwargs: {"ranked": pd.DataFrame()})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: analyst_subset)
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
-    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
-    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(app_main, "compute_ticker_metrics", lambda *_args, **_kwargs: {"summary": "", "behavior": {}})
     monkeypatch.setattr(
         app_main,
@@ -568,7 +573,7 @@ def test_ticker_analysis_selector_uses_canonical_dataset_universe(monkeypatch):
 
 def test_main_startup_path_is_not_blocked_by_missing_legacy_events_file(monkeypatch):
     app_main = _load_app_module()
-    dummy_st = DummyStreamlit(mode_choice="Beginner")
+    dummy_st = DummyStreamlit(mode_choice="Guided View")
     events_path = (ROOT / "data" / "demo" / "earnings_events.csv").resolve()
     original_exists = Path.exists
     original_read_csv = pd.read_csv
@@ -595,7 +600,7 @@ def test_main_startup_path_is_not_blocked_by_missing_legacy_events_file(monkeypa
 
 def test_ticker_analysis_beginner_mode_hides_raw_deep_dive_tables(monkeypatch):
     app_main = _load_app_module()
-    dummy_st = DummyStreamlit(mode_choice="Beginner")
+    dummy_st = DummyStreamlit(mode_choice="Guided View")
 
     canonical_df = pd.DataFrame({"instrument": ["CAR"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
     analyst_df = pd.DataFrame({"instrument": ["CAR"], "holding_window": [5], "net_return_pct": [0.01]})
@@ -613,8 +618,6 @@ def test_ticker_analysis_beginner_mode_hides_raw_deep_dive_tables(monkeypatch):
     monkeypatch.setattr(app_main, "run_demo", lambda *_args, **_kwargs: {"ranked": pd.DataFrame()})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: analyst_df)
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
-    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
-    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(
         app_main,
         "compute_ticker_metrics",
@@ -652,17 +655,15 @@ def test_ticker_analysis_beginner_mode_hides_raw_deep_dive_tables(monkeypatch):
     app_main.main()
 
     ticker_markdowns = [text for tab, text in dummy_st.markdowns if tab == "Ticker Analysis"]
-    ticker_captions = [text for tab, text in dummy_st.captions if tab == "Ticker Analysis"]
-    assert "#### D) Execution Behavior" in ticker_markdowns
+    assert "#### Execution Behavior" in ticker_markdowns
     assert "#### G) Analyst Deep Dive" not in ticker_markdowns
-    assert any("Short execution framing" in text for text in ticker_captions)
+    assert any("Switch to Advanced View to open the full table breakdown." in text for _, text in dummy_st.captions)
     assert not any("Outcome context:" in text for text in ticker_markdowns)
-    assert any("Analyst Deep Dive" in text for text in ticker_markdowns)
 
 
 def test_ticker_analysis_analyst_mode_shows_deep_dive_tables(monkeypatch):
     app_main = _load_app_module()
-    dummy_st = DummyStreamlit(mode_choice="Analyst")
+    dummy_st = DummyStreamlit(mode_choice="Advanced View")
 
     canonical_df = pd.DataFrame({"instrument": ["CAR"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
     analyst_df = pd.DataFrame({"instrument": ["CAR"], "holding_window": [5], "net_return_pct": [0.01]})
@@ -680,8 +681,6 @@ def test_ticker_analysis_analyst_mode_shows_deep_dive_tables(monkeypatch):
     monkeypatch.setattr(app_main, "run_demo", lambda *_args, **_kwargs: {"ranked": pd.DataFrame()})
     monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: analyst_df)
     monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
-    monkeypatch.setattr(app_main, "generate_embedded_insights", lambda *_args, **_kwargs: {"headline": "ok"})
-    monkeypatch.setattr(app_main, "render_embedded_insights", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(
         app_main,
         "compute_ticker_metrics",
@@ -719,10 +718,8 @@ def test_ticker_analysis_analyst_mode_shows_deep_dive_tables(monkeypatch):
     app_main.main()
 
     ticker_markdowns = [text for tab, text in dummy_st.markdowns if tab == "Ticker Analysis"]
-    ticker_captions = [text for tab, text in dummy_st.captions if tab == "Ticker Analysis"]
     ticker_dataframes = [df for tab, df in dummy_st.dataframes if tab == "Ticker Analysis"]
-    assert "#### D) Execution Behavior" in ticker_markdowns
-    assert "#### G) Analyst Deep Dive" in ticker_markdowns
-    assert any("Expanded execution framing" in text for text in ticker_captions)
+    assert "#### Execution Behavior" in ticker_markdowns
+    assert "#### G) Analyst Deep Dive" not in ticker_markdowns
     assert any("Outcome context:" in text for text in ticker_markdowns)
-    assert len(ticker_dataframes) >= 5
+    assert len(ticker_dataframes) >= 4

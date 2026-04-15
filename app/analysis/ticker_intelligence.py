@@ -29,10 +29,10 @@ def _empty_payload() -> dict[str, Any]:
             "signal_count": 0,
         },
         "behavior": {
-            "holding_window": "There is not enough 5D or 20D data to compare holding windows right now.",
-            "consistency": "No consistency read is available because return data is missing.",
-            "reliability": "Reliability cannot be read because there are no completed signals.",
-            "tier_profile": "Tier profile cannot be read because tier data is missing.",
+            "holding_window": "Holding-window comparison will sharpen as more 5D and 20D rows are captured.",
+            "consistency": "Consistency read becomes available as return coverage grows.",
+            "reliability": "Reliability read strengthens as completed signals accumulate.",
+            "tier_profile": "Tier profile summary becomes available when tier-tagged rows are present.",
         },
         "execution": build_execution_summary({}, mode="beginner"),
     }
@@ -84,7 +84,7 @@ def build_ticker_behavior(metrics: dict[str, Any], *, mode: str = "beginner") ->
         else:
             holding_window = "The 5D and 20D windows came out nearly the same for this ticker."
     else:
-        holding_window = "There is not enough 5D or 20D data to compare holding windows right now."
+        holding_window = "Holding-window comparison will sharpen as more 5D and 20D rows are captured."
 
     avg_return = float(metrics["stats"]["avg_return"])
     median_return = float(metrics["stats"]["median_return"])
@@ -115,7 +115,7 @@ def build_ticker_behavior(metrics: dict[str, Any], *, mode: str = "beginner") ->
         top_share = (tier_counts[top_tier] / sum(tier_counts.values())) * 100
         tier_profile = f"Setup mix leans to {top_tier}, with about {top_share:.0f}% of rows in that tier."
     else:
-        tier_profile = "Tier profile cannot be read because tier data is missing."
+        tier_profile = "Tier profile summary becomes available when tier-tagged rows are present."
 
     if str(mode).lower() == "analyst":
         reliability = reliability + f" (Win rate: {win_rate:.0%})"
