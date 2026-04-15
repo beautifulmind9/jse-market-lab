@@ -83,6 +83,7 @@ class DummyStreamlit:
         self.html_blocks = []
         self.components = DummyComponents(self)
         self.metrics = []
+        self.expanders = []
 
     def set_page_config(self, **_kwargs):
         return None
@@ -146,6 +147,7 @@ class DummyStreamlit:
         return None
 
     def expander(self, _label, **_kwargs):
+        self.expanders.append((self.current_tab, _label))
         return DummyExpander(self)
 
 
@@ -260,6 +262,7 @@ def test_help_video_labels_and_links_render_in_expected_sections(monkeypatch):
     assert any("▶ Watch: Understanding Review" in text for tab, text in dummy_st.markdowns if tab == "Review")
     assert any("▶ Watch: How to Use Analyst Mode" in text for tab, text in dummy_st.markdowns if tab == "Analyst Insights")
     assert any("loom.com/embed/7429a995143a4bf498b640b5371309bc" in html for _, html, _ in dummy_st.html_blocks)
+    assert (None, "Learn how this works") in dummy_st.expanders
 
 
 def test_analyst_help_video_hidden_from_beginner_mode(monkeypatch):

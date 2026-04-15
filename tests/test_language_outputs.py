@@ -70,7 +70,7 @@ def test_first_run_helper_renders_without_breaking():
     st = DummyStreamlit()
     app_main._render_first_run_header(st, mode="beginner")
     assert any("How to read this" in line for line in st.lines)
-    assert any("Based on historical data." in line for line in st.lines)
+    assert any("Using historical JSE data available in the current dataset." in line for line in st.lines)
     assert any("risk still matters" in line.lower() for line in st.lines)
 
 
@@ -116,7 +116,7 @@ def test_first_run_helper_falls_back_when_info_missing():
     st = DummyStreamlitMissingInfo()
     app_main._render_first_run_header(st, mode="beginner")
     assert any("How to read this" in line for line in st.lines)
-    assert any("Based on historical data." in line for line in st.lines)
+    assert any("Using historical JSE data available in the current dataset." in line for line in st.lines)
 
 
 def test_first_run_helper_falls_back_when_components_html_missing():
@@ -163,7 +163,7 @@ def test_first_run_helper_falls_back_when_components_html_missing():
     st = DummyStreamlitMissingHtml()
     app_main._render_first_run_header(st, mode="beginner")
     assert any("How to read this" in line for line in st.lines)
-    assert any("Based on historical data." in line for line in st.lines)
+    assert any("Using historical JSE data available in the current dataset." in line for line in st.lines)
 
 
 def test_embedded_why_this_matters_includes_trust_layer_without_advisory_terms():

@@ -215,16 +215,26 @@ def _render_video_link(st_module, *, label: str, url: str) -> None:
     st_module.markdown(f'<a href="{url}" target="_blank" rel="noopener noreferrer">{label}</a>', unsafe_allow_html=True)
 
 
+def _resolve_dataset_period_description(df: pd.DataFrame) -> str:
+    if df.empty or "date" not in df.columns:
+        return "Using historical JSE data available in the current dataset."
+
+    date_values = pd.to_datetime(df["date"], errors="coerce").dropna()
+    if date_values.empty:
+        return "Using historical JSE data available in the current dataset."
+
+    min_year = int(date_values.min().year)
+    max_year = int(date_values.max().year)
+    return f"Using historical JSE data from {min_year} to {max_year} in the current dataset."
+
+
 def _render_start_here_video(st_module) -> None:
     st_module.markdown("### New here? Start with this video")
-    st_module.caption("This quick walkthrough shows how to use the dashboard and where to start.")
     st_module.components.v1.html(_START_HERE_EMBED_HTML, height=460)
 
 
-def _render_onboarding(st_module) -> None:
-    st_module.caption(
-        "Decision-support for JSE trades, using price action, volume participation, volatility, liquidity, and realized outcomes from the JSE sample (since 2018 where available)."
-    )
+def _render_onboarding(st_module, *, dataset_period_description: str) -> None:
+    st_module.caption(dataset_period_description)
     _render_start_here_video(st_module)
 
     st_module.markdown("### Where to start")
@@ -236,23 +246,24 @@ def _render_onboarding(st_module) -> None:
     with review_col:
         st_module.info("**Review**\n\nCheck whether the plan followed its rules.")
 
-    with st_module.expander("What this dashboard does"):
+    with st_module.expander("Learn how this works", expanded=False):
+        st_module.markdown("#### What this dashboard does")
         st_module.markdown("- Highlights stronger and weaker setups.")
         st_module.markdown("- Helps compare trades more clearly.")
         st_module.markdown("- Shows how long setups typically take to play out.")
         st_module.markdown("- Helps frame risk, not just returns.")
 
-    with st_module.expander("How this dashboard supports decisions"):
+        st_module.markdown("#### How this dashboard supports decisions")
         st_module.markdown("- Structures trade review with consistent rules.")
         st_module.markdown("- Keeps portfolio discipline visible before and after selection.")
         st_module.markdown("- Helps compare opportunities with a shared, repeatable framework.")
 
-    with st_module.expander("What the system looks at"):
-        st_module.markdown("- Price behavior.")
-        st_module.markdown("- Volume / participation.")
-        st_module.markdown("- Volatility / risk.")
+        st_module.markdown("#### What the system looks at")
+        st_module.markdown("- Price action.")
+        st_module.markdown("- Volume participation.")
+        st_module.markdown("- Volatility.")
         st_module.markdown("- Liquidity.")
-        st_module.markdown("- Historical outcomes like win rate and median return.")
+        st_module.markdown("- Realized outcomes and historical consistency.")
 
 
 def _render_first_run_header(st_module, mode: str = "beginner", **_kwargs) -> None:
@@ -282,7 +293,10 @@ def _render_first_run_header(st_module, mode: str = "beginner", **_kwargs) -> No
     )
     if supports_full_onboarding:
         try:
-            _render_onboarding(st_module)
+            _render_onboarding(
+                st_module,
+                dataset_period_description="Using historical JSE data available in the current dataset.",
+            )
             return
         except AttributeError:
             # Compatibility fallback for partial streamlit-like stubs.
@@ -290,7 +304,7 @@ def _render_first_run_header(st_module, mode: str = "beginner", **_kwargs) -> No
 
     # Minimal fallback for lightweight streamlit stubs used in tests/callers.
     st_module.markdown("### How to read this dashboard")
-    st_module.caption("Based on historical data.")
+    st_module.caption("Using historical JSE data available in the current dataset.")
     st_module.markdown("Use it as decision support—risk still matters in every setup.")
 
 
@@ -336,6 +350,7 @@ def main() -> None:
     _render_visual_polish(st)
 
     st.title("JSE Market Lab")
+    st.caption("Decision support for selecting, sizing, and reviewing JSE trade setups.")
     mode_label = st.radio("View", options=list(_MODE_OPTIONS.keys()), horizontal=True, index=0)
     mode_token = _MODE_OPTIONS[mode_label]
     st.caption("Guided View: simpler explanations and lighter detail")
@@ -398,7 +413,8 @@ def main() -> None:
         base_allocations = allocation_payload.get("allocations", [])
         enriched_allocations = [{**allocation, **row} for row, allocation in zip(trade_rows, base_allocations)]
 
-    _render_onboarding(st)
+    dataset_period_description = _resolve_dataset_period_description(canonical_df)
+    _render_onboarding(st, dataset_period_description=dataset_period_description)
 
     tabs = st.tabs(_resolve_tabs_for_mode(mode_token))
     tab_map = {name: tab for name, tab in zip(_resolve_tabs_for_mode(mode_token), tabs)}
