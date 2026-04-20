@@ -142,27 +142,21 @@ def render_portfolio_plan(
         execution_row = dict(trade)
         execution_row["holding_window"] = holding_days
         execution = build_execution_summary(execution_row, mode=mode)
+        decision_reason = explain_trade_reason(trade, mode=mode) if funded else resolve_unfunded_reason(trade)
+        decision_status = classify_decision_status(trade)
         row: dict[str, Any] = {
             "Ticker": trade.get("instrument", "Unknown"),
             "Setup Strength": explain_strength(trade.get("quality_tier"), mode=mode),
             "Confidence / Reliability": explain_confidence(trade.get("confidence_label"), mode=mode),
             "Holding Window": _format_holding_window_label(holding_days),
-            "Why this trade": (
-                explain_trade_reason(trade, mode=mode) if funded else resolve_unfunded_reason(trade)
-            ),
+            "Decision Reason": decision_reason,
+            "Decision Status": decision_status,
             "Execution Summary": _compact_execution_summary(execution, mode=mode),
+            "Rule Note": explain_funded_trade_why(trade) if funded else "Not funded this cycle.",
+            "Allocation %": trade.get("allocation_pct", 0.0),
+            "Allocation Amount": trade.get("allocation_amount", 0.0),
+            "Selection Rank": trade.get("selection_rank", "N/A"),
         }
-
-        if analyst_mode:
-            row.update(
-                {
-                    "Decision Status": classify_decision_status(trade),
-                    "Allocation %": trade.get("allocation_pct", 0.0),
-                    "Allocation Amount": trade.get("allocation_amount", 0.0),
-                    "Selection Rank": trade.get("selection_rank", "N/A"),
-                    "Rule Note": explain_funded_trade_why(trade) if funded else "Not funded this cycle.",
-                }
-            )
         return row
 
     def _render_snapshot_blocks() -> None:
@@ -197,16 +191,65 @@ def render_portfolio_plan(
     def _render_trade_cards(trades: Sequence[Mapping[str, Any]], *, funded: bool) -> None:
         for trade in trades:
             plan_row = _portfolio_plan_row(trade, funded=funded)
-            st_module.markdown(f"#### {plan_row['Ticker']}")
+            status_badge = "Funded" if funded else "Unfunded"
+            st_module.markdown(f"#### {plan_row['Ticker']} · {status_badge}")
             st_module.markdown(f"**Setup Strength:** {plan_row['Setup Strength']}")
             st_module.markdown(f"**Confidence / Reliability:** {plan_row['Confidence / Reliability']}")
             st_module.markdown(f"**Holding Window:** {plan_row['Holding Window']}")
-            st_module.markdown(f"**Why this trade:** {plan_row['Why this trade']}")
-            st_module.markdown(
-                f"**Execution Summary:** {plan_row['Execution Summary'] if funded else 'Not funded in this cycle.'}"
-            )
+            reason_label = "Why this trade" if funded else "Why not funded"
+            st_module.markdown(f"**{reason_label}:** {plan_row['Decision Reason']}")
+            expander_label = "See trade details" if funded else "See why this was not funded"
+            with st_module.expander(expander_label, expanded=False):
+                st_module.markdown(f"**Allocation %:** {plan_row['Allocation %']:.0%}")
+                st_module.markdown(f"**Allocation Amount:** JMD {plan_row['Allocation Amount']:,.0f}")
+                st_module.markdown(f"**Selection Rank:** #{plan_row['Selection Rank']}")
+                st_module.markdown(
+                    f"**Execution Summary:** {plan_row['Execution Summary'] if funded else 'Not funded in this cycle.'}"
+                )
+                st_module.markdown(f"**Rule Note:** {plan_row['Rule Note']}")
+                st_module.markdown(f"**Decision Status:** {plan_row['Decision Status']}")
             st_module.markdown("---")
 
+    def _render_advanced_decision_table(rows: Sequence[Mapping[str, Any]]) -> None:
+        compact_rows = []
+        for trade in rows:
+            plan_row = _portfolio_plan_row(trade, funded=float(trade.get("allocation_amount", 0.0) or 0.0) > 0)
+            compact_rows.append(
+                {
+                    "Ticker": plan_row["Ticker"],
+                    "Setup Strength": plan_row["Setup Strength"],
+                    "Confidence / Reliability": plan_row["Confidence / Reliability"],
+                    "Holding Window": plan_row["Holding Window"],
+                    "Decision Status": plan_row["Decision Status"],
+                    "Allocation %": plan_row["Allocation %"],
+                    "Selection Rank": plan_row["Selection Rank"],
+                }
+            )
+        if compact_rows:
+            st_module.dataframe(pd.DataFrame(compact_rows), use_container_width=True)
+        else:
+            st_module.info("No rows to compare in Advanced View.")
+
+    def _render_advanced_row_details(rows: Sequence[Mapping[str, Any]], *, funded: bool) -> None:
+        for trade in rows:
+            plan_row = _portfolio_plan_row(trade, funded=funded)
+            header_reason = "Why this trade" if funded else "Why not funded"
+            with st_module.expander(f"{plan_row['Ticker']} details", expanded=False):
+                st_module.markdown(f"**{header_reason}:** {plan_row['Decision Reason']}")
+                st_module.markdown(f"**Execution Summary:** {plan_row['Execution Summary']}")
+                st_module.markdown(f"**Rule Note:** {plan_row['Rule Note']}")
+                st_module.markdown(f"**Allocation Amount:** JMD {plan_row['Allocation Amount']:,.0f}")
+                st_module.markdown(f"**Allocation %:** {plan_row['Allocation %']:.0%}")
+                st_module.markdown(f"**Selection Rank:** #{plan_row['Selection Rank']}")
+                st_module.markdown(f"**Decision Status:** {plan_row['Decision Status']}")
+
+    def _render_full_analyst_table(rows: Sequence[Mapping[str, Any]], *, funded: bool) -> None:
+        with st_module.expander("Show full analyst table", expanded=False):
+            table_rows = [_portfolio_plan_row(trade, funded=funded) for trade in rows]
+            if table_rows:
+                st_module.dataframe(pd.DataFrame(table_rows), use_container_width=True)
+            else:
+                st_module.info("No rows available for the full analyst table.")
 
     def _render_plan_section() -> None:
         _render_snapshot_blocks()
@@ -214,8 +257,9 @@ def render_portfolio_plan(
         st_module.markdown("#### Funded Trades")
         if funded_trades:
             if analyst_mode:
-                funded_df = pd.DataFrame([_portfolio_plan_row(trade, funded=True) for trade in funded_trades])
-                st_module.dataframe(funded_df, use_container_width=True)
+                _render_advanced_decision_table(funded_trades)
+                _render_advanced_row_details(funded_trades, funded=True)
+                _render_full_analyst_table(funded_trades, funded=True)
             else:
                 _render_trade_cards(funded_trades, funded=True)
         else:
@@ -233,8 +277,9 @@ def render_portfolio_plan(
                 hidden_unfunded_count = len(unfunded_trades) - len(visible_unfunded)
 
             if analyst_mode:
-                unfunded_df = pd.DataFrame([_portfolio_plan_row(trade, funded=False) for trade in visible_unfunded])
-                st_module.dataframe(unfunded_df, use_container_width=True)
+                _render_advanced_decision_table(visible_unfunded)
+                _render_advanced_row_details(visible_unfunded, funded=False)
+                _render_full_analyst_table(visible_unfunded, funded=False)
             else:
                 _render_trade_cards(visible_unfunded, funded=False)
             if hidden_unfunded_count > 0:

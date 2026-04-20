@@ -154,11 +154,12 @@ def test_render_portfolio_plan_beginner_vs_analyst_columns():
 
     assert "Selection Rank" in analyst_df.columns
     assert "Allocation %" in analyst_df.columns
-    assert "Rule Note" in analyst_df.columns
+    assert "Decision Status" in analyst_df.columns
+    assert "Rule Note" not in analyst_df.columns
     assert analyst_df.iloc[0]["Holding Window"] == "10 trading days"
 
 
-def test_render_portfolio_plan_keeps_explanations_before_supporting_fields():
+def test_render_portfolio_plan_advanced_details_keep_explanations_in_expander():
     st = DummyStreamlit()
     render_portfolio_plan(
         allocations=[
@@ -178,11 +179,11 @@ def test_render_portfolio_plan_keeps_explanations_before_supporting_fields():
         mode="analyst",
     )
 
-    funded_df = st.dataframes[0][0]
-    ordered_columns = list(funded_df.columns)
-
-    assert ordered_columns.index("Why this trade") < ordered_columns.index("Allocation %")
-    assert ordered_columns.index("Execution Summary") < ordered_columns.index("Selection Rank")
+    combined_markdown = " ".join(st.markdowns)
+    assert "**Why this trade:**" in combined_markdown
+    assert "**Execution Summary:**" in combined_markdown
+    assert "**Allocation %:**" in combined_markdown
+    assert "**Selection Rank:**" in combined_markdown
 
 
 def test_group_mistakes_for_display_combines_repeated_types():
