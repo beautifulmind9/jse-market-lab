@@ -427,7 +427,16 @@ def main() -> None:
         st.markdown("### Portfolio")
         _render_video_link(st, label="▶ Watch: Understanding the Portfolio", url=_HELP_VIDEO_URLS["portfolio"])
         _render_video_link(st, label="▶ Watch: How to Read a Trade", url=_HELP_VIDEO_URLS["read_trade"])
-        selected_capital = st.number_input("Total capital", min_value=0.0, value=selected_capital, step=5_000.0, key="total_capital")
+        st.info("Start here: enter your investment amount above to build your plan.")
+        selected_capital = st.number_input(
+            "Enter your investment amount (JMD)",
+            min_value=0.0,
+            value=selected_capital,
+            step=5_000.0,
+            key="total_capital",
+        )
+        st.caption("This is the amount you want to allocate across trades.")
+        st.caption("This plan is built from the market data currently loaded in the dashboard.")
         if ranked_df.empty:
             st.info("Portfolio Plan will appear after ranked outputs are generated for the current run.")
         else:
