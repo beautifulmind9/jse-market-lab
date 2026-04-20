@@ -188,7 +188,13 @@ def test_sprint12_tab_layout_and_capital_location(monkeypatch):
     app_main.main()
 
     assert dummy_st.tabs_requested[0] == ["Portfolio", "Review", "Ticker Analysis", "Analyst Insights", "Data"]
-    assert dummy_st.number_inputs == [("Portfolio", "Total capital", "total_capital")]
+    assert dummy_st.number_inputs == [("Portfolio", "Enter your investment amount (JMD)", "total_capital")]
+    assert ("Portfolio", "Start here: enter your investment amount above to build your plan.") in dummy_st.info_messages
+    assert ("Portfolio", "This is the amount you want to allocate across trades.") in dummy_st.captions
+    assert (
+        "Portfolio",
+        "This plan is built from the market data currently loaded in the dashboard.",
+    ) in dummy_st.captions
 
 
 def test_guided_view_hides_analyst_insights_tab(monkeypatch):
