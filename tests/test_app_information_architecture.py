@@ -84,6 +84,8 @@ class DummyStreamlit:
         self.components = DummyComponents(self)
         self.metrics = []
         self.expanders = []
+        self.rerun_called = False
+        self.selectbox_choice = None
 
     def set_page_config(self, **_kwargs):
         return None
@@ -126,16 +128,18 @@ class DummyStreamlit:
             self.session_state[key] = value
         return value
 
-    def tabs(self, names):
+    def tabs(self, names, **_kwargs):
         self.tabs_requested.append(list(names))
         return [DummyTab(self, name) for name in names]
 
     def dataframe(self, df, **_kwargs):
         self.dataframes.append((self.current_tab, df.copy()))
 
-    def selectbox(self, _label, options):
+    def selectbox(self, _label, options, index=0):
         self.selectbox_calls.append(list(options))
-        return options[0]
+        if self.selectbox_choice in options:
+            return self.selectbox_choice
+        return options[index]
 
     def columns(self, count):
         return [DummyColumn(self) for _ in range(count)]
@@ -149,6 +153,12 @@ class DummyStreamlit:
     def expander(self, _label, **_kwargs):
         self.expanders.append((self.current_tab, _label))
         return DummyExpander(self)
+
+    def button(self, *_args, **_kwargs):
+        return False
+
+    def rerun(self):
+        self.rerun_called = True
 
 
 def _load_app_module():
@@ -188,7 +198,13 @@ def test_sprint12_tab_layout_and_capital_location(monkeypatch):
     app_main.main()
 
     assert dummy_st.tabs_requested[0] == ["Portfolio", "Review", "Ticker Analysis", "Analyst Insights", "Data"]
-    assert dummy_st.number_inputs == [("Portfolio", "Total capital", "total_capital")]
+    assert dummy_st.number_inputs == [("Portfolio", "Enter your investment amount (JMD)", "total_capital")]
+    assert ("Portfolio", "Start here: enter your investment amount above to build your plan.") in dummy_st.info_messages
+    assert ("Portfolio", "This is the amount you want to allocate across trades.") in dummy_st.captions
+    assert (
+        "Portfolio",
+        "This plan is built from the market data currently loaded in the dashboard.",
+    ) in dummy_st.captions
 
 
 def test_guided_view_hides_analyst_insights_tab(monkeypatch):
@@ -234,6 +250,153 @@ def test_analyst_mode_keeps_all_tabs_visible(monkeypatch):
     assert dummy_st.tabs_requested[0] == ["Portfolio", "Review", "Ticker Analysis", "Analyst Insights", "Data"]
 
 
+def test_ticker_analysis_preloads_selected_ticker_from_portfolio_context(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Guided View")
+    dummy_st.session_state["selected_ticker"] = "BBB"
+    dummy_st.session_state["ticker_analysis_source"] = "portfolio"
+    dummy_st.session_state["ticker_analysis_source_ticker"] = "BBB"
+    dummy_st.session_state["active_tab_name"] = "Ticker Analysis"
+
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": ["AAA", "BBB"],
+            "date": pd.to_datetime(["2024-01-01", "2024-01-02"]),
+            "close": [10.0, 12.0],
+        }
+    )
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo-v1"}, {"errors": [], "warnings": []}),
+    )
+    monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: canonical_df)
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(
+        app_main,
+        "build_ticker_drilldown",
+        lambda _analyst_df, _ticker: {
+            "holding_window_stats": {"10D": {"win_rate": 0.6, "median_return": 0.03, "avg_return": 0.02, "count": 5}},
+            "pattern_summary": "Pattern summary",
+            "tier_performance": {},
+            "volatility_performance": {},
+            "return_distribution": {},
+            "signals": [],
+        },
+    )
+    monkeypatch.setattr(
+        app_main,
+        "compute_ticker_metrics",
+        lambda _analyst_df, _ticker, mode="beginner": {
+            "stats": {"win_rate": 0.6, "avg_return": 0.02, "median_return": 0.03, "best_window": "10D"},
+            "behavior": {
+                "holding_window": "Holding window context",
+                "reliability": "Reliability",
+                "consistency": "Consistency",
+                "tier_profile": "Tier profile",
+            },
+            "execution": {
+                "entry_reference": "Entry reference",
+                "planned_exit": "Planned exit",
+                "typical_outcome": "Typical outcome",
+                "execution_risk": "Execution risk",
+            },
+        },
+    )
+
+    app_main.main()
+
+    assert ("Ticker Analysis", "Viewing analysis for BBB from your portfolio plan.") in dummy_st.captions
+
+
+def test_ticker_analysis_clears_portfolio_context_after_manual_ticker_change(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Guided View")
+    dummy_st.session_state["selected_ticker"] = "BBB"
+    dummy_st.session_state["ticker_analysis_source"] = "portfolio"
+    dummy_st.session_state["ticker_analysis_source_ticker"] = "BBB"
+    dummy_st.selectbox_choice = "AAA"
+
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": ["AAA", "BBB"],
+            "date": pd.to_datetime(["2024-01-01", "2024-01-02"]),
+            "close": [10.0, 12.0],
+        }
+    )
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo-v1"}, {"errors": [], "warnings": []}),
+    )
+    monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: canonical_df)
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+    monkeypatch.setattr(
+        app_main,
+        "build_ticker_drilldown",
+        lambda _analyst_df, _ticker: {
+            "holding_window_stats": {"10D": {"win_rate": 0.6, "median_return": 0.03, "avg_return": 0.02, "count": 5}},
+            "pattern_summary": "Pattern summary",
+            "tier_performance": {},
+            "volatility_performance": {},
+            "return_distribution": {},
+            "signals": [],
+        },
+    )
+    monkeypatch.setattr(
+        app_main,
+        "compute_ticker_metrics",
+        lambda _analyst_df, _ticker, mode="beginner": {
+            "stats": {"win_rate": 0.6, "avg_return": 0.02, "median_return": 0.03, "best_window": "10D"},
+            "behavior": {
+                "holding_window": "Holding window context",
+                "reliability": "Reliability",
+                "consistency": "Consistency",
+                "tier_profile": "Tier profile",
+            },
+            "execution": {
+                "entry_reference": "Entry reference",
+                "planned_exit": "Planned exit",
+                "typical_outcome": "Typical outcome",
+                "execution_risk": "Execution risk",
+            },
+        },
+    )
+
+    app_main.main()
+
+    assert ("Ticker Analysis", "Viewing analysis for AAA from your portfolio plan.") not in dummy_st.captions
+    assert dummy_st.session_state.get("ticker_analysis_source") is None
+
+
+def test_ticker_analysis_navigation_injects_tab_focus_script_when_tab_preselected(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Guided View")
+    dummy_st.session_state["active_tab_name"] = "Ticker Analysis"
+
+    canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo-v1"}, {"errors": [], "warnings": []}),
+    )
+    monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+
+    app_main.main()
+
+    focus_scripts = [html for _, html, _ in dummy_st.html_blocks if 'targetLabel = "Ticker Analysis"' in html]
+    assert len(focus_scripts) == 1
+    assert dummy_st.session_state.get("active_tab_name") is None
 
 
 def test_help_video_labels_and_links_render_in_expected_sections(monkeypatch):

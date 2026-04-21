@@ -24,6 +24,8 @@ class DummyStreamlit:
         self.markdowns = []
         self.tabs_requested = []
         self.expanders = []
+        self.buttons = []
+        self.button_presses = set()
 
     class _DummyTab:
         def __enter__(self):
@@ -78,6 +80,10 @@ class DummyStreamlit:
     def tabs(self, names):
         self.tabs_requested.append(list(names))
         return [self._DummyTab(), self._DummyTab()]
+
+    def button(self, label, **_kwargs):
+        self.buttons.append(label)
+        return label in self.button_presses
 
 
 def test_render_portfolio_plan_uses_compact_cards_in_beginner_mode():
@@ -184,6 +190,67 @@ def test_render_portfolio_plan_advanced_details_keep_explanations_in_expander():
     assert "**Execution Summary:**" in combined_markdown
     assert "**Allocation %:**" in combined_markdown
     assert "**Selection Rank:**" in combined_markdown
+
+
+def test_render_portfolio_plan_shows_view_analysis_actions_in_both_modes():
+    beginner_st = DummyStreamlit()
+    analyst_st = DummyStreamlit()
+    allocations = [
+        {
+            "instrument": "AAA",
+            "allocation_amount": 1000,
+            "allocation_pct": 0.1,
+            "quality_tier": "A",
+            "confidence_label": "strong",
+            "selection_rank": 1,
+        }
+    ]
+
+    render_portfolio_plan(
+        allocations=allocations,
+        total_capital=10_000,
+        st_module=beginner_st,
+        section="plan",
+        mode="beginner",
+        on_view_analysis=lambda _ticker: None,
+    )
+    render_portfolio_plan(
+        allocations=allocations,
+        total_capital=10_000,
+        st_module=analyst_st,
+        section="plan",
+        mode="analyst",
+        on_view_analysis=lambda _ticker: None,
+    )
+
+    assert any("View analysis · AAA" in label for label in beginner_st.buttons)
+    assert any("View analysis · AAA" in label for label in analyst_st.buttons)
+
+
+def test_render_portfolio_plan_triggers_view_analysis_callback_when_clicked():
+    st = DummyStreamlit()
+    st.button_presses.add("View analysis · AAA")
+    selected = []
+
+    render_portfolio_plan(
+        allocations=[
+            {
+                "instrument": "AAA",
+                "allocation_amount": 1000,
+                "allocation_pct": 0.1,
+                "quality_tier": "A",
+                "confidence_label": "strong",
+                "selection_rank": 1,
+            }
+        ],
+        total_capital=10_000,
+        st_module=st,
+        section="plan",
+        mode="beginner",
+        on_view_analysis=lambda ticker: selected.append(ticker),
+    )
+
+    assert selected == ["AAA"]
 
 
 def test_group_mistakes_for_display_combines_repeated_types():
