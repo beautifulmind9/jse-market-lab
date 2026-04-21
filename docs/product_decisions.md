@@ -41,6 +41,158 @@ The dashboard should not only produce decisions but also provide analyst-facing 
 ## Product Surface Philosophy
 The engine is not enough on its own. The dashboard must present outputs in a way that lets users understand funded trades, unfunded trades, cash reserve, and allocation reasoning at a glance.
 
+## Decision — Portfolio surface must separate comparison from explanation
+
+### Context
+Sprint 14 improved overall UI clarity, onboarding, and Guided vs Advanced structure.
+
+However, the initial implementation revealed a key usability issue:
+
+Advanced portfolio tables contained important fields that were only visible through horizontal scrolling.
+
+This created a risk where users could miss critical decision information such as:
+- why a trade was selected or not funded
+- holding window context
+- allocation reasoning
+
+### Decision
+The portfolio surface must follow this structure:
+
+**comparison first, explanation second**
+
+This means:
+- essential decision fields must be visible without horizontal scrolling
+- deeper reasoning should be accessible through drilldowns or expanders
+- full raw tables should exist only as optional analyst depth
+
+### Implementation direction
+
+#### Guided View
+- uses compact trade cards
+- shows core fields immediately
+- moves secondary details into collapsed sections
+
+#### Advanced View
+- uses a compact comparison table for first-pass scanning
+- provides row-level drilldowns for detailed reasoning
+- includes a full analyst table only as an optional secondary surface
+
+### Rationale
+This structure:
+- improves scanability
+- reduces cognitive load
+- prevents hidden critical information
+- preserves analytical depth without overwhelming users
+
+### Outcome
+The portfolio becomes a true decision surface rather than a data display.
+
+Users can:
+- compare trades quickly
+- understand why trades appear
+- access deeper reasoning only when needed
+
+## Decision — Phase 2A focused on clarity before workflow connection
+
+### Context
+After public-beta release, the next risk was not lack of engine capability. It was user confusion.
+
+Observed issues included:
+- product identity confusion
+- capital input confusion
+- uncertainty about what to do first
+- risk of treating the dashboard like a static report instead of an interactive planning tool
+
+### Decision
+Phase 2 begins by improving:
+- first-run clarity
+- onboarding structure
+- scanability
+- product identity
+- portfolio readability
+
+before introducing deeper connected workflow behavior.
+
+### Rationale
+Users must first understand:
+- what the dashboard is
+- what the portfolio is for
+- where to start
+- what inputs belong to them
+
+before more advanced workflow links are added.
+
+### Outcome
+Sprint 13 and Sprint 14 prioritize clarity and interpretation first, creating the base for a more connected decision journey later.
+
+## Decision — Capital input must read as user-owned
+
+### Context
+User feedback showed that at least one tester did not understand that the capital field referred to their own money.
+
+This made the Portfolio surface feel more like a report than a planning tool.
+
+### Decision
+The capital input must use user-owned wording and visible directional support.
+
+### Implementation direction
+- use wording such as `Enter your investment amount (JMD)`
+- include helper text explaining that this is the amount the user wants to allocate across trades
+- add a visible cue near the top of Portfolio that tells the user where to start
+
+### Rationale
+This reinforces:
+- ownership
+- interactivity
+- planning intent
+
+### Outcome
+The Portfolio tab becomes easier to understand as a user-driven planning surface.
+
+## Decision — Product state wording must be accurate to loaded data
+
+### Context
+Users asked whether the system updates or changes after trades are followed.
+
+The current product does not yet support true user-facing refresh or user-controlled date-range regeneration of opportunity sets.
+
+### Decision
+System-behavior wording must stay accurate to the current product state.
+
+### Implementation direction
+Use wording that explains the plan is built from the currently loaded market data, without implying:
+- live updates
+- on-demand refresh
+- user-controlled regeneration of opportunities
+
+### Rationale
+Trust depends on not overstating system behavior.
+
+### Outcome
+The UI remains transparent and credible while the product is still in a validation stage.
+
+## Decision — Phase 2B should connect Portfolio to Ticker Analysis
+
+### Context
+By the end of Sprint 14, the main clarity and scanability problems were largely resolved.
+
+At that point, the next product gap becomes workflow continuity rather than basic explanation.
+
+Ticker Analysis is one of the clearest and strongest product surfaces, while Portfolio is the main decision surface.
+
+### Decision
+The next workflow improvement should connect Portfolio directly to Ticker Analysis.
+
+### Rationale
+This turns the product journey into:
+- Portfolio = what was selected
+- Ticker Analysis = why this stock deserves attention
+
+It reduces friction and strengthens the feeling of one connected decision-support system.
+
+### Outcome
+Sprint 15 should focus on workflow connection rather than another general clarity pass.
+
 ## Decision correction: public-facing insight prompts are not automatically in-app scope
 
 A prompt was defined to generate:
