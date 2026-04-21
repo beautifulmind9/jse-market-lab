@@ -33,6 +33,10 @@ _HELP_VIDEO_URLS = {
     "review": "https://www.loom.com/share/6e2058d50c5d447b98d9031b4e1050cf",
     "analyst_mode": "https://www.loom.com/share/399c4760e90744c49fd4aadcf172f4a3",
 }
+_STATE_SELECTED_TICKER = "selected_ticker"
+_STATE_ACTIVE_TAB = "active_tab_name"
+_STATE_TICKER_SOURCE = "ticker_analysis_source"
+_STATE_TICKER_SOURCE_TICKER = "ticker_analysis_source_ticker"
 
 
 def _has_analyst_insight_content(trades_df: pd.DataFrame, *, analyst_mode: bool) -> bool:
@@ -360,6 +364,16 @@ def main() -> None:
     st.caption("Guided View: simpler explanations and lighter detail")
     st.caption("Advanced View: deeper breakdowns and fuller analysis")
 
+    def _open_ticker_analysis_from_portfolio(ticker: str) -> None:
+        normalized_ticker = canonicalize_symbol(str(ticker or "").strip())
+        if not normalized_ticker:
+            return
+        st.session_state[_STATE_SELECTED_TICKER] = normalized_ticker
+        st.session_state[_STATE_TICKER_SOURCE] = "portfolio"
+        st.session_state[_STATE_TICKER_SOURCE_TICKER] = normalized_ticker
+        st.session_state[_STATE_ACTIVE_TAB] = "Ticker Analysis"
+        st.rerun()
+
     @st.cache_data(show_spinner=False)
     def _cached_ingest_dataset() -> tuple[pd.DataFrame, dict, tuple[tuple[str, tuple[str, ...]], ...]]:
         canonical_df_value, meta_value, issues_value = ingest_dataset("demo")
@@ -420,8 +434,13 @@ def main() -> None:
     dataset_period_description = _resolve_dataset_period_description(canonical_df)
     _render_onboarding(st, dataset_period_description=dataset_period_description)
 
-    tabs = st.tabs(_resolve_tabs_for_mode(mode_token))
-    tab_map = {name: tab for name, tab in zip(_resolve_tabs_for_mode(mode_token), tabs)}
+    available_tabs = _resolve_tabs_for_mode(mode_token)
+    active_tab_name = st.session_state.get(_STATE_ACTIVE_TAB)
+    resolved_default_tab = active_tab_name if active_tab_name in available_tabs else None
+    tabs = st.tabs(available_tabs, default=resolved_default_tab)
+    if resolved_default_tab is not None:
+        st.session_state[_STATE_ACTIVE_TAB] = None
+    tab_map = {name: tab for name, tab in zip(available_tabs, tabs)}
 
     with tab_map["Portfolio"]:
         st.markdown("### Portfolio")
@@ -437,6 +456,7 @@ def main() -> None:
         )
         st.caption("This is the amount you want to allocate across trades.")
         st.caption("This plan is built from the market data currently loaded in the dashboard.")
+        st.caption("Click a stock to review its behavior in Ticker Analysis.")
         if ranked_df.empty:
             st.info("Portfolio Plan will appear after ranked outputs are generated for the current run.")
         else:
@@ -448,6 +468,7 @@ def main() -> None:
                 mode=mode_token,
                 section="plan",
                 show_header=False,
+                on_view_analysis=_open_ticker_analysis_from_portfolio,
             )
 
     with tab_map["Review"]:
@@ -473,7 +494,20 @@ def main() -> None:
         if not ticker_options:
             st.info("Ticker Analysis will populate once ticker rows are loaded into the dataset.")
         else:
-            selected_ticker = st.selectbox("Select ticker", ticker_options)
+            stored_selected_ticker = canonicalize_symbol(str(st.session_state.get(_STATE_SELECTED_TICKER) or "").strip())
+            default_ticker_index = 0
+            if stored_selected_ticker and stored_selected_ticker in ticker_options:
+                default_ticker_index = ticker_options.index(stored_selected_ticker)
+            selected_ticker = st.selectbox("Select ticker", ticker_options, index=default_ticker_index)
+            st.session_state[_STATE_SELECTED_TICKER] = selected_ticker
+
+            source = str(st.session_state.get(_STATE_TICKER_SOURCE) or "").strip().lower()
+            source_ticker = canonicalize_symbol(str(st.session_state.get(_STATE_TICKER_SOURCE_TICKER) or "").strip())
+            if source == "portfolio" and source_ticker and selected_ticker == source_ticker:
+                st.caption(f"Viewing analysis for {selected_ticker} from your portfolio plan.")
+            elif source == "portfolio" and selected_ticker != source_ticker:
+                st.session_state[_STATE_TICKER_SOURCE] = None
+                st.session_state[_STATE_TICKER_SOURCE_TICKER] = None
             ticker_payload, ticker_metrics = _cached_ticker_payloads(analyst_df, selected_ticker, mode_token)
             analyst_mode = mode_token == "analyst"
             metrics_stats = ticker_metrics.get("stats", {})

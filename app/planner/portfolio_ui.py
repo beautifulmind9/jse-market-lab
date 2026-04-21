@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 import pandas as pd
 
@@ -115,6 +115,7 @@ def render_portfolio_plan(
     section: str = "both",
     show_header: bool = True,
     analyst_max_funded_trades_override: int | None = None,
+    on_view_analysis: Callable[[str], None] | None = None,
 ) -> None:
     """Render portfolio summary/review details in one section or both."""
     if st_module is None:
@@ -208,6 +209,14 @@ def render_portfolio_plan(
                 )
                 st_module.markdown(f"**Rule Note:** {plan_row['Rule Note']}")
                 st_module.markdown(f"**Decision Status:** {plan_row['Decision Status']}")
+            if on_view_analysis is not None:
+                ticker = str(plan_row["Ticker"]).strip()
+                if ticker:
+                    if st_module.button(
+                        f"View analysis · {ticker}",
+                        key=f"view-analysis-card-{funded}-{ticker}-{plan_row['Selection Rank']}",
+                    ):
+                        on_view_analysis(ticker)
             st_module.markdown("---")
 
     def _render_advanced_decision_table(rows: Sequence[Mapping[str, Any]]) -> None:
@@ -242,6 +251,13 @@ def render_portfolio_plan(
                 st_module.markdown(f"**Allocation %:** {plan_row['Allocation %']:.0%}")
                 st_module.markdown(f"**Selection Rank:** #{plan_row['Selection Rank']}")
                 st_module.markdown(f"**Decision Status:** {plan_row['Decision Status']}")
+                if on_view_analysis is not None:
+                    ticker = str(plan_row["Ticker"]).strip()
+                    if ticker and st_module.button(
+                        f"View analysis · {ticker}",
+                        key=f"view-analysis-advanced-{funded}-{ticker}-{plan_row['Selection Rank']}",
+                    ):
+                        on_view_analysis(ticker)
 
     def _render_full_analyst_table(rows: Sequence[Mapping[str, Any]], *, funded: bool) -> None:
         with st_module.expander("Show full analyst table", expanded=False):
