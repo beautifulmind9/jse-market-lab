@@ -375,6 +375,28 @@ def test_ticker_analysis_clears_portfolio_context_after_manual_ticker_change(mon
     assert dummy_st.session_state.get("ticker_analysis_source") is None
 
 
+def test_ticker_analysis_navigation_injects_tab_focus_script_when_tab_preselected(monkeypatch):
+    app_main = _load_app_module()
+    dummy_st = DummyStreamlit(mode_choice="Guided View")
+    dummy_st.session_state["active_tab_name"] = "Ticker Analysis"
+
+    canonical_df = pd.DataFrame({"instrument": ["AAA"], "date": pd.to_datetime(["2024-01-01"]), "close": [10.0]})
+
+    monkeypatch.setitem(sys.modules, "streamlit", dummy_st)
+    monkeypatch.setattr(
+        app_main,
+        "ingest_dataset",
+        lambda _dataset: (canonical_df, {"source": "demo", "dataset_id": "demo-v1"}, {"errors": [], "warnings": []}),
+    )
+    monkeypatch.setattr(app_main, "run_demo", lambda: {"ranked": pd.DataFrame()})
+    monkeypatch.setattr(app_main, "build_analyst_dataset", lambda _canonical, _ranked: pd.DataFrame())
+    monkeypatch.setattr(app_main, "coerce_trade_rows_from_ranked", lambda _ranked: [])
+
+    app_main.main()
+
+    focus_scripts = [html for _, html, _ in dummy_st.html_blocks if 'targetLabel = "Ticker Analysis"' in html]
+    assert len(focus_scripts) == 1
+    assert dummy_st.session_state.get("active_tab_name") is None
 
 
 def test_help_video_labels_and_links_render_in_expected_sections(monkeypatch):
