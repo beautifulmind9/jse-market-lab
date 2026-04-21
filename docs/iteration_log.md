@@ -37,7 +37,12 @@
 | V16.3 | Sprint 12 JSE data integration | Replaced the generic demo source with bundled historical JSE data and preserved backward compatibility by exposing both ticker and instrument through the loader |
 | V17.0 | Sprint 13 planning started | Reframed the next sprint around user understanding, execution framing, Analyst Insights purpose, label cleanup, and median-first interpretation |
 | V17.1 | Sprint 13 execution layer added to scope | Expanded Sprint 13 from a pure explanation sprint into a decision + execution framing sprint so the product answers not only what looks strong, but how a trade would typically be approached |
-| V18.0 | Sprint 14 UI architecture refresh started | Introduced Guided vs Advanced structure, first-run onboarding improvements, and product-surface polish aimed at public-beta clarity and lighter first use |
-| V18.1 | Sprint 14 Guided View scanability pass | Reduced always-visible top-area copy, tightened Portfolio Snapshot, collapsed secondary explainers, and moved Guided portfolio rows into compact cards while keeping Advanced tables |
-| V18.2 | Sprint 14 onboarding compatibility hardening | Restored backward compatibility for `_render_first_run_header` and hardened onboarding delegation so partial Streamlit/test stubs do not break startup |
-| V18.3 | Sprint 14 portfolio decision-surface refinement in progress | Current refinement focus is making Portfolio comparison user-friendly without hiding critical fields behind horizontal scrolling; PR #108 implements compact Guided cards with collapsed details and Advanced compact decision tables with drilldowns while preserving full analyst tables as optional deeper surfaces |
+| V17.2 | Sprint 13 closeout | Completed Phase 2 clarity foundation: improved interpretation, execution framing, and surface-level understanding across Portfolio and Ticker Analysis |
+| V18.0 | Sprint 14 UI architecture refresh started | Introduced Guided vs Advanced structure, onboarding improvements, and product-surface simplification |
+| V18.1 | Sprint 14 scanability pass | Reduced visible clutter, improved snapshot readability, and shifted Guided portfolio to compact cards |
+| V18.2 | Sprint 14 compatibility hardening | Stabilized onboarding and UI behavior across environments |
+| V18.3 | Sprint 14 portfolio decision-surface redesign | Implemented comparison-first structure: compact Guided cards, compact Advanced tables with drilldowns, optional full analyst table |
+| V18.4 | Sprint 14 first-run clarity closeout | Added capital input guidance, clearer ownership wording, helper text, and accurate loaded-data messaging |
+| V18.5 | Phase 2A complete | Clarity, scanability, onboarding, and portfolio decision-surface redesign are complete; product now functions as a clear decision-support tool |
+| V19.0 | Sprint 15 workflow connection shipped | Added Portfolio → Ticker Analysis context handoff so clicking `View analysis` preloads the selected ticker into Ticker Analysis |
+| V19.1 | Sprint 15 navigation follow-up bug identified | Confirmed deployed behavior only partially completes the workflow: ticker preload works, but the app does not visibly switch tabs after click; created Issue #115 for a navigation-only fix |
