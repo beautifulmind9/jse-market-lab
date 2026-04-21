@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import json
 
 import pandas as pd
 
@@ -217,6 +218,31 @@ def _render_visual_polish(st_module) -> None:
 
 def _render_video_link(st_module, *, label: str, url: str) -> None:
     st_module.markdown(f'<a href="{url}" target="_blank" rel="noopener noreferrer">{label}</a>', unsafe_allow_html=True)
+
+
+def _render_tab_focus_script(st_module, *, tab_name: str) -> None:
+    safe_tab_name = json.dumps(str(tab_name))
+    st_module.components.v1.html(
+        f"""
+        <script>
+        (() => {{
+            const targetLabel = {safe_tab_name};
+            const tryFocus = () => {{
+                const tabButtons = window.parent.document.querySelectorAll('.stTabs [data-baseweb="tab"]');
+                tabButtons.forEach((button) => {{
+                    const label = (button.textContent || '').trim();
+                    if (label === targetLabel) {{
+                        button.click();
+                    }}
+                }});
+            }};
+            requestAnimationFrame(tryFocus);
+            setTimeout(tryFocus, 120);
+        }})();
+        </script>
+        """,
+        height=0,
+    )
 
 
 def _resolve_dataset_period_description(df: pd.DataFrame) -> str:
@@ -439,6 +465,7 @@ def main() -> None:
     resolved_default_tab = active_tab_name if active_tab_name in available_tabs else None
     tabs = st.tabs(available_tabs, default=resolved_default_tab)
     if resolved_default_tab is not None:
+        _render_tab_focus_script(st, tab_name=resolved_default_tab)
         st.session_state[_STATE_ACTIVE_TAB] = None
     tab_map = {name: tab for name, tab in zip(available_tabs, tabs)}
 
