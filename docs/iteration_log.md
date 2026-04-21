@@ -37,3 +37,10 @@
 | V16.3 | Sprint 12 JSE data integration | Replaced the generic demo source with bundled historical JSE data and preserved backward compatibility by exposing both ticker and instrument through the loader |
 | V17.0 | Sprint 13 planning started | Reframed the next sprint around user understanding, execution framing, Analyst Insights purpose, label cleanup, and median-first interpretation |
 | V17.1 | Sprint 13 execution layer added to scope | Expanded Sprint 13 from a pure explanation sprint into a decision + execution framing sprint so the product answers not only what looks strong, but how a trade would typically be approached |
+| V17.2 | Sprint 13 closeout | Completed Phase 2 clarity foundation: improved interpretation, execution framing, and surface-level understanding across Portfolio and Ticker Analysis |
+| V18.0 | Sprint 14 UI architecture refresh started | Introduced Guided vs Advanced structure, onboarding improvements, and product-surface simplification |
+| V18.1 | Sprint 14 scanability pass | Reduced visible clutter, improved snapshot readability, and shifted Guided portfolio to compact cards |
+| V18.2 | Sprint 14 compatibility hardening | Stabilized onboarding and UI behavior across environments |
+| V18.3 | Sprint 14 portfolio decision-surface redesign | Implemented comparison-first structure: compact Guided cards, compact Advanced tables with drilldowns, optional full analyst table |
+| V18.4 | Sprint 14 first-run clarity closeout | Added capital input guidance, clearer ownership wording, helper text, and accurate loaded-data messaging |
+| V18.5 | Phase 2A complete | Clarity, scanability, onboarding, and portfolio decision-surface redesign are complete; product now functions as a clear decision-support tool |
