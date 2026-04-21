@@ -44,3 +44,5 @@
 | V18.3 | Sprint 14 portfolio decision-surface redesign | Implemented comparison-first structure: compact Guided cards, compact Advanced tables with drilldowns, optional full analyst table |
 | V18.4 | Sprint 14 first-run clarity closeout | Added capital input guidance, clearer ownership wording, helper text, and accurate loaded-data messaging |
 | V18.5 | Phase 2A complete | Clarity, scanability, onboarding, and portfolio decision-surface redesign are complete; product now functions as a clear decision-support tool |
+| V19.0 | Sprint 15 workflow connection shipped | Added Portfolio → Ticker Analysis context handoff so clicking `View analysis` preloads the selected ticker into Ticker Analysis |
+| V19.1 | Sprint 15 navigation follow-up bug identified | Confirmed deployed behavior only partially completes the workflow: ticker preload works, but the app does not visibly switch tabs after click; created Issue #115 for a navigation-only fix |
