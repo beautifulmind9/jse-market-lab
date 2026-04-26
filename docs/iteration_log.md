@@ -46,3 +46,5 @@
 | V18.5 | Phase 2A complete | Clarity, scanability, onboarding, and portfolio decision-surface redesign are complete; product now functions as a clear decision-support tool |
 | V19.0 | Sprint 15 workflow connection shipped | Added Portfolio → Ticker Analysis context handoff so clicking `View analysis` preloads the selected ticker into Ticker Analysis |
 | V19.1 | Sprint 15 navigation follow-up bug identified | Confirmed deployed behavior only partially completes the workflow: ticker preload works, but the app does not visibly switch tabs after click; created Issue #115 for a navigation-only fix |
+| V19.2 | Sprint 15 navigation bugfix | Fixed the `View analysis` flow so the selected ticker preloads and the app visibly lands on Ticker Analysis in deployed Streamlit |
+| V19.3 | Sprint 15 closeout | Completed the connected workflow layer: Portfolio now links directly to Ticker Analysis with context preserved and no ranking, allocation, signal, or ticker-analysis logic changes |
