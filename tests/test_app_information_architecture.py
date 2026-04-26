@@ -205,6 +205,9 @@ def test_sprint12_tab_layout_and_capital_location(monkeypatch):
         "Portfolio",
         "This plan is built from the market data currently loaded in the dashboard.",
     ) in dummy_st.captions
+    assert any(tab == "Portfolio" and "Viewed as at" in text for tab, text in dummy_st.captions)
+    assert any(tab == "Portfolio" and "Latest market data in dashboard" in text for tab, text in dummy_st.captions)
+    assert any(tab == "Portfolio" and "trading days" in text for tab, text in dummy_st.info_messages)
 
 
 def test_guided_view_hides_analyst_insights_tab(monkeypatch):
@@ -823,6 +826,9 @@ def test_ticker_analysis_beginner_mode_hides_raw_deep_dive_tables(monkeypatch):
     ticker_markdowns = [text for tab, text in dummy_st.markdowns if tab == "Ticker Analysis"]
     assert "#### Execution Behavior" in ticker_markdowns
     assert "#### G) Analyst Deep Dive" not in ticker_markdowns
+    assert any(tab == "Ticker Analysis" and "Viewed as at" in text for tab, text in dummy_st.captions)
+    assert any(tab == "Ticker Analysis" and "Latest market data in dashboard" in text for tab, text in dummy_st.captions)
+    assert any(tab == "Ticker Analysis" and "trading days" in text for tab, text in dummy_st.info_messages)
     assert any("Switch to Advanced View to open the full table breakdown." in text for _, text in dummy_st.captions)
     assert not any("Outcome context:" in text for text in ticker_markdowns)
 
