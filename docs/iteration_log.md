@@ -48,3 +48,4 @@
 | V19.1 | Sprint 15 navigation follow-up bug identified | Confirmed deployed behavior only partially completes the workflow: ticker preload works, but the app does not visibly switch tabs after click; created Issue #115 for a navigation-only fix |
 | V19.2 | Sprint 15 navigation bugfix | Fixed the `View analysis` flow so the selected ticker preloads and the app visibly lands on Ticker Analysis in deployed Streamlit |
 | V19.3 | Sprint 15 closeout | Completed the connected workflow layer: Portfolio now links directly to Ticker Analysis with context preserved and no ranking, allocation, signal, or ticker-analysis logic changes |
+| V20.0 | Sprint 16 live context layer started | Introduced time-awareness into the dashboard with viewed timestamp, dataset recency, and holding-window clarification to improve decision timing interpretation |
