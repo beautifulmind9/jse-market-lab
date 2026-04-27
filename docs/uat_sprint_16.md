@@ -20,7 +20,8 @@
 ## Test Area 3: Holding Window Clarity
 
 - [ ] Copy explicitly references trading days
-- [ ] No implication of calendar-based timing
+- [ ] Copy clarifies that holding windows are **review periods**, not fixed holding deadlines
+- [ ] Copy clarifies that users are not expected to hold until month-end
 - [ ] Appears in both Portfolio and Ticker Analysis
 
 ---
