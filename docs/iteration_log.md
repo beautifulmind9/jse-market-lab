@@ -51,3 +51,4 @@
 | V20.0 | Sprint 16 live context layer started | Introduced time-awareness into the dashboard with viewed timestamp, dataset recency, and holding-window clarification to improve decision timing interpretation |
 | V20.1 | Sprint 16 live context layer shipped | Added viewed timestamp, latest market data label, and review-window guidance in Portfolio and Ticker Analysis |
 | V20.2 | Sprint 16 timing clarity refinement | Updated holding-window guidance to explain that users start counting from their entry date and review after the assigned number of trading days |
+| V20.3 | Sprint 16 closeout | Completed the live context layer with timezone-labeled view time, latest market data date, and entry-based review-window guidance; signal freshness remains a later backlog item |
