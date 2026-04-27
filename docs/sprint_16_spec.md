@@ -50,9 +50,19 @@ Add near the top of Portfolio and Ticker Analysis:
 - `Viewed as at: {timestamp}`
 - `Latest market data in dashboard: {date}`
 
-Add holding-window interpretation copy:
+Add holding-window interpretation copy.
+
+Current copy is directionally correct but may feel too vague for first-time users:
 
 > Holding windows are measured in trading days from the signal or entry reference, not from the calendar month.
+
+Preferred clearer copy:
+
+> Holding windows are review periods. A 5D, 10D, 20D, or 30D window means the trade should be reviewed after that many trading days from the signal or your entry reference — not held until month-end.
+
+If space is limited, use:
+
+> 5D, 10D, 20D, and 30D are trading-day review windows from the signal or entry reference, not calendar-month deadlines.
 
 Wording must stay clear that the app is not a live-streaming market feed.
 
@@ -91,6 +101,7 @@ A user should be able to answer:
 - When am I viewing this plan?
 - How recent is the market data in the dashboard?
 - How should I interpret 5D, 10D, 20D, or 30D holding windows?
+- Does the holding-window label mean a review period rather than a calendar deadline?
 
 ---
 
