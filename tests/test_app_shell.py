@@ -212,3 +212,65 @@ def test_dataset_period_description_uses_date_range_when_available():
 def test_app_no_long_hard_coded_data_period_copy():
     source = (ROOT / "app.py").read_text()
     assert "since 2018 where available" not in source
+
+
+def test_trade_readiness_signal_timing_falls_back_to_canonical_market_date():
+    spec = importlib.util.spec_from_file_location("app_main", ROOT / "app.py")
+    app_main = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(app_main)
+
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": ["AAA", "AAA"],
+            "date": ["2024-01-10", "2024-01-11"],
+            "volume": [1000, 1200],
+        }
+    )
+    analyst_df = pd.DataFrame(
+        {
+            "instrument": ["AAA"],
+            "liquidity_pass": [True],
+        }
+    )
+
+    lines = app_main._build_trade_readiness_lines(
+        canonical_df=canonical_df,
+        analyst_df=analyst_df,
+        selected_ticker="AAA",
+        ticker_payload={},
+        metrics_stats={},
+    )
+
+    assert "Signal timing: Not yet assessed" in lines
+
+
+def test_trade_readiness_signal_timing_unavailable_when_no_parseable_dates():
+    spec = importlib.util.spec_from_file_location("app_main", ROOT / "app.py")
+    app_main = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(app_main)
+
+    canonical_df = pd.DataFrame(
+        {
+            "instrument": ["AAA"],
+            "date": ["not-a-date"],
+            "volume": [1000],
+        }
+    )
+    analyst_df = pd.DataFrame(
+        {
+            "instrument": ["AAA"],
+            "signal_date": ["still-not-a-date"],
+        }
+    )
+
+    lines = app_main._build_trade_readiness_lines(
+        canonical_df=canonical_df,
+        analyst_df=analyst_df,
+        selected_ticker="AAA",
+        ticker_payload={},
+        metrics_stats={},
+    )
+
+    assert "Signal timing: Signal date unavailable" in lines

@@ -211,16 +211,18 @@ def _build_trade_readiness_lines(
     else:
         evidence_label = "Broader sample"
 
-    signal_date_candidates = ("signal_date", "entry_date", "date")
-    signal_date_field = next((field for field in signal_date_candidates if field in ticker_scope_analysis.columns), None)
-    if signal_date_field is None:
-        signal_timing_label = "Signal date unavailable"
-    else:
-        parsed_dates = pd.to_datetime(ticker_scope_analysis[signal_date_field], errors="coerce")
-        if parsed_dates.notna().any():
-            signal_timing_label = "Not yet assessed"
-        else:
-            signal_timing_label = "Signal date unavailable"
+    def _has_parseable_date(df: pd.DataFrame, candidates: tuple[str, ...]) -> bool:
+        for field in candidates:
+            if field not in df.columns:
+                continue
+            parsed_dates = pd.to_datetime(df[field], errors="coerce")
+            if parsed_dates.notna().any():
+                return True
+        return False
+
+    has_analysis_signal_date = _has_parseable_date(ticker_scope_analysis, ("signal_date", "entry_date", "date"))
+    has_market_date = _has_parseable_date(ticker_scope_market, ("date",))
+    signal_timing_label = "Not yet assessed" if (has_analysis_signal_date or has_market_date) else "Signal date unavailable"
 
     return [
         f"Liquidity data: {liquidity_label}",
