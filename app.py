@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 import inspect
 import json
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 
@@ -259,6 +260,17 @@ def _resolve_dataset_period_description(df: pd.DataFrame) -> str:
     return f"Using historical JSE data from {min_date} to {max_date} in the current dataset."
 
 
+def _format_viewed_timestamp() -> str:
+    """Return a timezone-labeled 'Viewed as at' timestamp."""
+    try:
+        jamaica_now = datetime.now(ZoneInfo("America/Jamaica"))
+        hour = jamaica_now.strftime("%I").lstrip("0") or "0"
+        return f"{jamaica_now:%b} {jamaica_now.day}, {jamaica_now:%Y} {hour}:{jamaica_now:%M} {jamaica_now:%p} Jamaica time"
+    except Exception:
+        utc_now = datetime.utcnow()
+        return f"{utc_now:%Y-%m-%d %H:%M} UTC"
+
+
 def _render_start_here_video(st_module) -> None:
     st_module.markdown("### New here? Start with this video")
     st_module.components.v1.html(_START_HERE_EMBED_HTML, height=460)
@@ -460,7 +472,7 @@ def main() -> None:
 
     dataset_period_description = _resolve_dataset_period_description(canonical_df)
     _render_onboarding(st, dataset_period_description=dataset_period_description)
-    viewed_ts = datetime.now().strftime("%Y-%m-%d %I:%M %p")
+    viewed_ts = _format_viewed_timestamp()
     latest_date = canonical_df["date"].max() if "date" in canonical_df.columns else pd.NaT
     if pd.isna(latest_date):
         latest_market_data_label = "Unavailable"
@@ -495,8 +507,9 @@ def main() -> None:
         st.caption(f"Viewed as at: {viewed_ts}")
         st.caption(f"Latest market data in dashboard: {latest_market_data_label}")
         st.info(
-            "5D, 10D, 20D, and 30D are review windows.\n"
-            "Check the trade around that time — not a fixed hold until month-end."
+            "5D, 10D, 20D, and 30D are review windows. "
+            "If you enter today, start counting from your entry date and review after that many trading days. "
+            "These are not month-end hold rules."
         )
         st.caption("Click a stock to see how it typically behaves and when it’s usually reviewed.")
         if ranked_df.empty:
@@ -558,8 +571,9 @@ def main() -> None:
             st.caption(f"Viewed as at: {viewed_ts}")
             st.caption(f"Latest market data in dashboard: {latest_market_data_label}")
             st.info(
-                "5D, 10D, 20D, and 30D are review windows.\n"
-                "Check the trade around that time — not a fixed hold until month-end."
+                "5D, 10D, 20D, and 30D are review windows. "
+                "If you enter today, start counting from your entry date and review after that many trading days. "
+                "These are not month-end hold rules."
             )
             st.markdown("#### Quick Take")
             for line in _build_quick_take(stats=metrics_stats, holding_window_stats=ticker_payload["holding_window_stats"]):

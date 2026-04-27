@@ -209,14 +209,29 @@ def test_sprint12_tab_layout_and_capital_location(monkeypatch):
         "Portfolio",
         "Click a stock to see how it typically behaves and when it’s usually reviewed.",
     ) in dummy_st.captions
-    assert any(tab == "Portfolio" and "Viewed as at" in text for tab, text in dummy_st.captions)
+    assert any(
+        tab == "Portfolio" and "Viewed as at" in text and ("Jamaica time" in text or "UTC" in text)
+        for tab, text in dummy_st.captions
+    )
     assert any(tab == "Portfolio" and "Latest market data in dashboard" in text for tab, text in dummy_st.captions)
     assert any(
         tab == "Portfolio" and "5D, 10D, 20D, and 30D are review windows." in text
         for tab, text in dummy_st.info_messages
     )
     assert any(
-        tab == "Portfolio" and "not a fixed hold until month-end." in text
+        tab == "Portfolio" and "If you enter today" in text
+        for tab, text in dummy_st.info_messages
+    )
+    assert any(
+        tab == "Portfolio" and "start counting from your entry date" in text
+        for tab, text in dummy_st.info_messages
+    )
+    assert any(
+        tab == "Portfolio" and "review after that many trading days" in text
+        for tab, text in dummy_st.info_messages
+    )
+    assert any(
+        tab == "Portfolio" and "not month-end hold rules" in text
         for tab, text in dummy_st.info_messages
     )
 
@@ -837,14 +852,29 @@ def test_ticker_analysis_beginner_mode_hides_raw_deep_dive_tables(monkeypatch):
     ticker_markdowns = [text for tab, text in dummy_st.markdowns if tab == "Ticker Analysis"]
     assert "#### Execution Behavior" in ticker_markdowns
     assert "#### G) Analyst Deep Dive" not in ticker_markdowns
-    assert any(tab == "Ticker Analysis" and "Viewed as at" in text for tab, text in dummy_st.captions)
+    assert any(
+        tab == "Ticker Analysis" and "Viewed as at" in text and ("Jamaica time" in text or "UTC" in text)
+        for tab, text in dummy_st.captions
+    )
     assert any(tab == "Ticker Analysis" and "Latest market data in dashboard" in text for tab, text in dummy_st.captions)
     assert any(
         tab == "Ticker Analysis" and "5D, 10D, 20D, and 30D are review windows." in text
         for tab, text in dummy_st.info_messages
     )
     assert any(
-        tab == "Ticker Analysis" and "not a fixed hold until month-end." in text
+        tab == "Ticker Analysis" and "If you enter today" in text
+        for tab, text in dummy_st.info_messages
+    )
+    assert any(
+        tab == "Ticker Analysis" and "start counting from your entry date" in text
+        for tab, text in dummy_st.info_messages
+    )
+    assert any(
+        tab == "Ticker Analysis" and "review after that many trading days" in text
+        for tab, text in dummy_st.info_messages
+    )
+    assert any(
+        tab == "Ticker Analysis" and "not month-end hold rules" in text
         for tab, text in dummy_st.info_messages
     )
     assert any("Switch to Advanced View to open the full table breakdown." in text for _, text in dummy_st.captions)
