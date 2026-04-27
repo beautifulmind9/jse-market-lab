@@ -193,6 +193,35 @@ It reduces friction and strengthens the feeling of one connected decision-suppor
 ### Outcome
 Sprint 15 should focus on workflow connection rather than another general clarity pass.
 
+## Decision — Holding windows are entry-based review checkpoints
+
+### Context
+Sprint 16 introduced live context and holding-window guidance. During UAT, the initial explanation still did not fully answer the practical user question:
+
+> If I enter a trade today or midweek, when do I start counting and when should I review it?
+
+This matters because users may act on a trade after the original signal date, and a static holding-window label can be misread as a calendar deadline or unconditional hold instruction.
+
+### Decision
+Holding windows are user-facing review checkpoints counted from the user's entry date when the user decides to act.
+
+The product should explain:
+- 5D, 10D, 20D, and 30D mean review after that many trading days
+- if the user enters today, counting starts from the entry date
+- these are not month-end hold rules
+- holding windows do not remove the need for future signal freshness and risk-exit logic
+
+### Rationale
+This separates two important concepts:
+
+1. **Entry-based review timing** — when the user should check the trade after entering
+2. **Signal freshness** — whether the original setup is still timely enough to act on
+
+The dashboard can clarify entry-based review timing now, while signal age, freshness labels, and remaining-window logic remain future timing features.
+
+### Outcome
+Sprint 16 copy should use entry-based wording so users understand how to apply holding windows if they act midweek or after the page loads.
+
 ## Decision correction: public-facing insight prompts are not automatically in-app scope
 
 A prompt was defined to generate:
@@ -233,73 +262,20 @@ Because of that, the need for real historical data in that workflow does not aut
 ## Decision — Introduce Review Layer
 
 ### Context
-Sprint 14 improved overall UI clarity, onboarding, and Guided vs Advanced structure.
-
-However, the initial implementation revealed a key usability issue:
-
-Advanced portfolio tables contained important fields that were only visible through horizontal scrolling.
-
-This created a risk where users could miss critical decision information such as:
-- why a trade was selected or not funded
-- holding window context
-- allocation reasoning
+Users could interpret outputs but had no feedback on their own decisions.
 
 ### Decision
-The portfolio surface must follow this structure:
-
-**comparison first, explanation second**
-
-This means:
-- essential decision fields must be visible without horizontal scrolling
-- deeper reasoning should be accessible through drilldowns or expanders
-- full raw tables should exist only as optional analyst depth
-
-### Implementation direction
-
-#### Guided View
-- uses compact trade cards
-- shows core fields immediately
-- moves secondary details into collapsed sections
-
-#### Advanced View
-- uses a compact comparison table for first-pass scanning
-- provides row-level drilldowns for detailed reasoning
-- includes a full analyst table only as an optional secondary surface
+Add a post-decision evaluation layer focused on:
+- behavior
+- mistakes
+- discipline
 
 ### Rationale
-This structure:
-- improves scanability
-- reduces cognitive load
-- prevents hidden critical information
-- preserves analytical depth without overwhelming users
+Improves:
+- user learning
+- trust in system
+- differentiation from basic dashboards
 
-### Outcome
-The portfolio becomes a true decision surface rather than a data display.
-
-Users can:
-- compare trades quickly
-- understand why trades appear
-- access deeper reasoning only when needed
-
----
-
-## Decision Guidance Philosophy
-Guidance is provided as optional decision support, not as automatic execution logic. The system suggests possible responses to risk while preserving user agency.
-
-## Language Localization Decision
-Guidance should sound natural to Jamaican users without using patois or overly foreign financial language. The product uses a Clear mode for everyday readability and a Pro mode for more concise interpretation. Both modes should remain locally understandable.
-
-## Guidance Mode Ownership
-Clear vs Pro guidance is controlled at the planner level, not inside each trade card. This keeps the UI stable, avoids repeated widget creation, and applies one consistent reading mode across a planner view.
-
-## Confidence Layer Philosophy
-The confidence layer converts signals and risk factors into a clear prioritization system. It does not predict outcomes but helps users decide which trades deserve attention and capital first.
-
-## Allocation Philosophy
-The allocation layer uses simple, rule-based sizing to prioritize stronger trades while preserving cash and limiting exposure. It is designed to support disciplined portfolio decisions, not optimize returns through complex models.
-
-## Validation Layer Philosophy
-The dashboard should not only produce decisions but also provide analyst-facing views that help validate whether current rules, filters, and setup classifications are supported by historical behavior.
-
-## Product Surface Philosophy
-The engine is not enough on its own. The dashboard must present outputs in a way that lets users understand funded trades, unfunded trades, cash reserve, and allocation reasoning at a glance.
+### Trade-offs
+- adds complexity
+- requires careful tone control (no advisory language)
