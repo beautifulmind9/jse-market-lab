@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 import inspect
 import json
 
@@ -459,6 +460,14 @@ def main() -> None:
 
     dataset_period_description = _resolve_dataset_period_description(canonical_df)
     _render_onboarding(st, dataset_period_description=dataset_period_description)
+    viewed_ts = datetime.now().strftime("%Y-%m-%d %I:%M %p")
+    latest_date = canonical_df["date"].max() if "date" in canonical_df.columns else pd.NaT
+    if pd.isna(latest_date):
+        latest_market_data_label = "Unavailable"
+    elif hasattr(latest_date, "strftime"):
+        latest_market_data_label = latest_date.strftime("%Y-%m-%d")
+    else:
+        latest_market_data_label = str(latest_date)
 
     available_tabs = _resolve_tabs_for_mode(mode_token)
     active_tab_name = st.session_state.get(_STATE_ACTIVE_TAB)
@@ -483,7 +492,13 @@ def main() -> None:
         )
         st.caption("This is the amount you want to allocate across trades.")
         st.caption("This plan is built from the market data currently loaded in the dashboard.")
-        st.caption("Click a stock to review its behavior in Ticker Analysis.")
+        st.caption(f"Viewed as at: {viewed_ts}")
+        st.caption(f"Latest market data in dashboard: {latest_market_data_label}")
+        st.info(
+            "5D, 10D, 20D, and 30D are review windows.\n"
+            "Check the trade around that time — not a fixed hold until month-end."
+        )
+        st.caption("Click a stock to see how it typically behaves and when it’s usually reviewed.")
         if ranked_df.empty:
             st.info("Portfolio Plan will appear after ranked outputs are generated for the current run.")
         else:
@@ -540,6 +555,12 @@ def main() -> None:
             metrics_stats = ticker_metrics.get("stats", {})
             metrics_behavior = ticker_metrics.get("behavior", {})
 
+            st.caption(f"Viewed as at: {viewed_ts}")
+            st.caption(f"Latest market data in dashboard: {latest_market_data_label}")
+            st.info(
+                "5D, 10D, 20D, and 30D are review windows.\n"
+                "Check the trade around that time — not a fixed hold until month-end."
+            )
             st.markdown("#### Quick Take")
             for line in _build_quick_take(stats=metrics_stats, holding_window_stats=ticker_payload["holding_window_stats"]):
                 st.markdown(f"- {line}")
