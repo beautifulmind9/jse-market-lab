@@ -205,9 +205,20 @@ def test_sprint12_tab_layout_and_capital_location(monkeypatch):
         "Portfolio",
         "This plan is built from the market data currently loaded in the dashboard.",
     ) in dummy_st.captions
+    assert (
+        "Portfolio",
+        "Click a stock to see how it typically behaves and when it’s usually reviewed.",
+    ) in dummy_st.captions
     assert any(tab == "Portfolio" and "Viewed as at" in text for tab, text in dummy_st.captions)
     assert any(tab == "Portfolio" and "Latest market data in dashboard" in text for tab, text in dummy_st.captions)
-    assert any(tab == "Portfolio" and "trading days" in text for tab, text in dummy_st.info_messages)
+    assert any(
+        tab == "Portfolio" and "5D, 10D, 20D, and 30D are review windows." in text
+        for tab, text in dummy_st.info_messages
+    )
+    assert any(
+        tab == "Portfolio" and "not a fixed hold until month-end." in text
+        for tab, text in dummy_st.info_messages
+    )
 
 
 def test_guided_view_hides_analyst_insights_tab(monkeypatch):
@@ -828,7 +839,14 @@ def test_ticker_analysis_beginner_mode_hides_raw_deep_dive_tables(monkeypatch):
     assert "#### G) Analyst Deep Dive" not in ticker_markdowns
     assert any(tab == "Ticker Analysis" and "Viewed as at" in text for tab, text in dummy_st.captions)
     assert any(tab == "Ticker Analysis" and "Latest market data in dashboard" in text for tab, text in dummy_st.captions)
-    assert any(tab == "Ticker Analysis" and "trading days" in text for tab, text in dummy_st.info_messages)
+    assert any(
+        tab == "Ticker Analysis" and "5D, 10D, 20D, and 30D are review windows." in text
+        for tab, text in dummy_st.info_messages
+    )
+    assert any(
+        tab == "Ticker Analysis" and "not a fixed hold until month-end." in text
+        for tab, text in dummy_st.info_messages
+    )
     assert any("Switch to Advanced View to open the full table breakdown." in text for _, text in dummy_st.captions)
     assert not any("Outcome context:" in text for text in ticker_markdowns)
 
