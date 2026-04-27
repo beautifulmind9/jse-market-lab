@@ -131,9 +131,105 @@ def _build_holding_window_table(holding_window_stats: dict[str, dict], *, analys
         if analyst_mode:
             row["count"] = count
         else:
-            row["sample_note"] = f"Built from about {count} completed trades"
+            if count < 15:
+                row["sample_note"] = (
+                    f"Built from about {count} completed trades. "
+                    "This gives supporting context, but the pattern is still developing."
+                )
+            else:
+                row["sample_note"] = (
+                    "Built from a broader set of completed trades, "
+                    "so the holding-window read is more mature."
+                )
         rows.append(row)
     return pd.DataFrame(rows)
+
+
+def _build_trade_readiness_lines(
+    *,
+    canonical_df: pd.DataFrame,
+    analyst_df: pd.DataFrame,
+    selected_ticker: str,
+    ticker_payload: dict,
+    metrics_stats: dict,
+) -> list[str]:
+    def _scope(df: pd.DataFrame) -> pd.DataFrame:
+        for column in ("instrument", "ticker"):
+            if column in df.columns:
+                scoped = df[df[column].astype(str).str.strip().map(canonicalize_symbol) == selected_ticker]
+                return scoped.copy()
+        return pd.DataFrame(columns=df.columns)
+
+    ticker_scope_market = _scope(canonical_df)
+    ticker_scope_analysis = _scope(analyst_df)
+
+    liquidity_label = "Not available"
+    if "liquidity_pass" in ticker_scope_analysis.columns:
+        liquidity_values = ticker_scope_analysis["liquidity_pass"].dropna()
+        if liquidity_values.empty:
+            liquidity_label = "Liquidity data limited"
+        else:
+            liquidity_label = "Liquidity data available"
+    elif "volume" in ticker_scope_market.columns:
+        volume_values = pd.to_numeric(ticker_scope_market["volume"], errors="coerce").dropna()
+        if volume_values.empty:
+            liquidity_label = "Liquidity data limited"
+        else:
+            liquidity_label = "Liquidity data available"
+
+    volume_label = "Not available"
+    if "volume" in ticker_scope_market.columns:
+        volume_values = pd.to_numeric(ticker_scope_market["volume"], errors="coerce")
+        coverage = float(volume_values.notna().mean()) if len(volume_values) > 0 else 0.0
+        if coverage >= 0.8:
+            volume_label = "Present"
+        elif coverage > 0:
+            volume_label = "Limited"
+
+    spread_label = "Not available"
+    spread_columns = [column for column in ("spread", "spread_pct", "bid_ask_spread", "bid_ask_spread_pct") if column in ticker_scope_market.columns]
+    if spread_columns:
+        spread_values = pd.to_numeric(ticker_scope_market[spread_columns[0]], errors="coerce").dropna()
+        spread_label = "Watch" if spread_values.empty else "Supportive"
+
+    volatility_stats = ticker_payload.get("volatility_performance", {})
+    volatility_label = "Not available"
+    if volatility_stats:
+        volatility_label = "Context available"
+    elif "volatility_bucket" in ticker_scope_analysis.columns:
+        volatility_values = ticker_scope_analysis["volatility_bucket"].dropna()
+        if not volatility_values.empty:
+            volatility_label = "Context available"
+        else:
+            volatility_label = "Limited"
+
+    signal_count = int(metrics_stats.get("signal_count", 0) or 0)
+    if signal_count < 8:
+        evidence_label = "Small sample"
+    elif signal_count < 25:
+        evidence_label = "Moderate sample"
+    else:
+        evidence_label = "Broader sample"
+
+    signal_date_candidates = ("signal_date", "entry_date", "date")
+    signal_date_field = next((field for field in signal_date_candidates if field in ticker_scope_analysis.columns), None)
+    if signal_date_field is None:
+        signal_timing_label = "Signal date unavailable"
+    else:
+        parsed_dates = pd.to_datetime(ticker_scope_analysis[signal_date_field], errors="coerce")
+        if parsed_dates.notna().any():
+            signal_timing_label = "Not yet assessed"
+        else:
+            signal_timing_label = "Signal date unavailable"
+
+    return [
+        f"Liquidity data: {liquidity_label}",
+        f"Volume support: {volume_label}",
+        f"Spread behavior: {spread_label}",
+        f"Volatility context: {volatility_label}",
+        f"Evidence base: {evidence_label}",
+        f"Signal timing: {signal_timing_label}",
+    ]
 
 
 def _build_execution_behavior_lines(*, execution_summary: dict, behavior: dict, stats: dict, analyst_mode: bool) -> list[str]:
@@ -560,6 +656,10 @@ def main() -> None:
             source_ticker = canonicalize_symbol(str(st.session_state.get(_STATE_TICKER_SOURCE_TICKER) or "").strip())
             if source == "portfolio" and source_ticker and selected_ticker == source_ticker:
                 st.caption(f"Viewing analysis for {selected_ticker} from your portfolio plan.")
+                st.info(
+                    "This trade was selected by the portfolio rules. "
+                    "The analysis below gives supporting historical context."
+                )
             elif source == "portfolio" and selected_ticker != source_ticker:
                 st.session_state[_STATE_TICKER_SOURCE] = None
                 st.session_state[_STATE_TICKER_SOURCE_TICKER] = None
@@ -606,6 +706,16 @@ def main() -> None:
                 behavior=metrics_behavior,
                 stats=metrics_stats,
                 analyst_mode=analyst_mode,
+            ):
+                st.markdown(f"- {line}")
+
+            st.markdown("#### Trade Readiness")
+            for line in _build_trade_readiness_lines(
+                canonical_df=canonical_df,
+                analyst_df=analyst_df,
+                selected_ticker=selected_ticker,
+                ticker_payload=ticker_payload,
+                metrics_stats=metrics_stats,
             ):
                 st.markdown(f"- {line}")
 

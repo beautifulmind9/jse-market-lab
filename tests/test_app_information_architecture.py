@@ -339,6 +339,12 @@ def test_ticker_analysis_preloads_selected_ticker_from_portfolio_context(monkeyp
     app_main.main()
 
     assert ("Ticker Analysis", "Viewing analysis for BBB from your portfolio plan.") in dummy_st.captions
+    assert any(
+        tab == "Ticker Analysis"
+        and "This trade was selected by the portfolio rules. The analysis below gives supporting historical context."
+        in text
+        for tab, text in dummy_st.info_messages
+    )
 
 
 def test_ticker_analysis_clears_portfolio_context_after_manual_ticker_change(monkeypatch):
@@ -879,6 +885,30 @@ def test_ticker_analysis_beginner_mode_hides_raw_deep_dive_tables(monkeypatch):
     )
     assert any("Switch to Advanced View to open the full table breakdown." in text for _, text in dummy_st.captions)
     assert not any("Outcome context:" in text for text in ticker_markdowns)
+    assert "#### Trade Readiness" in ticker_markdowns
+    assert any("Liquidity data:" in text for text in ticker_markdowns)
+
+
+def test_holding_window_sample_note_uses_developing_and_broader_wording():
+    app_main = _load_app_module()
+
+    low_sample = app_main._build_holding_window_table(  # noqa: SLF001
+        {"5D": {"count": 6, "win_rate": 0.5, "median_return": 1.0, "avg_return": 1.1}},
+        analyst_mode=False,
+    )
+    broader_sample = app_main._build_holding_window_table(  # noqa: SLF001
+        {"20D": {"count": 22, "win_rate": 0.6, "median_return": 1.4, "avg_return": 1.5}},
+        analyst_mode=False,
+    )
+
+    assert (
+        "Built from about 6 completed trades. This gives supporting context, but the pattern is still developing."
+        in set(low_sample["sample_note"])
+    )
+    assert (
+        "Built from a broader set of completed trades, so the holding-window read is more mature."
+        in set(broader_sample["sample_note"])
+    )
 
 
 def test_ticker_analysis_analyst_mode_shows_deep_dive_tables(monkeypatch):
