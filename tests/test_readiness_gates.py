@@ -77,6 +77,76 @@ def test_model_c_reports_spread_limitation_when_high_low_unavailable():
     assert strict_row["reason"] == "strict_spread_unavailable"
 
 
+def test_high_low_columns_with_all_nan_do_not_enable_context_flags():
+    df = pd.DataFrame(
+        {
+            "date": pd.date_range("2025-01-01", periods=30),
+            "ticker": ["AAA"] * 30,
+            "close": [10 + i * 0.1 for i in range(30)],
+            "volume": [1000] * 30,
+            "high": [None] * 30,
+            "low": [None] * 30,
+            "signal_date": ["2025-01-05"] * 30,
+        }
+    )
+
+    metrics = compute_readiness_metrics(df)
+    row = metrics.iloc[0]
+    assert not bool(row["volatility_context_available"])
+    assert not bool(row["spread_context_available"])
+
+    _summary, detail = evaluate_models(metrics)
+    strict_row = detail[detail["model"] == "C_strict"].iloc[0]
+    assert strict_row["reason"] == "strict_spread_unavailable"
+
+
+def test_high_low_with_numeric_values_enables_volatility_context():
+    df = pd.DataFrame(
+        {
+            "date": pd.date_range("2025-01-01", periods=30),
+            "ticker": ["AAA"] * 30,
+            "close": [10 + i * 0.1 for i in range(30)],
+            "volume": [1000] * 30,
+            "high": [11 + i * 0.1 for i in range(30)],
+            "low": [9 + i * 0.1 for i in range(30)],
+            "signal_date": ["2025-01-05"] * 30,
+        }
+    )
+
+    metrics = compute_readiness_metrics(df)
+    row = metrics.iloc[0]
+    assert bool(row["volatility_context_available"])
+
+
+def test_invalid_signal_date_strings_are_not_timing_assessable():
+    df = pd.DataFrame(
+        {
+            "date": pd.date_range("2025-01-01", periods=30),
+            "ticker": ["AAA"] * 30,
+            "close": [10.0] * 30,
+            "volume": [1000] * 30,
+            "signal_date": ["not-a-date"] * 30,
+        }
+    )
+    metrics = compute_readiness_metrics(df)
+    assert not bool(metrics.iloc[0]["timing_assessable"])
+
+
+def test_at_least_one_valid_signal_date_is_timing_assessable():
+    signal_dates = ["not-a-date"] * 29 + ["2025-01-31"]
+    df = pd.DataFrame(
+        {
+            "date": pd.date_range("2025-01-01", periods=30),
+            "ticker": ["AAA"] * 30,
+            "close": [10.0] * 30,
+            "volume": [1000] * 30,
+            "signal_date": signal_dates,
+        }
+    )
+    metrics = compute_readiness_metrics(df)
+    assert bool(metrics.iloc[0]["timing_assessable"])
+
+
 def test_output_files_created_in_expected_artifact_location(tmp_path):
     metrics = pd.DataFrame([{"ticker": "AAA"}])
     summary = pd.DataFrame([{"model": "A_current", "total_candidate_trades": 1}])
