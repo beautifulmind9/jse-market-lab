@@ -52,3 +52,6 @@
 | V20.1 | Sprint 16 live context layer shipped | Added viewed timestamp, latest market data label, and review-window guidance in Portfolio and Ticker Analysis |
 | V20.2 | Sprint 16 timing clarity refinement | Updated holding-window guidance to explain that users start counting from their entry date and review after the assigned number of trading days |
 | V20.3 | Sprint 16 closeout | Completed the live context layer with timezone-labeled view time, latest market data date, and entry-based review-window guidance; signal freshness remains a later backlog item |
+| V21.0 | Sprint 17 trade readiness layer shipped | Added Trade Readiness context for liquidity, volume, spread, volatility, evidence base, and signal timing without changing funding logic |
+| V21.1 | Sprint 17 signal timing fallback | Fixed signal timing readiness so canonical market dates can support the readiness placeholder when analyst date fields are missing |
+| V21.2 | Sprint 17 closeout | Completed Trade Readiness, Liquidity & Data Foundations; readiness gating is documented as a future researched funding rule rather than a Sprint 17 logic change |
