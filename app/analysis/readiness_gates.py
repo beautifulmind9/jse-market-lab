@@ -80,11 +80,21 @@ def compute_readiness_metrics(data: pd.DataFrame, thresholds: ReadinessThreshold
         if high_col and low_col:
             high = pd.to_numeric(grp[high_col], errors="coerce")
             low = pd.to_numeric(grp[low_col], errors="coerce")
+            high_low_usable = bool((high.notna() & low.notna()).any())
             daily_range_pct = (high - low) / close.replace(0, np.nan)
             avg_range_pct_20d = float(daily_range_pct.tail(20).mean())
             high_low_volatility = bool(avg_range_pct_20d > 0.05) if not np.isnan(avg_range_pct_20d) else False
-            volatility_context_available = True
-            spread_context_available = True
+            volatility_context_available = high_low_usable
+
+            spread_context_available = False
+            if traded_value_col:
+                traded_value_num = pd.to_numeric(grp[traded_value_col], errors="coerce")
+                spread_context_available = bool(traded_value_num.notna().any())
+            elif trades_count_col:
+                trades_count_num = pd.to_numeric(grp[trades_count_col], errors="coerce")
+                spread_context_available = bool(trades_count_num.notna().any())
+            elif high_col and low_col:
+                spread_context_available = high_low_usable
         else:
             avg_range_pct_20d = np.nan
             high_low_volatility = False
@@ -106,7 +116,8 @@ def compute_readiness_metrics(data: pd.DataFrame, thresholds: ReadinessThreshold
             and (np.isnan(avg_volume_20d) or avg_volume_20d >= thresholds.min_avg_volume_20d)
         )
 
-        timing_assessable = bool(signal_date_col is not None and grp[signal_date_col].notna().any())
+        parsed_signal_dates = pd.to_datetime(grp[signal_date_col], errors="coerce") if signal_date_col is not None else pd.Series(dtype="datetime64[ns]")
+        timing_assessable = bool(signal_date_col is not None and parsed_signal_dates.notna().any())
 
         rows.append(
             {
