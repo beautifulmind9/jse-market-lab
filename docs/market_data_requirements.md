@@ -176,19 +176,92 @@ The most valuable additions beyond the current canonical dataset are:
 - **currency** — prevents JMD and USD instruments from being mixed incorrectly
 - **source_url / source_file / ingested_at** — supports auditability and data lineage
 
-### Current limitation observed in the sample
+---
 
-In the provided sample, the richer schema exists but some fields were not populated:
+## Mini Scraper Run Audit — 2026-04-20 to 2026-04-24
 
-- open: missing
-- high: missing
-- low: missing
-- adjusted_close: missing
-- value_traded: missing
-- trades_count: missing
-- company_name: missing
+A mini scraper run across all markets produced normalized and raw outputs for:
 
-The scraper should preserve these columns even when empty, but future scraping should attempt to populate them when available from the source.
+- all markets
+- main market
+- junior market
+- USD market
+
+### Normalized all-markets output
+
+Observed shape:
+
+- 625 rows
+- 125 tickers
+- date range: 2026-04-20 to 2026-04-24
+
+Market/security coverage:
+
+- junior_market ordinary_share JMD: 240 rows
+- main_market ordinary_share JMD: 265 rows
+- main_market preference_share JMD: 80 rows
+- usd_market preference_share USD: 40 rows
+
+### Field completeness observed
+
+Fully populated:
+
+- high
+- low
+- close
+- volume
+- date
+- ticker
+- market_code
+- market_name
+- security_type
+- currency
+- source
+- source_url
+- source_file
+- ingested_at
+
+Currently empty in normalized output:
+
+- open
+- adjusted_close
+- value_traded
+- trades_count
+- company_name
+
+### Important raw payload fields available
+
+The raw payload includes fields that should be promoted into normalized columns where possible:
+
+- last_traded_price
+- closing_price
+- price_change
+- closing_bid
+- closing_ask
+- today_s_range
+- 52_week_range
+- total_prev_yr_div
+- total_current_yr_div
+
+### Product implication
+
+This scraper run materially improves Sprint 18 possibilities because `high` and `low` are now populated.
+
+It supports:
+
+- high-low daily range
+- better volatility research
+- intraday range context
+- price-risk research using daily range and close
+- bid/ask spread research if closing_bid and closing_ask are normalized from raw payload
+- dividend context if dividend fields are normalized
+
+It still does not yet support:
+
+- true value traded unless source data can populate it
+- trades count unless source data can populate it
+- company name unless another reference source is joined
+- full news/earnings analysis without a separate events/news dataset
 
 ---
 
@@ -218,6 +291,23 @@ To support upcoming development, the scraper should output a consistent daily ro
 - trades_count
 - adjusted_close
 - company_name
+
+### Newly recommended from raw payload
+
+Because the raw JSE trade quote payload includes these fields, the scraper should attempt to normalize them:
+
+- last_traded_price
+- price_change
+- closing_bid
+- closing_ask
+- bid_ask_spread
+- bid_ask_spread_pct
+- today_range_low
+- today_range_high
+- week_52_low
+- week_52_high
+- total_prev_yr_div
+- total_current_yr_div
 
 ### Future event/news fields
 
@@ -259,12 +349,15 @@ Requires:
 - volume
 - value_traded
 - trades_count
+- closing_bid
+- closing_ask
 
 Unlocks:
 - turnover rules
 - participation quality
 - volume reliability
 - zero-volume / thin-trading detection
+- bid-ask spread checks
 - liquidity deterioration checks
 
 ### Analyst Insights
