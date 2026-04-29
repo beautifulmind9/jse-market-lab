@@ -8,6 +8,21 @@ The goal is to prevent future features from overclaiming when the underlying dat
 
 ---
 
+## JSE Data Philosophy
+
+The JSE does not provide every field commonly available on larger international exchanges. The dashboard should work with the fields the Jamaican market reliably provides and clearly label fields that are derived or estimated.
+
+Product logic should distinguish:
+
+- **reported fields** — directly scraped from JSE source pages or files
+- **derived fields** — calculated from reported fields
+- **reference fields** — joined from a separate metadata table, such as company names
+- **unavailable fields** — not currently provided or not reliably populated
+
+Derived fields are allowed, but they must be auditable and should not be presented as if they were directly reported by the exchange.
+
+---
+
 ## Current Priority Areas
 
 ### 1. Liquidity & Tradeability
@@ -169,12 +184,87 @@ Example fields from the market-prices dataset:
 
 The most valuable additions beyond the current canonical dataset are:
 
-- **open / high / low / close** — supports volatility, range, drawdown, and better risk-control testing
-- **value_traded** — supports stronger liquidity and turnover rules
-- **trades_count** — supports participation quality, not just raw volume
+- **high / low / close** — supports range, drawdown, and better risk-control testing
+- **derived open** — can use the previous trading day close as a practical JSE proxy when true open is unavailable
+- **value_traded** — supports stronger liquidity and turnover rules when reported; otherwise use an estimated turnover field
+- **trades_count** — supports participation quality, not just raw volume, if available
 - **security_type** — allows filtering ordinary shares vs preference shares
 - **currency** — prevents JMD and USD instruments from being mixed incorrectly
 - **source_url / source_file / ingested_at** — supports auditability and data lineage
+
+---
+
+## Derived and Reference Fields
+
+### Derived open
+
+Because the JSE data source may not provide a true opening price, the dashboard can derive:
+
+- `derived_open = previous trading day close`
+
+This should be labeled as derived and should not be presented as an exchange-reported open.
+
+Recommended columns:
+
+- `open`
+- `open_source`
+
+Where `open_source` can be:
+
+- `reported` — if a true open is ever available
+- `previous_close` — when derived from the previous trading day close
+- `unavailable` — when neither is available
+
+### Estimated value traded
+
+If official `value_traded` is unavailable, the dashboard can derive:
+
+- `estimated_value_traded = close * volume`
+
+Recommended columns:
+
+- `value_traded`
+- `estimated_value_traded`
+- `value_traded_source`
+
+Where `value_traded_source` can be:
+
+- `reported`
+- `estimated_close_x_volume`
+- `unavailable`
+
+### Bid-ask spread
+
+If `closing_bid` and `closing_ask` are available, derive:
+
+- `bid_ask_spread = closing_ask - closing_bid`
+- `bid_ask_spread_pct = bid_ask_spread / close`
+
+The system should guard against zero, missing, or invalid close values.
+
+### Company name reference table
+
+Company names should be joined from a separate ticker metadata reference rather than forced into the daily market-prices scraper.
+
+Recommended file:
+
+- `data/reference/ticker_master.csv`
+
+Recommended schema:
+
+- ticker
+- company_name
+- market_code
+- market_name
+- security_type
+- currency
+- is_active
+- effective_from
+- effective_to
+- source_url
+- ingested_at
+
+This allows ticker-to-company mapping to be maintained separately from daily price records and reduces repeated missing company names in market-prices outputs.
 
 ---
 
@@ -284,10 +374,27 @@ To support upcoming development, the scraper should output a consistent daily ro
 
 ### Strongly recommended
 
-- open
 - high
 - low
+- last_traded_price
+- closing_bid
+- closing_ask
+- bid_ask_spread
+- bid_ask_spread_pct
+- today_range_low
+- today_range_high
+- week_52_low
+- week_52_high
+- total_prev_yr_div
+- total_current_yr_div
+- estimated_value_traded
+
+### Derived / optional
+
+- open
+- open_source
 - value_traded
+- value_traded_source
 - trades_count
 - adjusted_close
 - company_name
@@ -331,10 +438,10 @@ Event/news data can be stored separately, but should join cleanly to ticker/date
 ### Volatility and risk controls
 
 Requires:
-- open
 - high
 - low
 - close
+- derived open when needed
 
 Unlocks:
 - daily range
@@ -347,8 +454,8 @@ Unlocks:
 
 Requires:
 - volume
-- value_traded
-- trades_count
+- value_traded or estimated_value_traded
+- trades_count, if available
 - closing_bid
 - closing_ask
 
@@ -368,11 +475,13 @@ Requires:
 - market_name
 - richer price/volume fields
 - event/news data
+- ticker metadata reference table
 
 Unlocks:
 - ordinary-share vs preference-share separation
 - JMD vs USD separation
 - market/board comparisons
+- company-level labeling
 - event-aware performance summaries
 - richer insight cards
 
