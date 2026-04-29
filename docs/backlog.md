@@ -19,7 +19,7 @@ Follow-up backlog:
 ---
 
 ### Sprint 17 — Trade Readiness, Liquidity & Data Foundations
-Status: Implemented / closeout pending UAT
+Status: Complete
 
 Completed:
 - Trade Readiness UI layer
@@ -27,6 +27,7 @@ Completed:
 - Sample-size context without undermining funded trades
 - Funding decision vs supporting analysis copy
 - Signal-date readiness audit
+- Canonical market date fallback for signal timing readiness
 
 Follow-up backlog:
 - stronger numeric liquidity model research
@@ -35,16 +36,26 @@ Follow-up backlog:
 
 ---
 
-### Sprint 18 — Exit Logic & Risk Controls
-- Price-based exit logic
-- Downside threshold exits
-- Signal invalidation exits
-- Liquidity deterioration exits
-- Event-risk exits
+### Sprint 18 — Readiness Gating Research & Risk Control Design
+- Research whether Trade Readiness should affect funding eligibility
+- Backtest minimum readiness gates before changing allocation logic
+- Define Ready / Watch / Incomplete / Not fundable labels
+- Design price-based and downside exit rules
+- Design signal invalidation exits
+- Design liquidity deterioration exits
+- Design event-risk exits
 
 ---
 
-### Sprint 19 — Portfolio Economics Layer
+### Sprint 19 — Exit Logic Implementation & Review Guidance
+- Implement validated exit logic from Sprint 18 research
+- Show risk-exit context in Execution Behavior
+- Clarify that holding windows are review checkpoints, not unconditional holds
+- Add reviewed-earlier-if-risk-changes guidance
+
+---
+
+### Sprint 20 — Portfolio Economics Layer
 - Allocation-based fee calculation
 - Estimated net returns based on capital
 - Portfolio-level cost summary
@@ -52,7 +63,7 @@ Follow-up backlog:
 
 ---
 
-### Sprint 20 — AI Event, Earnings, News & Economic Context Layer
+### Sprint 21 — AI Event, Earnings, News & Economic Context Layer
 - Earnings season review cards
 - Dividend and corporate action context
 - Company news summaries
@@ -62,7 +73,7 @@ Follow-up backlog:
 
 ---
 
-### Sprint 21 — User Profile, Decision History & Adaptive Guidance
+### Sprint 22 — User Profile, Decision History & Adaptive Guidance
 - User profile storage
 - Saved decisions and planned trades
 - Review outcomes over time
@@ -73,7 +84,7 @@ Follow-up backlog:
 
 ---
 
-### Sprint 22 — Decision Audit & Transparency
+### Sprint 23 — Decision Audit & Transparency
 - Ranking transparency
 - Score breakdown visibility
 - Structured comparison across trades
@@ -86,5 +97,6 @@ Follow-up backlog:
 - Items are sequenced to avoid premature optimization
 - Each sprint builds on user understanding, not just feature expansion
 - Risk-exit logic must be backtested before it becomes user-facing guidance
+- Readiness gating must be tested before it affects funding eligibility
 - AI context should be source-grounded and should not become a recommendation engine
 - User profile features require persistence and privacy decisions before implementation
