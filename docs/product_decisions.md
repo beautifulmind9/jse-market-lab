@@ -222,6 +222,59 @@ The dashboard can clarify entry-based review timing now, while signal age, fresh
 ### Outcome
 Sprint 16 copy should use entry-based wording so users understand how to apply holding windows if they act midweek or after the page loads.
 
+## Decision — Trade Readiness should become a future funding gate after validation
+
+### Context
+Sprint 17 introduced a Trade Readiness section that surfaces liquidity, volume, spread, volatility, evidence base, and signal timing context.
+
+During UAT, a funded trade could show:
+- liquidity data available
+- volume support present
+- spread behavior not available
+- volatility context not available
+- small evidence base
+- signal timing not yet assessed
+
+This made it clear that a funded trade can still have incomplete readiness context.
+
+### Decision
+Trade Readiness should remain contextual in Sprint 17, but it should be evaluated as a future funding gate before the product is treated as a stronger live decision system.
+
+The product should move toward a minimum readiness standard for funded trades, but only after research and backtesting.
+
+### Proposed gating model
+
+#### Minimum funding requirements to research
+Potential required fields:
+- liquidity data available
+- volume support present or sufficient
+- signal timing assessable
+
+#### Watch-only conditions to research
+Potential watch flags:
+- spread behavior unavailable
+- volatility context unavailable
+- small evidence base
+
+#### Future readiness labels
+Potential labels:
+- Ready
+- Watch
+- Incomplete
+- Not fundable
+
+### Rationale
+Requiring every readiness field immediately may exclude valid JSE opportunities because data availability can be uneven.
+
+However, funding trades with too many unavailable readiness fields can weaken trust and make the system feel less disciplined.
+
+A staged readiness gate allows the dashboard to remain realistic without overfitting or overclaiming.
+
+### Outcome
+A future sprint should research and backtest whether readiness completeness should affect funding eligibility, allocation sizing, or warning labels.
+
+No funding logic should change until the rule is tested against trade count, win rate, median return, average return, downside behavior, and liquidity realism.
+
 ## Decision correction: public-facing insight prompts are not automatically in-app scope
 
 A prompt was defined to generate:
