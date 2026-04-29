@@ -139,6 +139,152 @@ Future use:
 
 ---
 
+## Rich Market Prices Dataset
+
+A richer market-prices scrape can improve Sprint 18 readiness research and future Analyst Insights.
+
+Example fields from the market-prices dataset:
+
+- date
+- ticker
+- company_name
+- market_code
+- market_name
+- security_type
+- currency
+- open
+- high
+- low
+- close
+- adjusted_close
+- volume
+- value_traded
+- trades_count
+- source
+- source_url
+- source_file
+- ingested_at
+
+### High-value fields
+
+The most valuable additions beyond the current canonical dataset are:
+
+- **open / high / low / close** — supports volatility, range, drawdown, and better risk-control testing
+- **value_traded** — supports stronger liquidity and turnover rules
+- **trades_count** — supports participation quality, not just raw volume
+- **security_type** — allows filtering ordinary shares vs preference shares
+- **currency** — prevents JMD and USD instruments from being mixed incorrectly
+- **source_url / source_file / ingested_at** — supports auditability and data lineage
+
+### Current limitation observed in the sample
+
+In the provided sample, the richer schema exists but some fields were not populated:
+
+- open: missing
+- high: missing
+- low: missing
+- adjusted_close: missing
+- value_traded: missing
+- trades_count: missing
+- company_name: missing
+
+The scraper should preserve these columns even when empty, but future scraping should attempt to populate them when available from the source.
+
+---
+
+## Recommended Scraper Formatting
+
+To support upcoming development, the scraper should output a consistent daily row per ticker with these columns where possible:
+
+### Required baseline
+
+- date
+- ticker
+- market_code
+- market_name
+- security_type
+- currency
+- close
+- volume
+- source_url
+- ingested_at
+
+### Strongly recommended
+
+- open
+- high
+- low
+- value_traded
+- trades_count
+- adjusted_close
+- company_name
+
+### Future event/news fields
+
+Event/news data can be stored separately, but should join cleanly to ticker/date:
+
+- ticker
+- event_date
+- event_type
+- source_title
+- source_url
+- source_date
+- raw_text or extracted_text
+- summary
+- event_period
+- severity / attention_flag
+
+---
+
+## What Each Field Unlocks
+
+### Volatility and risk controls
+
+Requires:
+- open
+- high
+- low
+- close
+
+Unlocks:
+- daily range
+- close-to-close volatility
+- high-low volatility
+- maximum adverse movement if entry/exit dates are known
+- better price-exit research
+
+### Liquidity and tradeability
+
+Requires:
+- volume
+- value_traded
+- trades_count
+
+Unlocks:
+- turnover rules
+- participation quality
+- volume reliability
+- zero-volume / thin-trading detection
+- liquidity deterioration checks
+
+### Analyst Insights
+
+Requires:
+- security_type
+- currency
+- market_name
+- richer price/volume fields
+- event/news data
+
+Unlocks:
+- ordinary-share vs preference-share separation
+- JMD vs USD separation
+- market/board comparisons
+- event-aware performance summaries
+- richer insight cards
+
+---
+
 ## AI API Guardrails
 
 The AI layer should be a context review layer, not a trade recommender.
@@ -167,6 +313,7 @@ Required guardrails:
 
 These requirements support:
 - Sprint 17: Trade Readiness, Liquidity & Data Foundations
+- Sprint 18: Readiness Gating Research & Risk Control Design
 - Signal Freshness Layer
 - Exit Logic & Risk Controls
 - Portfolio Economics Layer
