@@ -77,6 +77,7 @@ def compute_readiness_metrics(data: pd.DataFrame, thresholds: ReadinessThreshold
         drawdown = (close / rolling_peak) - 1.0
         max_drawdown = float(drawdown.min()) if len(drawdown) else np.nan
 
+        high_low_usable = False
         if high_col and low_col:
             high = pd.to_numeric(grp[high_col], errors="coerce")
             low = pd.to_numeric(grp[low_col], errors="coerce")
@@ -85,21 +86,22 @@ def compute_readiness_metrics(data: pd.DataFrame, thresholds: ReadinessThreshold
             avg_range_pct_20d = float(daily_range_pct.tail(20).mean())
             high_low_volatility = bool(avg_range_pct_20d > 0.05) if not np.isnan(avg_range_pct_20d) else False
             volatility_context_available = high_low_usable
-
-            spread_context_available = False
-            if traded_value_col:
-                traded_value_num = pd.to_numeric(grp[traded_value_col], errors="coerce")
-                spread_context_available = bool(traded_value_num.notna().any())
-            elif trades_count_col:
-                trades_count_num = pd.to_numeric(grp[trades_count_col], errors="coerce")
-                spread_context_available = bool(trades_count_num.notna().any())
-            elif high_col and low_col:
-                spread_context_available = high_low_usable
         else:
             avg_range_pct_20d = np.nan
             high_low_volatility = False
             volatility_context_available = False
-            spread_context_available = False
+
+        spread_context_available = False
+        if traded_value_col:
+            traded_value_num = pd.to_numeric(grp[traded_value_col], errors="coerce")
+            spread_context_available = bool(traded_value_num.notna().any())
+
+        if not spread_context_available and trades_count_col:
+            trades_count_num = pd.to_numeric(grp[trades_count_col], errors="coerce")
+            spread_context_available = bool(trades_count_num.notna().any())
+
+        if not spread_context_available:
+            spread_context_available = high_low_usable
 
         latest_volume = float(vol_num.iloc[-1]) if len(vol_num) else np.nan
         volume_deterioration = bool(

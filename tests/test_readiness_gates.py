@@ -158,3 +158,73 @@ def test_output_files_created_in_expected_artifact_location(tmp_path):
     assert (tmp_path / "readiness_gate_by_model.csv").exists()
     assert (tmp_path / "readiness_gate_by_ticker.csv").exists()
     assert (tmp_path / "readiness_gate_report.md").exists()
+
+
+def test_spread_context_falls_back_to_trades_count_when_value_traded_unusable():
+    df = pd.DataFrame(
+        {
+            "date": pd.date_range("2025-01-01", periods=30),
+            "ticker": ["AAA"] * 30,
+            "close": [10.0] * 30,
+            "volume": [1000] * 30,
+            "value_traded": ["bad"] * 30,
+            "trades_count": [25] * 30,
+            "signal_date": ["2025-01-05"] * 30,
+        }
+    )
+    metrics = compute_readiness_metrics(df)
+    assert bool(metrics.iloc[0]["spread_context_available"])
+
+
+def test_spread_context_falls_back_to_high_low_when_value_traded_and_trades_count_unusable():
+    df = pd.DataFrame(
+        {
+            "date": pd.date_range("2025-01-01", periods=30),
+            "ticker": ["AAA"] * 30,
+            "close": [10.0] * 30,
+            "volume": [1000] * 30,
+            "value_traded": [None] * 30,
+            "trades_count": ["bad"] * 30,
+            "high": [11.0] * 30,
+            "low": [9.0] * 30,
+            "signal_date": ["2025-01-05"] * 30,
+        }
+    )
+    metrics = compute_readiness_metrics(df)
+    assert bool(metrics.iloc[0]["spread_context_available"])
+
+
+def test_spread_context_false_when_all_fallback_sources_unusable():
+    df = pd.DataFrame(
+        {
+            "date": pd.date_range("2025-01-01", periods=30),
+            "ticker": ["AAA"] * 30,
+            "close": [10.0] * 30,
+            "volume": [1000] * 30,
+            "value_traded": ["bad"] * 30,
+            "trades_count": ["bad"] * 30,
+            "high": [None] * 30,
+            "low": [None] * 30,
+            "signal_date": ["2025-01-05"] * 30,
+        }
+    )
+    metrics = compute_readiness_metrics(df)
+    assert not bool(metrics.iloc[0]["spread_context_available"])
+
+
+def test_spread_context_uses_value_traded_when_usable():
+    df = pd.DataFrame(
+        {
+            "date": pd.date_range("2025-01-01", periods=30),
+            "ticker": ["AAA"] * 30,
+            "close": [10.0] * 30,
+            "volume": [1000] * 30,
+            "value_traded": [100.0] * 30,
+            "trades_count": ["bad"] * 30,
+            "high": [None] * 30,
+            "low": [None] * 30,
+            "signal_date": ["2025-01-05"] * 30,
+        }
+    )
+    metrics = compute_readiness_metrics(df)
+    assert bool(metrics.iloc[0]["spread_context_available"])
