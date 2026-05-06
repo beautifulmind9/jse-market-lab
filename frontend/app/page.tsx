@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ApiStatusCard } from '@/components/shared/ApiStatusCard';
 import { InfoCard } from '@/components/shared/InfoCard';
 
 export default function HomePage() {
@@ -22,6 +23,7 @@ export default function HomePage() {
       </section>
 
       <section className="grid">
+        <ApiStatusCard />
         <InfoCard title="Plan with structure" label="Portfolio">
           <p>
             Enter capital, review funded and unfunded setups, and keep reserve cash visible when the
