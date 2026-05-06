@@ -2,3 +2,8 @@ streamlit
 pandas
 numpy
 python-dateutil
+fastapi
+uvicorn
+pydantic
+pytest
+httpx
