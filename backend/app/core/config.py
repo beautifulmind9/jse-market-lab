@@ -1,6 +1,8 @@
-"""Configuration constants for the JSE Market Lab API."""
+"""Configuration helpers for the JSE Market Lab API."""
 
 from __future__ import annotations
+
+import os
 
 SERVICE_NAME = "jse-market-lab-api"
 DEFAULT_DATASET = "demo"
@@ -26,3 +28,17 @@ def public_mode(mode: str | None) -> str:
     """Return the API-facing mode label."""
     internal = normalize_mode(mode)
     return "advanced" if internal == "analyst" else "guided"
+
+
+def get_cors_origins() -> list[str]:
+    """Return allowed frontend origins from the API environment."""
+    raw_origins = os.getenv("BACKEND_CORS_ORIGINS", "")
+    origins = [origin.strip().rstrip("/") for origin in raw_origins.split(",") if origin.strip()]
+
+    if origins:
+        return origins
+
+    return [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
