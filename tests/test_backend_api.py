@@ -30,6 +30,19 @@ def test_health_endpoint_returns_ok() -> None:
     assert payload["service"] == "jse-market-lab-api"
 
 
+def test_cors_preflight_allows_local_frontend_origin() -> None:
+    response = client.options(
+        "/health",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+
 def test_data_status_endpoint_returns_required_fields() -> None:
     response = client.get("/api/data/status")
 
