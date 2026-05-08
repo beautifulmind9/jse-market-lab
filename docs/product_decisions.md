@@ -275,6 +275,130 @@ A future sprint should research and backtest whether readiness completeness shou
 
 No funding logic should change until the rule is tested against trade count, win rate, median return, average return, downside behavior, and liquidity realism.
 
+## Decision — Platform expansion beyond dashboard
+
+### Context
+The product is expanding beyond a single decision dashboard into a broader JSE market intelligence, research, education, brokerage-access, and monetization platform.
+
+New pathway phases include:
+- Brokerage Access Flow
+- Research Hub
+- Company Pages
+- Analyst Accountability Scoreboard
+- Market Intelligence Features
+- Monetization Packaging
+- Documentation and Operating System
+
+### Decision
+JSE Market Lab may expand into a platform, but the core boundary remains decision support.
+
+The dashboard remains the decision engine. The platform layers around it may support:
+- research discovery
+- company context
+- dividend and earnings education
+- market pulse summaries
+- tradability analysis
+- brokerage-account education and routing to licensed institutions
+- premium research and education products
+
+### Non-negotiable constraints
+The platform must not:
+- provide personal investment advice
+- tell users what to buy or sell
+- guarantee returns
+- rank paid brokers as objectively best
+- imply broker placement is independent if paid
+- execute trades
+- hold client funds
+- hide sponsored content or referral fees
+- host copyrighted or licensed research without permission
+
+### Rationale
+The broader platform improves user value and monetization potential, but only if trust, compliance, source rights, and user agency remain clear.
+
+### Outcome
+Future features should be evaluated against both:
+1. user value / market education
+2. compliance, disclosure, and decision-support boundaries
+
+## Decision — Brokerage Access Flow must support access, not advice
+
+### Context
+Users who learn from JSE Market Lab may need a brokerage account before they can act in the JSE market.
+
+### Decision
+The Brokerage Access Flow should explain the account-opening process and connect consenting users with licensed institutions. It should not recommend a specific broker as best or provide investment advice.
+
+### Required language
+Use:
+- licensed institution
+- account-opening support
+- market access
+- review all fees and requirements
+- JSE Market Lab does not provide investment advice
+
+Avoid:
+- best broker
+- recommended broker
+- buy now
+- invest in this stock
+- this broker will give you the best return
+
+### Compliance gate
+This flow must remain prototype/documentation-only until JSE/FSC/legal/broker-referral questions are validated.
+
+## Decision — Research Hub hosting policy
+
+### Context
+The Research Hub will index and summarize research, filings, notices, dividend information, market commentary, and structured summaries.
+
+### Decision
+The Research Hub should follow this hosting policy:
+
+> Index and summarize responsibly. Host only where permission or licensing exists.
+
+### Rights statuses
+- public_link_only
+- permission_to_host
+- partner_research
+- original_jse_market_lab_summary
+- licensed_content
+- do_not_host
+
+### Rationale
+Research discovery is valuable, but source rights and content permissions must be respected.
+
+## Decision — Analyst Accountability should begin as tracking, not leaderboard hype
+
+### Context
+The Analyst Accountability Scoreboard is intended to track analyst calls against actual outcomes.
+
+### Decision
+Start with a Research Call Tracker, not a public “Top Analyst” leaderboard.
+
+Public rankings should only appear once enough scored calls are available.
+
+### Minimum ranking rule
+Main leaderboard eligibility requires at least 10 scored calls.
+
+### Trust language
+Use:
+- Call history
+- Research performance
+- Documented outcomes
+- Scored calls
+- Tracking in progress
+- Methodology
+
+Avoid:
+- Worst analyst
+- Bad analyst
+- Exposed
+- Failed prediction
+
+### Rationale
+The feature should increase transparency and accountability without becoming sensational or unfair.
+
 ## Decision correction: public-facing insight prompts are not automatically in-app scope
 
 A prompt was defined to generate:
