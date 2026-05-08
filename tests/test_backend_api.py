@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from backend.app.core.config import get_cors_origins
 from backend.main import app
 
 client = TestClient(app)
@@ -30,17 +31,25 @@ def test_health_endpoint_returns_ok() -> None:
     assert payload["service"] == "jse-market-lab-api"
 
 
-def test_cors_preflight_allows_local_frontend_origin() -> None:
-    response = client.options(
-        "/health",
-        headers={
-            "Origin": "http://localhost:3000",
-            "Access-Control-Request-Method": "GET",
-        },
+def test_default_cors_origins_include_local_frontend(monkeypatch) -> None:
+    monkeypatch.delenv("BACKEND_CORS_ORIGINS", raising=False)
+
+    assert get_cors_origins() == [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+
+def test_cors_origins_can_be_configured_from_environment(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "BACKEND_CORS_ORIGINS",
+        "https://jse-market-lab.vercel.app, http://localhost:3000/",
     )
 
-    assert response.status_code == 200
-    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+    assert get_cors_origins() == [
+        "https://jse-market-lab.vercel.app",
+        "http://localhost:3000",
+    ]
 
 
 def test_data_status_endpoint_returns_required_fields() -> None:
