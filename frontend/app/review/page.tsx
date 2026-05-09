@@ -1,36 +1,65 @@
 import { InfoCard } from '@/components/shared/InfoCard';
+import { getDecisionAudit } from '@/lib/api';
+import { formatJmd } from '@/lib/formatters';
 
-export default function ReviewPage() {
+const DEFAULT_CAPITAL = 100000;
+
+function BulletCard({ title, label, lines }: { title: string; label: string; lines: string[] }) {
+  return (
+    <InfoCard title={title} label={label}>
+      {lines.map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+    </InfoCard>
+  );
+}
+
+export default async function ReviewPage() {
+  let audit;
+  let error: string | null = null;
+
+  try {
+    audit = await getDecisionAudit(DEFAULT_CAPITAL, 'guided');
+  } catch {
+    error = 'Decision audit data is not available right now. Please try again after the API is reachable.';
+  }
+
   return (
     <div className="page-shell">
       <section className="hero">
         <span className="eyebrow">Decision Audit</span>
         <h1>Review why the plan looks the way it does.</h1>
         <p>
-          This page will explain funded rationale, unfunded rationale, rules applied, and cash reserve
-          logic in simple decision-support language.
+          This page uses the hosted FastAPI backend to explain funded rationale, unfunded rationale,
+          rules applied, and cash reserve logic for a sample {formatJmd(DEFAULT_CAPITAL)} guided plan.
         </p>
       </section>
 
-      <section className="grid">
-        <InfoCard title="Why trades were funded" label="Rationale">
-          <p>
-            Shows which quality, confidence, and portfolio rules supported funding for review.
-          </p>
-        </InfoCard>
-        <InfoCard title="Why trades were not funded" label="Discipline">
-          <p>
-            Explains liquidity failures, Tier C handling, allocation limits, and other constraints without
-            forcing weak setups into the plan.
-          </p>
-        </InfoCard>
-        <InfoCard title="Cash reserve" label="Risk control">
-          <p>
-            Keeps unallocated capital visible so the user understands reserve cash is part of the plan,
-            not a mistake.
-          </p>
-        </InfoCard>
-      </section>
+      {error || !audit ? (
+        <section className="grid">
+          <InfoCard title="Decision audit unavailable" label="API status">
+            <p>{error}</p>
+          </InfoCard>
+        </section>
+      ) : (
+        <>
+          <section className="grid">
+            <BulletCard title="Summary" label={audit.mode} lines={audit.summary} />
+            <BulletCard title="Why trades were funded" label="Rationale" lines={audit.funded_rationale} />
+            <BulletCard title="Why trades were not funded" label="Discipline" lines={audit.unfunded_rationale} />
+          </section>
+
+          <section className="grid">
+            <BulletCard title="Rules applied" label="Method" lines={audit.rules_applied} />
+            <InfoCard title="Cash reserve" label="Risk control">
+              <p>{audit.cash_reserve_explanation}</p>
+            </InfoCard>
+            <InfoCard title="Decision boundary" label="Reminder">
+              <p>{audit.disclaimer}</p>
+            </InfoCard>
+          </section>
+        </>
+      )}
     </div>
   );
 }
