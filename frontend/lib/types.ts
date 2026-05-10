@@ -1,5 +1,16 @@
 export type ViewMode = 'guided' | 'advanced';
 
+export type CostProfile = {
+  key: string;
+  label: string;
+  broker_fee: number;
+  cess: number;
+  verification_status: string;
+  source: string;
+  note: string;
+  disclaimer: string;
+};
+
 export type Trade = {
   ticker: string;
   company_name: string;
@@ -18,6 +29,7 @@ export type Trade = {
 export type PortfolioPlan = {
   capital: number;
   mode: ViewMode;
+  cost_profile: CostProfile;
   funded_trades: Trade[];
   unfunded_trades: Trade[];
   reserve_cash: number;
