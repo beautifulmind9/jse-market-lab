@@ -5,6 +5,7 @@ import { formatJmd, formatPercent } from '@/lib/formatters';
 import type { Trade } from '@/lib/types';
 
 const DEFAULT_CAPITAL = 100000;
+const DEFAULT_COST_PROFILE = 'conservative_estimate';
 
 function TradeCard({ trade, label }: { trade: Trade; label: string }) {
   return (
@@ -25,7 +26,7 @@ export default async function PortfolioPage() {
   let error: string | null = null;
 
   try {
-    plan = await getPortfolioPlan(DEFAULT_CAPITAL, 'guided');
+    plan = await getPortfolioPlan(DEFAULT_CAPITAL, 'guided', DEFAULT_COST_PROFILE);
   } catch {
     error = 'Portfolio plan data is not available right now. Please try again after the API is reachable.';
   }
@@ -58,14 +59,20 @@ export default async function PortfolioPage() {
               <MetricRow label="Unallocated cash" value={formatJmd(plan.reserve_cash)} />
               <p>Reserve cash is part of the plan when not enough setups meet the rules.</p>
             </InfoCard>
-            <InfoCard title="Unfunded setups" label="Discipline">
-              <MetricRow label="Held back by rules" value={plan.summary.unfunded_count} />
-              <p>Unfunded does not mean ignored. It means the rules held back capital.</p>
+            <InfoCard title="Cost assumptions" label="Estimate">
+              <MetricRow label="Profile" value={plan.cost_profile.label} />
+              <MetricRow label="Service charge" value={formatPercent(plan.cost_profile.broker_fee)} />
+              <MetricRow label="Market charge" value={formatPercent(plan.cost_profile.cess)} />
+              <p>{plan.cost_profile.note}</p>
             </InfoCard>
           </section>
 
           <div className="notice">
             <p>{plan.disclaimer}</p>
+          </div>
+
+          <div className="notice warning">
+            <p>{plan.cost_profile.disclaimer}</p>
           </div>
 
           <section className="hero compact">
