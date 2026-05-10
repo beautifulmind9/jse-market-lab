@@ -1,4 +1,5 @@
 import { InfoCard } from '@/components/shared/InfoCard';
+import { MetricRow } from '@/components/shared/MetricRow';
 import { getPortfolioPlan } from '@/lib/api';
 import { formatJmd, formatPercent } from '@/lib/formatters';
 import type { Trade } from '@/lib/types';
@@ -9,10 +10,11 @@ function TradeCard({ trade, label }: { trade: Trade; label: string }) {
   return (
     <InfoCard title={trade.ticker} label={label}>
       <p>{trade.company_name}</p>
-      <p>Tier: {trade.tier}</p>
-      <p>Holding window: {trade.holding_window}</p>
-      <p>Allocation: {formatJmd(trade.allocation_amount)} ({formatPercent(trade.allocation_pct)})</p>
-      <p>Liquidity: {trade.liquidity_status}</p>
+      <MetricRow label="Tier" value={trade.tier} />
+      <MetricRow label="Holding window" value={trade.holding_window} />
+      <MetricRow label="Allocation" value={formatJmd(trade.allocation_amount)} />
+      <MetricRow label="Allocation share" value={formatPercent(trade.allocation_pct)} />
+      <MetricRow label="Liquidity" value={trade.liquidity_status} />
       <p>{trade.reason}</p>
     </InfoCard>
   );
@@ -49,20 +51,24 @@ export default async function PortfolioPage() {
         <>
           <section className="grid">
             <InfoCard title="Funded setups" label="Summary">
-              <p>{plan.summary.funded_count} setups funded for review.</p>
-              <p>Total allocated: {formatJmd(plan.summary.total_allocated)}</p>
+              <MetricRow label="Funded for review" value={plan.summary.funded_count} />
+              <MetricRow label="Total allocated" value={formatJmd(plan.summary.total_allocated)} />
             </InfoCard>
             <InfoCard title="Cash reserve" label="Risk control">
-              <p>{formatJmd(plan.reserve_cash)} remains unallocated.</p>
+              <MetricRow label="Unallocated cash" value={formatJmd(plan.reserve_cash)} />
               <p>Reserve cash is part of the plan when not enough setups meet the rules.</p>
             </InfoCard>
             <InfoCard title="Unfunded setups" label="Discipline">
-              <p>{plan.summary.unfunded_count} setups were not funded.</p>
+              <MetricRow label="Held back by rules" value={plan.summary.unfunded_count} />
               <p>Unfunded does not mean ignored. It means the rules held back capital.</p>
             </InfoCard>
           </section>
 
-          <section className="hero">
+          <div className="notice">
+            <p>{plan.disclaimer}</p>
+          </div>
+
+          <section className="hero compact">
             <span className="eyebrow">Funded for review</span>
             <h2>Top funded setups</h2>
           </section>
@@ -72,7 +78,7 @@ export default async function PortfolioPage() {
             ))}
           </section>
 
-          <section className="hero">
+          <section className="hero compact">
             <span className="eyebrow">Not funded</span>
             <h2>Held back by rules</h2>
           </section>
@@ -80,10 +86,6 @@ export default async function PortfolioPage() {
             {plan.unfunded_trades.slice(0, 6).map((trade) => (
               <TradeCard key={trade.ticker} trade={trade} label="Not funded" />
             ))}
-          </section>
-
-          <section className="hero">
-            <p>{plan.disclaimer}</p>
           </section>
         </>
       )}
