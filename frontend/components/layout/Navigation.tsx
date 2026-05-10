@@ -6,6 +6,7 @@ const links = [
   { href: '/ticker/JMMBGL', label: 'Ticker Analysis' },
   { href: '/review', label: 'Review' },
   { href: '/demo', label: 'Demo Mode' },
+  { href: '/platform-preview', label: 'Platform Preview' },
 ];
 
 export function Navigation() {
