@@ -19,6 +19,9 @@ export default function HomePage() {
           <Link className="button secondary" href="/ticker/JMMBGL">
             Start with a ticker
           </Link>
+          <Link className="button secondary" href="/platform-preview">
+            See Platform Preview
+          </Link>
         </div>
       </section>
 
@@ -40,6 +43,12 @@ export default function HomePage() {
           <p>
             The review layer explains how ranking, quality, liquidity, and allocation rules shaped the
             plan. It supports discipline, not blind action.
+          </p>
+        </InfoCard>
+        <InfoCard title="Show the platform vision" label="Demo">
+          <p>
+            Use Demo Mode and Platform Preview when walking advisors, partners, or testers through the
+            product before official JSE data/API authorization is confirmed.
           </p>
         </InfoCard>
       </section>
