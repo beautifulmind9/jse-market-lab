@@ -1,4 +1,6 @@
 import { InfoCard } from '@/components/shared/InfoCard';
+import { MetricRow } from '@/components/shared/MetricRow';
+import { TextStack } from '@/components/shared/TextStack';
 import { getTickerAnalysis } from '@/lib/api';
 import { formatPercent } from '@/lib/formatters';
 
@@ -40,49 +42,42 @@ export default async function TickerPage({ params }: TickerPageProps) {
         <>
           <section className="grid">
             <InfoCard title="Quick take" label={analysis.mode}>
-              {analysis.quick_take.map((line) => (
-                <p key={line}>{line}</p>
-              ))}
+              <TextStack lines={analysis.quick_take} />
             </InfoCard>
             <InfoCard title="Best holding window" label="Current sample">
-              <p>{analysis.best_holding_window || 'Not enough data yet'}</p>
+              <MetricRow label="Best window" value={analysis.best_holding_window || 'Not enough data yet'} />
               <p>Use this as context, not a prediction.</p>
             </InfoCard>
             <InfoCard title="What to watch" label="Risk context">
-              {analysis.what_to_watch.map((line) => (
-                <p key={line}>{line}</p>
-              ))}
+              <TextStack lines={analysis.what_to_watch} />
             </InfoCard>
           </section>
 
-          <section className="hero">
+          <div className="notice">
+            <p>{analysis.disclaimer}</p>
+          </div>
+
+          <section className="hero compact">
             <span className="eyebrow">Holding windows</span>
             <h2>Historical signal behavior</h2>
           </section>
           <section className="grid">
             {analysis.holding_windows.map((window) => (
               <InfoCard key={window.holding_window} title={window.holding_window} label="Window">
-                <p>Signals: {window.count}</p>
-                <p>Win rate: {formatPercent(window.win_rate)}</p>
-                <p>Median return: {formatPercent(window.median_return)}</p>
-                <p>Average return: {formatPercent(window.average_return)}</p>
+                <MetricRow label="Signals" value={window.count} />
+                <MetricRow label="Win rate" value={formatPercent(window.win_rate)} />
+                <MetricRow label="Median return" value={formatPercent(window.median_return)} />
+                <MetricRow label="Average return" value={formatPercent(window.average_return)} />
               </InfoCard>
             ))}
           </section>
 
-          <section className="grid">
+          <section className="grid two">
             <InfoCard title="Risk profile" label="Review">
-              {analysis.risk_profile.map((line) => (
-                <p key={line}>{line}</p>
-              ))}
+              <TextStack lines={analysis.risk_profile} />
             </InfoCard>
             <InfoCard title="Execution behavior" label="Market reality">
-              {analysis.execution_behavior.map((line) => (
-                <p key={line}>{line}</p>
-              ))}
-            </InfoCard>
-            <InfoCard title="Decision boundary" label="Reminder">
-              <p>{analysis.disclaimer}</p>
+              <TextStack lines={analysis.execution_behavior} />
             </InfoCard>
           </section>
         </>

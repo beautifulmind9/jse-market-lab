@@ -1,15 +1,14 @@
 import { InfoCard } from '@/components/shared/InfoCard';
+import { TextStack } from '@/components/shared/TextStack';
 import { getDecisionAudit } from '@/lib/api';
 import { formatJmd } from '@/lib/formatters';
 
 const DEFAULT_CAPITAL = 100000;
 
-function BulletCard({ title, label, lines }: { title: string; label: string; lines: string[] }) {
+function TextCard({ title, label, lines }: { title: string; label: string; lines: string[] }) {
   return (
     <InfoCard title={title} label={label}>
-      {lines.map((line) => (
-        <p key={line}>{line}</p>
-      ))}
+      <TextStack lines={lines} />
     </InfoCard>
   );
 }
@@ -43,19 +42,20 @@ export default async function ReviewPage() {
         </section>
       ) : (
         <>
-          <section className="grid">
-            <BulletCard title="Summary" label={audit.mode} lines={audit.summary} />
-            <BulletCard title="Why trades were funded" label="Rationale" lines={audit.funded_rationale} />
-            <BulletCard title="Why trades were not funded" label="Discipline" lines={audit.unfunded_rationale} />
-          </section>
+          <div className="notice">
+            <p>{audit.disclaimer}</p>
+          </div>
 
           <section className="grid">
-            <BulletCard title="Rules applied" label="Method" lines={audit.rules_applied} />
+            <TextCard title="Summary" label={audit.mode} lines={audit.summary} />
+            <TextCard title="Why trades were funded" label="Rationale" lines={audit.funded_rationale} />
+            <TextCard title="Why trades were not funded" label="Discipline" lines={audit.unfunded_rationale} />
+          </section>
+
+          <section className="grid two">
+            <TextCard title="Rules applied" label="Method" lines={audit.rules_applied} />
             <InfoCard title="Cash reserve" label="Risk control">
               <p>{audit.cash_reserve_explanation}</p>
-            </InfoCard>
-            <InfoCard title="Decision boundary" label="Reminder">
-              <p>{audit.disclaimer}</p>
             </InfoCard>
           </section>
         </>
