@@ -6,6 +6,7 @@ const demoSurfaces = [
   'Portfolio Plan',
   'Ticker Analysis',
   'Decision Audit',
+  'Platform Preview',
   'Company Pages concept',
   'Market Pulse concept',
   'Research Hub concept',
@@ -73,8 +74,8 @@ export default function DemoPage() {
         <InfoCard title="4. Decision Audit" label="Trust layer">
           <p>Explain why the plan looks the way it does and how the rules guide discipline.</p>
         </InfoCard>
-        <InfoCard title="5. Future platform" label="Expansion">
-          <p>Discuss Research Hub, Company Pages, Market Pulse, Setup Tester, and AI Helper concepts.</p>
+        <InfoCard title="5. Platform Preview" label="Expansion">
+          <p>Show Research Hub, Company Pages, Market Pulse, Setup Tester, and AI Helper concepts.</p>
         </InfoCard>
         <InfoCard title="6. Compliance path" label="Before launch">
           <p>Explain that JSE/FSC/legal validation is needed before official data, referrals, or monetization.</p>
@@ -111,6 +112,9 @@ export default function DemoPage() {
         </Link>
         <Link className="button secondary" href="/ticker/JMMBGL">
           Open Ticker Analysis
+        </Link>
+        <Link className="button secondary" href="/platform-preview">
+          Open Platform Preview
         </Link>
       </div>
     </div>
