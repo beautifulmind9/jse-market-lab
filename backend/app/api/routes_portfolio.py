@@ -10,4 +10,8 @@ router = APIRouter(prefix="/api/portfolio")
 
 @router.post("/plan")
 def create_portfolio_plan(request: PortfolioPlanRequest) -> dict:
-    return get_portfolio_plan(capital=request.capital, mode=request.mode)
+    return get_portfolio_plan(
+        capital=request.capital,
+        mode=request.mode,
+        cost_profile=request.cost_profile,
+    )
