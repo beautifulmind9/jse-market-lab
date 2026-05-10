@@ -33,6 +33,12 @@ DEFAULT_PROFILE_KEY = "conservative_estimate"
 # Preserve the legacy profile for backwards compatibility and historical comparisons.
 LEGACY_DEFAULT_PROFILE: CostProfile = {"broker_fee": 0.001, "cess": 0.0005}
 
+# Older engine code may still request this exact profile name.
+LEGACY_PROFILE_ALIASES = {
+    "default": "legacy_default",
+    "Default": "legacy_default",
+}
+
 # Neutral planning profiles. These should not imply that any broker is preferred.
 PROFILES: Dict[str, CostProfileMetadata] = {
     "legacy_default": {
@@ -89,6 +95,10 @@ def get_profile(name: str | None = None) -> CostProfile:
 def get_profile_metadata(name: str | None = None) -> CostProfileMetadata:
     """Return profile metadata for the given profile key or label."""
     profile_name = (name or DEFAULT_PROFILE_KEY).strip()
+    alias_key = LEGACY_PROFILE_ALIASES.get(profile_name) or LEGACY_PROFILE_ALIASES.get(profile_name.lower())
+    if alias_key:
+        return PROFILES[alias_key].copy()
+
     if profile_name in PROFILES:
         return PROFILES[profile_name].copy()
 
