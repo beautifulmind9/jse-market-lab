@@ -5,6 +5,7 @@ const links = [
   { href: '/portfolio', label: 'Portfolio Plan' },
   { href: '/ticker/JMMBGL', label: 'Ticker Analysis' },
   { href: '/review', label: 'Review' },
+  { href: '/demo', label: 'Demo Mode' },
 ];
 
 export function Navigation() {
