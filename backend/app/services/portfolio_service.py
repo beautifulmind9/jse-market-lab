@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.costs.profiles import get_cost_disclaimer, get_profile_metadata
 from backend.app.core.config import DISCLAIMER, public_mode
 from backend.app.services.engine_context import build_allocation_payload
 
@@ -51,7 +52,25 @@ def _trade_response(row: dict[str, Any], *, mode: str | None) -> dict[str, Any]:
     }
 
 
-def get_portfolio_plan(capital: float, mode: str | None = None) -> dict[str, Any]:
+def _cost_profile_payload(cost_profile: str | None) -> dict[str, Any]:
+    profile = get_profile_metadata(cost_profile)
+    return {
+        "key": profile["key"],
+        "label": profile["label"],
+        "broker_fee": profile["broker_fee"],
+        "cess": profile["cess"],
+        "verification_status": profile["verification_status"],
+        "source": profile["source"],
+        "note": profile["note"],
+        "disclaimer": get_cost_disclaimer(),
+    }
+
+
+def get_portfolio_plan(
+    capital: float,
+    mode: str | None = None,
+    cost_profile: str | None = None,
+) -> dict[str, Any]:
     """Return funded and unfunded portfolio plan data for the API."""
     safe_capital = max(float(capital or 0.0), 0.0)
     payload = build_allocation_payload(safe_capital, mode)
@@ -67,6 +86,7 @@ def get_portfolio_plan(capital: float, mode: str | None = None) -> dict[str, Any
     return {
         "capital": safe_capital,
         "mode": public_mode(mode),
+        "cost_profile": _cost_profile_payload(cost_profile),
         "funded_trades": funded,
         "unfunded_trades": unfunded,
         "reserve_cash": reserve_cash,
