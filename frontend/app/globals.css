@@ -29,6 +29,29 @@ a {
   padding: 32px 20px 56px;
 }
 
+.demo-banner {
+  background: var(--warning-soft);
+  border-bottom: 1px solid #f59e0b;
+  color: var(--warning-text);
+  font-size: 14px;
+}
+
+.demo-banner-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.demo-banner a {
+  font-weight: 800;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
 .navbar {
   border-bottom: 1px solid var(--border);
   background: var(--surface);
@@ -202,6 +225,11 @@ p {
 }
 
 @media (max-width: 780px) {
+  .demo-banner-inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .navbar-inner {
     align-items: flex-start;
     flex-direction: column;
