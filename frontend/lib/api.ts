@@ -6,6 +6,10 @@ export function getApiBaseUrl(): string {
   return API_BASE_URL;
 }
 
+export function hasConfiguredApiBaseUrl(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(API_BASE_URL + path, {
     ...init,
