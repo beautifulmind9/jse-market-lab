@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ApiStatusCard } from '@/components/shared/ApiStatusCard';
+import { HomeMarketSnapshot } from '@/components/shared/HomeMarketSnapshot';
 import { InfoCard } from '@/components/shared/InfoCard';
 
 const intentCards = [
@@ -46,10 +47,10 @@ export default function HomePage() {
     <div className="page-shell">
       <section className="hero">
         <span className="eyebrow">Decision support and market intelligence for the JSE</span>
-        <h1>What are you trying to do today?</h1>
+        <h1>Start with the market, then choose your path.</h1>
         <p>
-          JSE Market Lab helps Jamaican, Caribbean, and diaspora investors learn, research companies,
-          review market context, and use structured tools before making their own decisions.
+          JSE Market Lab helps Jamaican, Caribbean, and diaspora investors see market context, learn,
+          research companies, and use structured tools before making their own decisions.
         </p>
         <div className="button-row">
           <Link className="button" href="/tools">
@@ -62,6 +63,13 @@ export default function HomePage() {
             View Demo
           </Link>
         </div>
+      </section>
+
+      <HomeMarketSnapshot />
+
+      <section className="hero compact">
+        <span className="eyebrow">Choose your path</span>
+        <h2>What are you trying to do today?</h2>
       </section>
 
       <section className="grid">
