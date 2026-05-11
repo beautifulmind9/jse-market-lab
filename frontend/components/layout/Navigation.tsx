@@ -2,11 +2,12 @@ import Link from 'next/link';
 
 const links = [
   { href: '/', label: 'Start Here' },
-  { href: '/portfolio', label: 'Portfolio Plan' },
-  { href: '/ticker/JMMBGL', label: 'Ticker Analysis' },
-  { href: '/review', label: 'Review' },
-  { href: '/demo', label: 'Demo Mode' },
-  { href: '/platform-preview', label: 'Platform Preview' },
+  { href: '/learn', label: 'Learn' },
+  { href: '/market', label: 'Market' },
+  { href: '/companies', label: 'Companies' },
+  { href: '/tools', label: 'Tools' },
+  { href: '/research', label: 'Research' },
+  { href: '/demo', label: 'Demo' },
 ];
 
 export function Navigation() {
