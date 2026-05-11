@@ -29,6 +29,10 @@ a {
   padding: 32px 20px 56px;
 }
 
+.market-home-shell {
+  padding-top: 24px;
+}
+
 .demo-banner {
   background: var(--warning-soft);
   border-bottom: 1px solid #f59e0b;
@@ -86,6 +90,24 @@ a {
 
 .hero.compact {
   padding: 28px 0 16px;
+}
+
+.home-positioning {
+  align-items: end;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  padding: 14px 0 10px;
+}
+
+.home-positioning h1 {
+  font-size: 34px;
+  margin-top: 10px;
+}
+
+.home-positioning p {
+  margin-bottom: 0;
+  max-width: 820px;
 }
 
 .eyebrow {
@@ -146,7 +168,7 @@ p {
   background: white;
   border: 1px solid var(--border);
   border-top: 6px solid #08245c;
-  margin: 10px 0 28px;
+  margin: 0 0 26px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
 }
 
@@ -453,10 +475,15 @@ p {
 }
 
 @media (max-width: 900px) {
+  .home-positioning,
   .market-tape,
   .market-front-grid,
   .market-content-grid {
     grid-template-columns: 1fr;
+  }
+
+  .home-positioning {
+    align-items: start;
   }
 
   .tape-item,
@@ -486,8 +513,9 @@ p {
     flex-wrap: wrap;
   }
 
-  h1 {
-    font-size: 36px;
+  h1,
+  .home-positioning h1 {
+    font-size: 32px;
   }
 
   .grid,
