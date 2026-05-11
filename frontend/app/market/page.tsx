@@ -8,10 +8,10 @@ const marketTape = [
 ];
 
 const movers = [
-  { ticker: 'JPS9.5', name: 'JPS Preference', window: '5D', tier: 'A', note: 'Funded in demo plan' },
-  { ticker: 'WIPT', name: 'Wigton Windfarm', window: '30D', tier: 'A', note: 'Longer holding window' },
-  { ticker: 'TJH8.0', name: 'TransJamaican Highway', window: '5D', tier: 'A', note: 'Smaller allocation' },
-  { ticker: 'CAR', name: 'Carreras', window: '30D', tier: 'B', note: 'Held back by rules' },
+  { ticker: 'JPS9.5', window: '5D', tier: 'A', note: 'Funded in demo plan' },
+  { ticker: 'WIPT', window: '30D', tier: 'A', note: 'Longer holding window' },
+  { ticker: 'TJH8.0', window: '5D', tier: 'A', note: 'Smaller allocation' },
+  { ticker: 'CAR', window: '30D', tier: 'B', note: 'Held back by rules' },
 ];
 
 const liquidityWatch = [
@@ -36,17 +36,8 @@ const marketNotes = [
 export default function MarketPage() {
   return (
     <div className="page-shell market-home-shell">
-      <section className="market-pulse-page">
-        <div className="market-pulse-header">
-          <span className="eyebrow">Demo Market Pulse</span>
-          <h1>JSE market context, before the ticker deep dive.</h1>
-          <p>
-            A demo-safe market intelligence view for broad conditions, setup clusters, liquidity
-            context, and data status. This is not an official live JSE feed.
-          </p>
-        </div>
-
-        <div className="market-tape pulse-tape" aria-label="Demo Market Pulse status tape">
+      <section className="market-front">
+        <div className="market-tape" aria-label="Demo Market Pulse status tape">
           {marketTape.map((item) => (
             <div key={item.label} className={'tape-item ' + (item.tone || 'neutral')}>
               <span>{item.label}</span>
@@ -55,36 +46,27 @@ export default function MarketPage() {
           ))}
         </div>
 
-        <div className="pulse-grid">
-          <section className="pulse-module pulse-main">
-            <div className="module-heading">
-              <h2>Market movers mockup</h2>
-              <Link href="/companies">Research companies</Link>
+        <div className="market-front-grid">
+          <div className="market-lede-panel">
+            <span className="eyebrow">Demo Market Pulse</span>
+            <h2>JSE market context, before the ticker deep dive.</h2>
+            <p>
+              A demo-safe market intelligence view for broad conditions, setup clusters, liquidity
+              context, and data status. This is not an official live JSE feed.
+            </p>
+            <div className="market-lede-actions">
+              <Link href="/companies">Companies</Link>
+              <Link href="/tools">Tools</Link>
+              <Link href="/demo">Demo</Link>
             </div>
-            <div className="pulse-table">
-              <div className="pulse-table-head">
-                <span>Ticker</span>
-                <span>Window</span>
-                <span>Tier</span>
-                <span>Context</span>
-              </div>
-              {movers.map((row) => (
-                <Link className="pulse-table-row" key={row.ticker} href={'/ticker/' + encodeURIComponent(row.ticker)}>
-                  <strong>{row.ticker}</strong>
-                  <span>{row.window}</span>
-                  <span>{row.tier}</span>
-                  <span>{row.note}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
+          </div>
 
-          <section className="pulse-module">
-            <div className="module-heading">
-              <h2>Signal clusters</h2>
-              <Link href="/tools">Open tools</Link>
+          <div className="quote-panel">
+            <div className="quote-panel-header">
+              <span>Pulse Board</span>
+              <strong>DEMO</strong>
             </div>
-            <div className="cluster-list">
+            <div className="quote-metrics">
               {signalClusters.map((cluster) => (
                 <div key={cluster.label}>
                   <span>{cluster.label}</span>
@@ -92,14 +74,37 @@ export default function MarketPage() {
                 </div>
               ))}
             </div>
-          </section>
+          </div>
         </div>
 
-        <div className="pulse-grid lower">
-          <section className="pulse-module">
+        <div className="market-content-grid">
+          <section className="market-module wide">
             <div className="module-heading">
-              <h2>Liquidity watch</h2>
-              <Link href="/learn">Learn why it matters</Link>
+              <h3>Market movers mockup</h3>
+              <Link href="/companies">Research companies</Link>
+            </div>
+            <div className="market-table">
+              <div className="market-table-head">
+                <span>Ticker</span>
+                <span>Tier</span>
+                <span>Window</span>
+                <span>Context</span>
+              </div>
+              {movers.map((row) => (
+                <Link className="market-table-row" key={row.ticker} href={'/ticker/' + encodeURIComponent(row.ticker)}>
+                  <strong>{row.ticker}</strong>
+                  <span>{row.tier}</span>
+                  <span>{row.window}</span>
+                  <span>{row.note}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="market-module">
+            <div className="module-heading">
+              <h3>Liquidity watch</h3>
+              <Link href="/learn">Learn why</Link>
             </div>
             <ul className="market-news-list">
               {liquidityWatch.map((note) => (
@@ -107,10 +112,12 @@ export default function MarketPage() {
               ))}
             </ul>
           </section>
+        </div>
 
-          <section className="pulse-module pulse-main">
+        <div className="market-content-grid">
+          <section className="market-module wide">
             <div className="module-heading">
-              <h2>Latest market notes</h2>
+              <h3>Latest market notes</h3>
               <Link href="/demo">Demo mode</Link>
             </div>
             <ul className="market-news-list">
@@ -119,16 +126,28 @@ export default function MarketPage() {
               ))}
             </ul>
           </section>
-        </div>
 
-        <div className="notice warning">
-          <p>
-            Demo Market Pulse is a product mockup using sample or internally prepared data. It is for
-            education and decision-support demonstration only, not investment advice or an official
-            real-time exchange feed.
-          </p>
+          <section className="market-module">
+            <div className="module-heading">
+              <h3>Next step</h3>
+              <Link href="/tools">Open tools</Link>
+            </div>
+            <ul className="market-news-list">
+              <li>Use Market Pulse to get context first.</li>
+              <li>Open Companies to research a specific ticker.</li>
+              <li>Use Tools for portfolio planning and decision review.</li>
+            </ul>
+          </section>
         </div>
       </section>
+
+      <div className="notice warning">
+        <p>
+          Demo Market Pulse is a product mockup using sample or internally prepared data. It is for
+          education and decision-support demonstration only, not investment advice or an official
+          real-time exchange feed.
+        </p>
+      </div>
     </div>
   );
 }
