@@ -73,7 +73,8 @@ def get_portfolio_plan(
 ) -> dict[str, Any]:
     """Return funded and unfunded portfolio plan data for the API."""
     safe_capital = max(float(capital or 0.0), 0.0)
-    payload = build_allocation_payload(safe_capital, mode)
+    cost_profile_payload = _cost_profile_payload(cost_profile)
+    payload = build_allocation_payload(safe_capital, mode, cost_profile_payload["key"])
     allocations = payload["allocations"]
     summary_payload = payload["allocation_summary"]
 
@@ -86,7 +87,7 @@ def get_portfolio_plan(
     return {
         "capital": safe_capital,
         "mode": public_mode(mode),
-        "cost_profile": _cost_profile_payload(cost_profile),
+        "cost_profile": cost_profile_payload,
         "funded_trades": funded,
         "unfunded_trades": unfunded,
         "reserve_cash": reserve_cash,
