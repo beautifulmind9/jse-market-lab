@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from app.costs.profiles import get_profile
 from backend.app.core.config import get_cors_origins
 from backend.main import app
 
@@ -50,6 +51,10 @@ def test_cors_origins_can_be_configured_from_environment(monkeypatch) -> None:
         "https://jse-market-lab.vercel.app",
         "http://localhost:3000",
     ]
+
+
+def test_legacy_default_cost_profile_alias_still_resolves() -> None:
+    assert get_profile("Default") == {"broker_fee": 0.001, "cess": 0.0005}
 
 
 def test_data_status_endpoint_returns_required_fields() -> None:
@@ -101,6 +106,20 @@ def test_portfolio_plan_returns_selected_cost_profile_metadata() -> None:
     assert cost_profile["verification_status"] == "planning_estimate"
     assert "Confirm fees with your licensed broker" in cost_profile["disclaimer"]
     _assert_safe_language(cost_profile)
+
+
+def test_invalid_portfolio_cost_profile_returns_client_error() -> None:
+    response = client.post(
+        "/api/portfolio/plan",
+        json={
+            "capital": 100000,
+            "mode": "guided",
+            "cost_profile": "high-cost",
+        },
+    )
+
+    assert response.status_code == 422
+    assert "Unknown broker or cost profile" in response.json()["detail"]
 
 
 def test_ticker_analysis_endpoint_returns_decision_support_payload() -> None:
