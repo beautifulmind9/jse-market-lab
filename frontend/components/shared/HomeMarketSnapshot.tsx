@@ -1,74 +1,167 @@
 import Link from 'next/link';
 import { getDataStatus, getPortfolioPlan } from '@/lib/api';
 import { formatJmd, formatPercent } from '@/lib/formatters';
+import type { PortfolioPlan, Trade } from '@/lib/types';
 
 const SNAPSHOT_CAPITAL = 100000;
 
 const demoFallback = {
-  latestMarketDate: 'Latest available demo date',
+  latestMarketDate: '2026-04-24',
   datasetSource: 'Demo/internal market dataset',
   rowsLoaded: '57,656+',
   allocated: '$70,000',
   reserve: '$30,000',
+  unfundedCount: 6,
   tickers: [
-    { ticker: 'JPS9.5', label: '5D · 30%' },
-    { ticker: 'WIPT', label: '30D · 30%' },
-    { ticker: 'TJH8.0', label: '5D · 10%' },
+    { ticker: 'JPS9.5', window: '5D', tier: 'A', allocation: '30%' },
+    { ticker: 'WIPT', window: '30D', tier: 'A', allocation: '30%' },
+    { ticker: 'TJH8.0', window: '5D', tier: 'A', allocation: '10%' },
   ],
 };
 
-function DemoFallbackSnapshot() {
+function MarketTape({ rowsLoaded, latestDate }: { rowsLoaded: string; latestDate: string }) {
+  const tape = [
+    { label: 'JSE LAB MODE', value: 'DEMO', tone: 'neutral' },
+    { label: 'LATEST DATA', value: latestDate, tone: 'neutral' },
+    { label: 'ROWS', value: rowsLoaded, tone: 'neutral' },
+    { label: 'FEED', value: 'INTERNAL', tone: 'neutral' },
+    { label: 'STATUS', value: 'NOT LIVE JSE', tone: 'warn' },
+  ];
+
   return (
-    <section className="market-snapshot">
-      <div className="snapshot-lead">
-        <span className="eyebrow">Demo Market Snapshot</span>
-        <h2>Latest available market view</h2>
-        <p>
-          A live-looking homepage preview using demo/internal market data. This keeps the walkthrough
-          useful even when the API is waking up or temporarily unreachable.
-        </p>
-      </div>
+    <div className="market-tape" aria-label="Demo market status tape">
+      {tape.map((item) => (
+        <div key={item.label} className={'tape-item ' + item.tone}>
+          <span>{item.label}</span>
+          <strong>{item.value}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
 
-      <div className="snapshot-grid">
-        <div className="snapshot-card">
-          <span>Market mode</span>
-          <strong>Demo / internal</strong>
-          <p>Not an official live JSE feed.</p>
-        </div>
-        <div className="snapshot-card">
-          <span>Latest market date</span>
-          <strong>{demoFallback.latestMarketDate}</strong>
-          <p>{demoFallback.datasetSource}</p>
-        </div>
-        <div className="snapshot-card">
-          <span>Rows loaded</span>
-          <strong>{demoFallback.rowsLoaded}</strong>
-          <p>Sample dataset for product demonstration.</p>
-        </div>
-        <div className="snapshot-card">
-          <span>Sample capital plan</span>
-          <strong>{demoFallback.allocated}</strong>
-          <p>{demoFallback.reserve} held as reserve.</p>
-        </div>
+function SetupRows({ trades }: { trades: Array<Pick<Trade, 'ticker' | 'holding_window' | 'tier' | 'allocation_pct'>> }) {
+  return (
+    <div className="market-table">
+      <div className="market-table-head">
+        <span>Ticker</span>
+        <span>Tier</span>
+        <span>Window</span>
+        <span>Allocation</span>
       </div>
+      {trades.map((trade) => (
+        <Link className="market-table-row" key={trade.ticker} href={'/ticker/' + encodeURIComponent(trade.ticker)}>
+          <strong>{trade.ticker}</strong>
+          <span>{trade.tier || '—'}</span>
+          <span>{trade.holding_window || '—'}</span>
+          <span>{formatPercent(trade.allocation_pct)}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
 
-      <div className="snapshot-strip">
-        <div>
-          <span className="snapshot-label">Demo setup examples</span>
-          <div className="snapshot-tickers">
-            {demoFallback.tickers.map((item) => (
-              <Link key={item.ticker} href={'/ticker/' + encodeURIComponent(item.ticker)}>
-                {item.ticker} · {item.label}
-              </Link>
-            ))}
+function DemoSetupRows() {
+  return (
+    <div className="market-table">
+      <div className="market-table-head">
+        <span>Ticker</span>
+        <span>Tier</span>
+        <span>Window</span>
+        <span>Allocation</span>
+      </div>
+      {demoFallback.tickers.map((trade) => (
+        <Link className="market-table-row" key={trade.ticker} href={'/ticker/' + encodeURIComponent(trade.ticker)}>
+          <strong>{trade.ticker}</strong>
+          <span>{trade.tier}</span>
+          <span>{trade.window}</span>
+          <span>{trade.allocation}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function MarketFrontPage({
+  latestDate,
+  datasetSource,
+  rowsLoaded,
+  allocated,
+  reserve,
+  unfundedCount,
+  plan,
+}: {
+  latestDate: string;
+  datasetSource: string;
+  rowsLoaded: string;
+  allocated: string;
+  reserve: string;
+  unfundedCount: number;
+  plan?: PortfolioPlan;
+}) {
+  const funded = plan?.funded_trades.slice(0, 3) ?? [];
+
+  return (
+    <section className="market-front">
+      <MarketTape rowsLoaded={rowsLoaded} latestDate={latestDate} />
+
+      <div className="market-front-grid">
+        <div className="market-lede-panel">
+          <span className="eyebrow">Demo Market Snapshot</span>
+          <h2>Latest available JSE market view</h2>
+          <p>
+            Demo/internal data shaped into a market-front page experience. This is not an official live
+            JSE feed.
+          </p>
+          <div className="market-lede-actions">
+            <Link href="/market">Market</Link>
+            <Link href="/companies">Companies</Link>
+            <Link href="/tools">Tools</Link>
           </div>
         </div>
-        <div>
-          <span className="snapshot-label">Watch areas</span>
-          <p>
-            Review liquidity, cost assumptions, data status, and holding-window behavior before
-            interpreting any output.
-          </p>
+
+        <div className="quote-panel">
+          <div className="quote-panel-header">
+            <span>Snapshot Board</span>
+            <strong>DEMO</strong>
+          </div>
+          <div className="quote-metrics">
+            <div>
+              <span>Sample allocated</span>
+              <strong>{allocated}</strong>
+            </div>
+            <div>
+              <span>Reserve cash</span>
+              <strong>{reserve}</strong>
+            </div>
+            <div>
+              <span>Held back</span>
+              <strong>{unfundedCount}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="market-content-grid">
+        <div className="market-module wide">
+          <div className="module-heading">
+            <h3>Top demo setups</h3>
+            <Link href="/portfolio">View portfolio plan</Link>
+          </div>
+          {funded.length > 0 ? <SetupRows trades={funded} /> : <DemoSetupRows />}
+        </div>
+
+        <div className="market-module">
+          <div className="module-heading">
+            <h3>Market notes</h3>
+            <Link href="/demo">Demo mode</Link>
+          </div>
+          <ul className="market-news-list">
+            <li>Latest available dataset: {latestDate}</li>
+            <li>Source: {datasetSource}</li>
+            <li>Cost assumptions and liquidity checks are active.</li>
+            <li>Official live feed requires JSE/data-rights validation.</li>
+          </ul>
         </div>
       </div>
     </section>
@@ -90,65 +183,27 @@ export async function HomeMarketSnapshot() {
   }
 
   if (unavailable || !status || !plan) {
-    return <DemoFallbackSnapshot />;
+    return (
+      <MarketFrontPage
+        latestDate={demoFallback.latestMarketDate}
+        datasetSource={demoFallback.datasetSource}
+        rowsLoaded={demoFallback.rowsLoaded}
+        allocated={demoFallback.allocated}
+        reserve={demoFallback.reserve}
+        unfundedCount={demoFallback.unfundedCount}
+      />
+    );
   }
 
-  const funded = plan.funded_trades.slice(0, 3);
-  const unfundedCount = plan.summary.unfunded_count;
-
   return (
-    <section className="market-snapshot">
-      <div className="snapshot-lead">
-        <span className="eyebrow">Demo Market Snapshot</span>
-        <h2>Latest available market view</h2>
-        <p>
-          A live-looking homepage preview using the current internal dataset. This demonstrates the
-          market-intelligence experience and is not an official live JSE feed.
-        </p>
-      </div>
-
-      <div className="snapshot-grid">
-        <div className="snapshot-card">
-          <span>Market mode</span>
-          <strong>Demo / internal</strong>
-          <p>Latest available prepared dataset.</p>
-        </div>
-        <div className="snapshot-card">
-          <span>Latest market date</span>
-          <strong>{status.latest_market_date || 'Not available'}</strong>
-          <p>{status.dataset_source}</p>
-        </div>
-        <div className="snapshot-card">
-          <span>Rows loaded</span>
-          <strong>{status.row_count.toLocaleString()}</strong>
-          <p>Used for demo analysis and routing.</p>
-        </div>
-        <div className="snapshot-card">
-          <span>Sample capital plan</span>
-          <strong>{formatJmd(plan.summary.total_allocated)}</strong>
-          <p>{formatJmd(plan.reserve_cash)} held as reserve.</p>
-        </div>
-      </div>
-
-      <div className="snapshot-strip">
-        <div>
-          <span className="snapshot-label">Top funded demo setups</span>
-          <div className="snapshot-tickers">
-            {funded.map((trade) => (
-              <Link key={trade.ticker} href={'/ticker/' + encodeURIComponent(trade.ticker)}>
-                {trade.ticker} · {trade.holding_window} · {formatPercent(trade.allocation_pct)}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <div>
-          <span className="snapshot-label">Watch areas</span>
-          <p>
-            {unfundedCount} setups held back by rules. Review liquidity, cost assumptions, and data
-            status before interpreting outputs.
-          </p>
-        </div>
-      </div>
-    </section>
+    <MarketFrontPage
+      latestDate={status.latest_market_date || 'Not available'}
+      datasetSource={status.dataset_source}
+      rowsLoaded={status.row_count.toLocaleString()}
+      allocated={formatJmd(plan.summary.total_allocated)}
+      reserve={formatJmd(plan.reserve_cash)}
+      unfundedCount={plan.summary.unfunded_count}
+      plan={plan}
+    />
   );
 }
