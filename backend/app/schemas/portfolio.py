@@ -10,3 +10,4 @@ class PortfolioPlanRequest(BaseModel):
 
     capital: float = Field(default=100_000.0, ge=0)
     mode: str = "guided"
+    cost_profile: str = "conservative_estimate"

@@ -27,10 +27,14 @@ export function getDataStatus(): Promise<DataStatus> {
   return apiFetch<DataStatus>('/api/data/status');
 }
 
-export function getPortfolioPlan(capital: number, mode: ViewMode = 'guided'): Promise<PortfolioPlan> {
+export function getPortfolioPlan(
+  capital: number,
+  mode: ViewMode = 'guided',
+  costProfile = 'conservative_estimate',
+): Promise<PortfolioPlan> {
   return apiFetch<PortfolioPlan>('/api/portfolio/plan', {
     method: 'POST',
-    body: JSON.stringify({ capital, mode }),
+    body: JSON.stringify({ capital, mode, cost_profile: costProfile }),
   });
 }
 

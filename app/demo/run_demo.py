@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from app.costs.engine import run_cost_engine
+from app.costs.profiles import DEFAULT_PROFILE_KEY
 from app.data.ingest import ingest_dataset
 from app.demo.language import get_explanatory_copy
 from app.events.earnings import tag_earnings_phase
@@ -33,6 +34,7 @@ def run_demo(
     canonical_df: pd.DataFrame | None = None,
     meta: dict | None = None,
     issues: dict | None = None,
+    cost_profile: str = DEFAULT_PROFILE_KEY,
 ) -> dict:
     """Run ingestion, cost, ranking, and phase metrics for demo data."""
     if canonical_df is None or meta is None or issues is None:
@@ -42,9 +44,10 @@ def run_demo(
 
     entries = canonical[["instrument", "date"]].rename(columns={"date": "entry_date"})
 
-    trades, summary_instrument, _, _ = run_cost_engine(
+    trades, summary_instrument, _, cost_config = run_cost_engine(
         df_prices=canonical,
         df_entries=entries,
+        broker_profile=cost_profile,
     )
     ranked = rank_instruments(summary_instrument, meta, "income_stability")
 
@@ -68,10 +71,9 @@ def run_demo(
         artifacts_dir.mkdir(parents=True, exist_ok=True)
         ranked.to_csv(artifacts_dir / "ranked.csv", index=False)
         phase_metrics.to_csv(artifacts_dir / "phase_metrics.csv", index=False)
-        meta_payload = {"meta": meta, "issues": issues}
+        meta_payload = {"meta": meta, "issues": issues, "cost_config": cost_config}
         (artifacts_dir / "meta.json").write_text(json.dumps(meta_payload, indent=2))
     except PermissionError as exc:
-        # Continue when running in restricted environments where local writes are unavailable.
         logger.warning("Demo artifacts not written due to restricted filesystem permissions: %s", exc)
     except OSError as exc:
         if exc.errno == errno.EROFS:
@@ -84,6 +86,7 @@ def run_demo(
         "phase_metrics": phase_metrics,
         "meta": meta,
         "issues": issues,
+        "cost_config": cost_config,
         "language_mode": language_mode,
         "explanatory_copy": get_explanatory_copy(language_mode),
     }
