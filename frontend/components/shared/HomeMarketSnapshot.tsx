@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getDataStatus, getPortfolioPlan } from '@/lib/api';
+import { getDataStatus, getPortfolioPlan, hasConfiguredApiBaseUrl } from '@/lib/api';
 import { formatJmd, formatPercent } from '@/lib/formatters';
 import type { PortfolioPlan, Trade } from '@/lib/types';
 
@@ -168,7 +168,24 @@ function MarketFrontPage({
   );
 }
 
+function renderDemoFallback() {
+  return (
+    <MarketFrontPage
+      latestDate={demoFallback.latestMarketDate}
+      datasetSource={demoFallback.datasetSource}
+      rowsLoaded={demoFallback.rowsLoaded}
+      allocated={demoFallback.allocated}
+      reserve={demoFallback.reserve}
+      unfundedCount={demoFallback.unfundedCount}
+    />
+  );
+}
+
 export async function HomeMarketSnapshot() {
+  if (!hasConfiguredApiBaseUrl()) {
+    return renderDemoFallback();
+  }
+
   let status;
   let plan;
   let unavailable = false;
@@ -183,16 +200,7 @@ export async function HomeMarketSnapshot() {
   }
 
   if (unavailable || !status || !plan) {
-    return (
-      <MarketFrontPage
-        latestDate={demoFallback.latestMarketDate}
-        datasetSource={demoFallback.datasetSource}
-        rowsLoaded={demoFallback.rowsLoaded}
-        allocated={demoFallback.allocated}
-        reserve={demoFallback.reserve}
-        unfundedCount={demoFallback.unfundedCount}
-      />
-    );
+    return renderDemoFallback();
   }
 
   return (
