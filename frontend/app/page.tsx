@@ -44,14 +44,18 @@ const intentCards = [
 
 export default function HomePage() {
   return (
-    <div className="page-shell">
-      <section className="hero">
-        <span className="eyebrow">Decision support and market intelligence for the JSE</span>
-        <h1>Start with the market, then choose your path.</h1>
-        <p>
-          JSE Market Lab helps Jamaican, Caribbean, and diaspora investors see market context, learn,
-          research companies, and use structured tools before making their own decisions.
-        </p>
+    <div className="page-shell market-home-shell">
+      <HomeMarketSnapshot />
+
+      <section className="home-positioning">
+        <div>
+          <span className="eyebrow">Decision support and market intelligence for the JSE</span>
+          <h1>Start with the market, then choose your path.</h1>
+          <p>
+            JSE Market Lab helps Jamaican, Caribbean, and diaspora investors see market context,
+            learn, research companies, and use structured tools before making their own decisions.
+          </p>
+        </div>
         <div className="button-row">
           <Link className="button" href="/tools">
             Open Tools
@@ -64,8 +68,6 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
-
-      <HomeMarketSnapshot />
 
       <section className="hero compact">
         <span className="eyebrow">Choose your path</span>
